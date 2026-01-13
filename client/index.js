@@ -7,6 +7,18 @@ let selectedPickup = null;
 let selectedDestination = null;
 
 /* ==============================
+   DETECT CURRENT PAGE
+================================ */
+function getCurrentPage() {
+  const path = window.location.pathname;
+  if (path.includes('create_a_ride.html')) return 'create_ride';
+  if (path.includes('profile.html')) return 'profile';
+  if (path.includes('previous.html')) return 'previous';
+  if (path.includes('index.html') || path === '/') return 'home';
+  return 'unknown';
+}
+
+/* ==============================
    AUTH
 ================================ */
 async function fetchCurrentUser() {
@@ -23,43 +35,32 @@ async function fetchCurrentUser() {
 
     currentUser = data.user;
 
-    document.getElementById("fullName").value = currentUser.name || "";
-    document.getElementById("email").value = currentUser.email || "";
-    document.getElementById("banasthaliId").value = currentUser.banasthaliId || "";
-    document.getElementById("phone").value = currentUser.phone || "";
-    document.getElementById("guardianPhone").value = currentUser.guardianPhone || "";
+    // Update profile form if on profile page
+    const nameInput = document.getElementById("fullName");
+    if (nameInput) {
+      nameInput.value = currentUser.name || "";
+      document.getElementById("email").value = currentUser.email || "";
+      document.getElementById("banasthaliId").value = currentUser.banasthaliId || "";
+      document.getElementById("phone").value = currentUser.phone || "";
+      document.getElementById("guardianPhone").value = currentUser.guardianPhone || "";
+    }
 
-    document.querySelector(".profile-avatar").textContent =
-      currentUser.name?.charAt(0).toUpperCase() || "U";
+    // Update avatar if exists
+    const avatarDiv = document.querySelector(".profile-avatar");
+    if (avatarDiv) {
+      avatarDiv.textContent = currentUser.name?.charAt(0).toUpperCase() || "U";
+    }
+
+    // Update all user name displays
+    const userNameElements = document.querySelectorAll(".user-name");
+    userNameElements.forEach(el => {
+      el.textContent = currentUser.name || "User";
+    });
+
   } catch (err) {
+    console.error("Error loading user data:", err);
     window.location.href = "/login.html";
   }
-}
-
-/* ==============================
-   NAVIGATION
-================================ */
-function showPage(pageName) {
-  // hide all pages
-  document.querySelectorAll(".page").forEach(page => {
-    page.classList.add("hidden");
-  });
-
-  // remove active class
-  document.querySelectorAll(".nav-item").forEach(item => {
-    item.classList.remove("active");
-  });
-
-  // show selected page
-  document.getElementById(pageName + "-page").classList.remove("hidden");
-
-  // activate correct nav item
-  document
-    .querySelector(`.nav-item[onclick*="${pageName}"]`)
-    .classList.add("active");
-
-  if (pageName === "home") loadRides();
-  if (pageName === "previous-rides") loadPreviousRides();
 }
 
 /* ==============================
@@ -150,16 +151,19 @@ function setupSearchAutocomplete(inputId) {
     return;
   }
 
-  // Create dropdown inside the wrapper
+  // Find the existing dropdown (don't create a new one)
   const wrapper = input.closest('.autocomplete-wrapper');
   if (!wrapper) {
     console.error("❌ No autocomplete-wrapper found for", inputId);
     return;
   }
 
-  const dropdown = document.createElement("div");
-  dropdown.className = "autocomplete-list";
-  wrapper.appendChild(dropdown);
+  // Use the existing <ul> element with class "autocomplete-dropdown"
+  const dropdown = wrapper.querySelector('.autocomplete-dropdown');
+  if (!dropdown) {
+    console.error("❌ No autocomplete-dropdown found for", inputId);
+    return;
+  }
 
   let debounceTimer;
 
@@ -168,7 +172,7 @@ function setupSearchAutocomplete(inputId) {
 
     debounceTimer = setTimeout(async () => {
       const query = input.value.trim();
-      dropdown.innerHTML = "";
+      dropdown.innerHTML = ""; // Clear previous results
 
       if (query.length < 3) return;
 
@@ -181,17 +185,17 @@ function setupSearchAutocomplete(inputId) {
 
         const data = await res.json();
 
+        // Create <li> elements (not div) for each result
         data.forEach(place => {
-          const div = document.createElement("div");
-          div.className = "autocomplete-item";
-          div.textContent = place.display_name;
+          const li = document.createElement("li");
+          li.textContent = place.display_name;
 
-          div.onclick = () => {
+          li.onclick = () => {
             input.value = place.display_name;
-            dropdown.innerHTML = "";
+            dropdown.innerHTML = ""; // Clear dropdown after selection
           };
 
-          dropdown.appendChild(div);
+          dropdown.appendChild(li);
         });
       } catch (err) {
         console.error("Error fetching locations:", err);
@@ -207,8 +211,14 @@ function setupSearchAutocomplete(inputId) {
   });
 }
 
+// Initialize for both pickup and destination inputs
+document.addEventListener('DOMContentLoaded', () => {
+  setupSearchAutocomplete('pickupSearch');
+  setupSearchAutocomplete('destinationSearch');
+});
+
 /* ==============================
-   LOAD RIDES
+   LOAD ALL RIDES (Home Page)
 ================================ */
 async function loadRides(search = "") {
   try {
@@ -228,12 +238,36 @@ async function loadRides(search = "") {
 }
 
 /* ==============================
+   LOAD USER'S PREVIOUS RIDES
+================================ */
+async function loadPreviousRides() {
+  try {
+    const res = await fetch(`${API_BASE}/rides/my-rides`, { 
+      credentials: "include" 
+    });
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.message);
+
+    const myRides = data.data;
+    displayRides(myRides, "previousRidesGrid");
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+/* ==============================
    DISPLAY RIDES
 ================================ */
 function displayRides(ridesData, containerId) {
   const container = document.getElementById(containerId);
+  
+  if (!container) {
+    console.error("❌ Container not found:", containerId);
+    return;
+  }
 
-  if (!ridesData.length) {
+  if (!ridesData || !ridesData.length) {
     container.innerHTML =
       `<p style="text-align:center;color:#6b7280;padding:40px;">
         No rides found
@@ -247,8 +281,8 @@ function displayRides(ridesData, containerId) {
         <div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>
         <div class="ride-info">
           <h3>
-            ${new Date(ride.createdAt).toLocaleDateString()} • 
-            ${new Date(ride.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
+            ${new Date(ride.departureTime || ride.createdAt).toLocaleDateString()} • 
+            ${new Date(ride.departureTime || ride.createdAt).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}
           </h3>
           <p>
             ${ride.rideType === "cab" ? "🚖 Cab Ride" : "🤝 Travel Buddy"}
@@ -272,20 +306,20 @@ function displayRides(ridesData, containerId) {
       </div>
 
       <div class="ride-actions">
-        <button class="btn btn-secondary">Chat</button>
-        <button class="btn btn-primary">Request</button>
+        <button class="btn btn-secondary" onclick="openChat('${ride._id}')">Chat</button>
+        <button class="btn btn-primary" onclick="requestRide('${ride._id}')">Request</button>
       </div>
     </div>
   `).join("");
 }
 
 /* ==============================
-   SEARCH
+   SEARCH RIDES (Home Page)
 ================================ */
 function searchRides() {
-  const pickup = document.getElementById("pickupSearch").value.trim();
-  const destination = document.getElementById("destinationSearch").value.trim();
-  const date = document.getElementById("dateSearch").value;
+  const pickup = document.getElementById("pickupSearch")?.value.trim();
+  const destination = document.getElementById("destinationSearch")?.value.trim();
+  const date = document.getElementById("dateSearch")?.value;
 
   const params = new URLSearchParams();
 
@@ -312,7 +346,7 @@ async function loadRidesWithParams(queryString = "") {
 }
 
 /* ==============================
-   CREATE RIDE
+   CREATE RIDE (Create Ride Page)
 ================================ */
 async function createRide(data) {
   try {
@@ -329,54 +363,38 @@ async function createRide(data) {
       throw new Error(result.errors?.join(", ") || result.message);
     }
 
-    showSuccess("Ride created successfully");
-    document.getElementById("createRideForm").reset();
+    showSuccess("Ride created successfully!");
+    
+    // Reset form and selections
+    const form = document.getElementById("createRideForm");
+    if (form) form.reset();
+    
     selectedPickup = null;
     selectedDestination = null;
 
-    loadRides();
-    showPage("home");
+    // Redirect to home page after short delay
+    setTimeout(() => {
+      window.location.href = "index.html";
+    }, 1500);
+
   } catch (err) {
     showError(err.message);
   }
 }
 
 /* ==============================
-   FORM HANDLER
+   RIDE ACTIONS
 ================================ */
-document.getElementById("createRideForm").addEventListener("submit", async (e) => {
-  e.preventDefault();
+function openChat(rideId) {
+  alert(`Opening chat for ride: ${rideId}`);
+  // Implement chat functionality
+}
 
-  if (!selectedPickup || !selectedDestination) {
-    showError("Please select pickup and destination from suggestions");
-    return;
+function requestRide(rideId) {
+  if (confirm("Do you want to request this ride?")) {
+    // Implement request ride functionality
+    alert(`Ride requested: ${rideId}`);
   }
-
-  const date = document.getElementById("rideDate").value;
-  const time = document.getElementById("rideTime").value;
-
-  const departureTime = new Date(`${date}T${time}:00`).toISOString();
-
-  const rideData = {
-    pickup: selectedPickup,
-    destination: selectedDestination,
-    rideType: document.getElementById("buddyRequest").checked
-      ? "travelBuddy"
-      : "cab",
-    departureTime
-  };
-
-  createRide(rideData);
-});
-
-/* ==============================
-   PREVIOUS RIDES
-================================ */
-function loadPreviousRides() {
-  displayRides(
-    rides.filter(r => r.initiatorId === currentUser?._id),
-    "previousRidesGrid"
-  );
 }
 
 /* ==============================
@@ -393,24 +411,36 @@ function logout() {
    UTILS
 ================================ */
 function showSuccess(msg) {
+  // You can replace this with a better notification system
   alert(msg);
 }
 
 function showError(msg) {
+  // You can replace this with a better notification system
   alert(msg);
 }
 
 /* ==============================
-   INIT
+   PAGE-SPECIFIC INITIALIZATION
 ================================ */
-document.addEventListener("DOMContentLoaded", async () => {
-  await fetchCurrentUser();
+function initHomePage() {
+  console.log("🏠 Initializing Home Page");
   loadRides();
-
+  
   // Setup search bar autocomplete
   setupSearchAutocomplete("pickupSearch");
   setupSearchAutocomplete("destinationSearch");
+  
+  // Setup search button
+  const searchBtn = document.querySelector('button[onclick="searchRides()"]');
+  if (searchBtn) {
+    searchBtn.addEventListener('click', searchRides);
+  }
+}
 
+function initCreateRidePage() {
+  console.log("➕ Initializing Create Ride Page");
+  
   // Setup create ride form autocomplete
   setupOSMAutocomplete("pickup", place => {
     selectedPickup = {
@@ -435,4 +465,132 @@ document.addEventListener("DOMContentLoaded", async () => {
     };
     console.log("🏁 Destination selected:", selectedDestination);
   });
+
+  // Setup form submission
+  const form = document.getElementById("createRideForm");
+  if (form) {
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!selectedPickup || !selectedDestination) {
+        showError("Please select pickup and destination from suggestions");
+        return;
+      }
+
+      const date = document.getElementById("rideDate").value;
+      const time = document.getElementById("rideTime").value;
+      const seats = document.getElementById("seats")?.value || 1;
+      const fare = document.getElementById("fare")?.value;
+      const notes = document.getElementById("notes")?.value;
+
+      if (!date || !time) {
+        showError("Please select date and time");
+        return;
+      }
+
+      const departureTime = new Date(`${date}T${time}:00`).toISOString();
+
+      const rideData = {
+        pickup: selectedPickup,
+        destination: selectedDestination,
+        rideType: document.getElementById("buddyRequest")?.checked
+          ? "travelBuddy"
+          : "cab",
+        departureTime,
+        seats: parseInt(seats),
+        fare: fare ? parseFloat(fare) : undefined,
+        notes: notes || undefined
+      };
+
+      await createRide(rideData);
+    });
+  }
+}
+
+function initPreviousRidesPage() {
+  console.log("📜 Initializing Previous Rides Page");
+  loadPreviousRides();
+}
+
+function initProfilePage() {
+  console.log("👤 Initializing Profile Page");
+  // Profile form is already populated by fetchCurrentUser()
+  
+  // You can add profile update functionality here
+  const profileForm = document.getElementById("profileForm");
+  if (profileForm) {
+    profileForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      // Implement profile update logic
+      alert("Profile update functionality coming soon!");
+    });
+  }
+}
+
+/* ==============================
+   MAIN INITIALIZATION
+================================ */
+document.addEventListener("DOMContentLoaded", async () => {
+  console.log("🚀 Application Starting...");
+  
+  // Fetch current user first
+  await fetchCurrentUser();
+  
+  // Initialize based on current page
+  const currentPage = getCurrentPage();
+  console.log("📄 Current Page:", currentPage);
+  
+  switch(currentPage) {
+    case 'home':
+      initHomePage();
+      break;
+    case 'create_ride':
+      initCreateRidePage();
+      break;
+    case 'previous':
+      initPreviousRidesPage();
+      break;
+    case 'profile':
+      initProfilePage();
+      break;
+    default:
+      console.warn("⚠️ Unknown page:", currentPage);
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    
+    // Select the checkbox and the section to toggle
+    const immediateStartCheckbox = document.getElementById('immediateStart');
+    const driverDetailsSection = document.getElementById('driverDetailsSection');
+
+    // Only run if these elements exist on the current page
+    if (immediateStartCheckbox && driverDetailsSection) {
+        
+        immediateStartCheckbox.addEventListener('change', function() {
+            // Select the inputs inside the driver section
+            const driverNameInput = document.getElementById('driverName');
+            const carNumberInput = document.getElementById('carNumber');
+            const aadharInput = document.getElementById('aadharPhoto');
+
+            if (this.checked) {
+                // Show the section
+                driverDetailsSection.style.display = 'block';
+                
+                // Make inputs required (so user can't submit empty fields if they chose this option)
+                if(driverNameInput) driverNameInput.required = true;
+                if(carNumberInput) carNumberInput.required = true;
+                if(aadharInput) aadharInput.required = true;
+                
+            } else {
+                // Hide the section
+                driverDetailsSection.style.display = 'none';
+                
+                // Remove required attribute (so user CAN submit the form without these fields)
+                if(driverNameInput) driverNameInput.required = false;
+                if(carNumberInput) carNumberInput.required = false;
+                if(aadharInput) aadharInput.required = false;
+            }
+        });
+    }
 });

@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Profile - Travio</title>
+     <link rel="stylesheet" href="styles.css"> 
+    </head>
+<body>
+
+
+<div class="main-content"></div>
+
+
+<div id="home" class="page hidden"></div> x   
+ <div class="main-content">
+<header class="header">
+    <div class="header-left">
+        <img src="images/logo.png" alt="Travio Logo" class="header-logo-img">
+        <div class="logo-info">
+            <h2>Travio</h2>
+            <p>Travel Buddy</p>
+        </div>
+    </div>
+
+    <nav class="top-nav">
+        <a href="index.html" class="nav-link" onclick="showPage('home')">Home</a>
+        <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride')">Create a Ride</a>
+        <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides')">Previous Rides</a>
+        <a href="about.html" class="nav-link" onclick="showPage('about')">About</a>
+        <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
+    </nav>
+
+    <div class="header-right">
+        <div class="notification">
+            <img src="images/notification.gif" alt="Notifications" class="header-icon">
+            
+        </div>
+        
+        <div class="notification">
+            <img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif">
+            
+        </div>
+        
+        <div class="notification">
+            <a href="profile.html">
+           <img src="images/profile.gif" alt="User" class="header-avatar">
+          </a>
+     </div>
+    </div>
+</header>
+    
+    <!-- Create Ride Page -->
+ <div class="main-container">
+        <div class="title-wrapper">
+    <img src="images/luggage.gif" alt="Car Animation" class="title-gif">
+    
+    <div class="title-text">
+        <h2 class="page-title">Create Your Ride</h2>
+        <p class="page-subtitle">Share your journey with fellow travelers</p>
+    </div>
+</div>
+        <div class="form-card">
+
+            <form id="createRideForm">
+                <div class="form-group">
+    <label for="pickup">
+        <img src="images/location-food.gif" class="icon" alt="map">
+        Pickup Location
+    </label>
+    <div class="autocomplete-wrapper">
+        <input type="text" id="pickup" placeholder="Enter pickup location" required>
+    </div>
+</div>
+
+                <div class="form-group">
+                    <label for="destination">
+                        <img src="images/destination.gif" class="destinationSearch" alt="map">
+                        Destination
+                    </label>
+                    <div class="autocomplete-wrapper">
+                        <input type="text" id="destination" placeholder="e.g. Banasthali Vidyapith" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="datetime-group">
+                        <div>
+                            <label for="rideDate">
+                                <span class="icon">📅</span>
+                                Date
+                            </label>
+                            <input type="date" id="rideDate" required>
+                        </div>
+                        <div>
+                            <label for="rideTime">
+                                <span class="icon">⏰</span>
+                                Time
+                            </label>
+                            <input type="time" id="rideTime" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="seats">
+                        <img src="images/woman-power.gif" class="destinationSearch" alt="map">
+                        Seats Available
+                    </label>
+                    <input type="number" id="seats" min="1" max="8" value="1" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="fare">
+                        <span class="icon">💰</span>
+                        Fare (₹) - Optional
+                    </label>
+                    <input type="number" id="fare" placeholder="Optional">
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">
+                        <span class="icon">📝</span>
+                        Notes
+                    </label>
+                    <textarea id="notes" placeholder="Any preferences or details"></textarea>
+                </div>
+
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="buddyRequest">
+                        <span>🤝 Post as a travel buddy request</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="immediateStart">
+                        <span>⚡ Start ride immediately</span>
+                    </label>
+                </div>
+
+                <div id="driverDetailsSection" style="display: none;">
+                    <div class="section-divider">
+                        <h3 class="section-title">🚗 Driver Details</h3>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="driverName">
+                            <span class="icon">👤</span>
+                            Driver Name
+                        </label>
+                        <input type="text" id="driverName" placeholder="Enter driver's full name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="carNumber">
+                            <span class="icon">🚙</span>
+                            Car Number
+                        </label>
+                        <input type="text" id="carNumber" placeholder="e.g., RJ14AB1234" style="text-transform: uppercase;">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="aadharPhoto">
+                            <span class="icon">🆔</span>
+                            Aadhar Card Photo
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="aadharPhoto" accept="image/*,.pdf" style="display: none;">
+                            <button type="button" class="file-upload-btn" onclick="document.getElementById('aadharPhoto').click()">
+                                📤 Choose File
+                            </button>
+                            <span id="fileName" class="file-name">No file chosen</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn">
+                    <span>🎉 Publish Ride</span>
+                </button>
+            </form>
+        </div>
+    </div>
+ 
+<script src="index.js"></script>
+</div>  
+</body>
+</html>
