@@ -65,17 +65,23 @@
         <div class="content">
             <!-- Home Page -->
             <div id="home-page" class="page">
-                <div class="welcome-section">
-                 <video autoplay muted loop playsinline class="video-bg">
-        <source src="images/Animated_Looping_Road_Scene.mp4" type="video/mp4">
-    </video>
-    <div class="slogan-overlay">
-        <h1>A Community of Girls Who Travel Together.</h1>
-    </div>
+               <section class="welcome-section">
+    <div class="hero-visual">
+        <img src="images/Gemini_Generated_Image_93s4ce93s4ce93s4.png" alt="Hero Visual" class="hero-image">
     </div>
 
+    <div class="hero-content">
+        <div class="grid-overlay"></div>
+        <div class="scanning-beam"></div>
+        
+        <div class="slogan-container">
+            <h1>INNOVATING THE FUTURE</h1>
+        </div>
+    </div>
+</section>
+
              <div class="search-container">
-    <form class="search-bar" onsubmit="event.preventDefault(); searchRides();">
+       <form class="search-bar" onsubmit="event.preventDefault(); searchRides();">
         
         <div class="input-group">
             <span class="icon-circle"></span>
@@ -108,13 +114,44 @@
         </div>
 
         <button type="submit" class="search-btn">Search</button>
-    </form>
-</div>
+           </form>
+      </div>
+
+
+      <section class="benefits-section">
+    <div class="benefits-container">
+        
+        <div class="benefit-item">
+            <div class="icon-circles">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            <h3>100% Verified Students</h3>
+            <p>Travel without worry. Every member is verified with a valid Banasthali ID card before they can book a ride.</p>
+        </div>
+
+        <div class="benefit-item">
+            <div class="icon-circles">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <h3>Student-Friendly Costs</h3>
+            <p>Save your pocket money. Split fuel costs with batchmates traveling to Jaipur or the Railway Station.</p>
+        </div>
+
+        <div class="benefit-item">
+            <div class="icon-circles">
+                <i class="fa-solid fa-route"></i>
+            </div>
+            <h3>Campus to Anywhere</h3>
+            <p>Direct rides from your hostel gate to Newai, Jaipur, or home. No more waiting for auto-rickshaws.</p>
+        </div>
+
+    </div>
+</section>
 
                 </div>
 
                 <div class="rides-section">
-                    <h2 class="section-title">Latest rides</h2>
+                    <h2 class="section-title">On going rides</h2>
                     <div class="rides-grid" id="ridesGrid">
                         <!-- Rides will be loaded here -->
                     </div>
@@ -151,8 +188,100 @@
                 </div>
             </div>
         </div>
+
+     
     </div>
 
+
+    <section class="travio-features">
+    <div class="features-container">
+        
+        <h2 class="section-title">We’re with you every mile</h2>
+
+        <div class="features-grid">
+            
+            <div class="feature-item">
+                <div class="icon-box">
+                    <i class="fa-regular fa-comments"></i>
+                </div>
+                <h3>Campus Support 24/7</h3>
+                <p>Our team is always available. Whether it's a booking issue or a route query, chat with us directly through the app.</p>
+            </div>
+
+            <div class="feature-item">
+                <div class="icon-box">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3>Travio Guardian Safety</h3>
+                <p>Ride with confidence. We share your live location and cab details via SMS to your guardians automatically when your ride starts.</p>
+            </div>
+
+            <div class="feature-item">
+                <div class="icon-box">
+                    <i class="fa-solid fa-user-check"></i>
+                </div>
+                <h3>100% Verified Students</h3>
+                <p>Travio is an exclusive community. Every profile is verified with a valid Banasthali University ID card to ensure a secure environment.</p>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+    <footer class="travio-footer">
+        <div class="footer-container">
+            
+            <div class="footer-col">
+                <h3>Travel with Travio</h3>
+                <ul>
+                    <li><a href="#">Find a Ride</a></li>
+                    <li><a href="#">Offer a Ride</a></li>
+                    <li><a href="#">Campus Shuttle Schedule</a></li>
+                    <li><a href="#">Safety Guidelines</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>Popular Routes</h3>
+                <ul class="routes-list">
+                    <li><a href="#">Banasthali <span>&rarr;</span> Jaipur</a></li>
+                    <li><a href="#">Banasthali <span>&rarr;</span> Newai Station</a></li>
+                    <li><a href="#">Banasthali <span>&rarr;</span> Delhi</a></li>
+                    <li><a href="#">Hostel <span>&rarr;</span> Main Gate</a></li>
+                    <li><a href="#">Jaipur <span>&rarr;</span> Banasthali</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-col">
+                <h3>About</h3>
+                <ul>
+                    <li><a href="#">How Travio Works</a></li>
+                    <li><a href="#">For Banasthali Students</a></li>
+                    <li><a href="#">Contact Support</a></li>
+                </ul>
+
+                <div class="lang-selector">
+                    <button>English (India)</button>
+                </div>
+
+                <div class="social-links">
+                    <a href="#"><i class="fa-brands fa-facebook"></i></a>
+                    <a href="#"><i class="fa-brands fa-twitter"></i></a> <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                    <a href="#"><i class="fa-brands fa-instagram"></i></a>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer-bottom">
+            <div class="bottom-links">
+                <a href="#">Terms and Conditions</a>
+                <a href="#">Privacy Policy</a>
+            </div>
+            <div class="copyright">
+                <span>Travio, 2026 &copy;</span>
+            </div>
+        </div>
+    </footer>
     <script src="index.js"></script>
 </body>
 </html>

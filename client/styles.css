@@ -131,85 +131,111 @@
 
         
 
-/* Welcome Section with Video */
+/* --- MAIN LAYOUT --- */
 .welcome-section {
-    position: relative;
-    width: 100%;
-    height: 400px;
-    overflow: hidden;
     display: flex;
-    align-items: flex-end; /* Aligns content to bottom */
-    padding-bottom: 30px; /* Space from bottom edge */
-}
-
-.video-bg {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    min-width: 100%;
-    min-height: 100%;
-    width: auto;
-    height: auto;
-    z-index: 0;
-    transform: translate(-50%, -50%);
-    object-fit: cover;
-}
-
-/* Slogan Overlay */
-.slogan-overlay {
-    position: absolute;
-    top: 60px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 5;
-    text-align: center;
-}
-
-.slogan-overlay h1 {
-    font-size: 48px;
-    font-weight: 700;
-    color: #eb6733;
-    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-    margin: 0;
-    letter-spacing: 1px;
-    line-height: 1.2;
+    width: 100%;
+    height: 90vh; /* Big height */
+    background-color: #000;
     overflow: hidden;
-    border-right: 3px solid #ffffff;
+}
+
+/* --- LEFT SIDE: BIG IMAGE --- */
+.hero-visual {
+    flex: 1.5; /* Large left side (60%) */
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* This makes sure the image covers the area without stretching */
+    display: block;
+}
+
+/* --- RIGHT SIDE: CONTENT (Same as before) --- */
+.hero-content {
+    flex: 1; /* Smaller right side (40%) */
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #111;
+    overflow: hidden;
+}
+
+/* --- GRID & BEAM (Same as before) --- */
+.grid-overlay {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+}
+
+.scanning-beam {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 10px;
+    z-index: 2;
+    background: linear-gradient(90deg, transparent, #eb6733, #eb6733, transparent);
+    box-shadow: 0 0 15px #eb6733;
+    opacity: 0.6;
+    animation: scan 4s linear infinite;
+}
+
+@keyframes scan {
+    0% { top: -10%; }
+    100% { top: 110%; }
+}
+
+/* --- TYPOGRAPHY --- */
+.slogan-container {
+    position: relative;
+    z-index: 10;
+    padding: 0 40px;
+    text-align: left;
+}
+
+.slogan-container h1 {
+    font-family: 'Bebas Neue', cursive;
+    font-size: 64px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.1;
+    margin: 0;
+    overflow: hidden;
     white-space: nowrap;
-    animation: typing 4s steps(44, end), blink 0.75s step-end infinite;
+    border-right: 4px solid #eb6733;
+    width: 0;
+    animation: typing 3s steps(30, end) forwards, blink 0.75s step-end infinite;
 }
 
-
-.slogan-overlay h1 {
-    animation: typing 4s steps(44, end), blink 0.75s step-end 5;
-    animation-fill-mode: forwards;
-}
+/* --- ANIMATIONS --- */
 @keyframes typing {
-    0% {
-        width: 0;
-    }
-    100% {
-        width: 100%;
-    }
+    from { width: 0 }
+    to { width: 100% }
 }
 
 @keyframes blink {
-    0%, 100% {
-        border-color: #eb6733;
-    }
-    50% {
-        border-color: transparent;
-    }
+    50% { border-color: transparent; }
 }
 
-@keyframes fadeInSlide {
-    0% {
-        opacity: 0;
-        transform: translateX(-50%) translateY(-30px);
+/* --- MOBILE RESPONSIVENESS --- */
+@media (max-width: 768px) {
+    .welcome-section {
+        flex-direction: column;
+        height: auto;
     }
-    100% {
-        opacity: 1;
-        transform: translateX(-50%) translateY(0);
+    .hero-visual, .hero-content {
+        flex: none;
+        width: 100%;
+        height: 400px;
     }
 }
 
@@ -289,7 +315,7 @@
 
 /* Search Button Styling */
 .search-btn {
-    background-color: #f77626;
+    background: linear-gradient(135deg, #F59E0B, #FBBF24);
     color: white;
     font-weight: bold;
     font-size: 18px;
@@ -455,10 +481,10 @@
 
 /* Scrolling Grid Container */
 .rides-grid {
-    max-height: 600px; /* Fixed height for scrolling */
+    max-height: 340px; /* Fixed height for scrolling */
     overflow-y: auto; /* Enable vertical scrolling */
     overflow-x: hidden;
-    padding-right: 10px; /* Space for scrollbar */
+    padding: 25px 15px 20px 15px; /* Space for scrollbar */
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
     gap: 24px;
@@ -584,7 +610,7 @@
     margin-bottom: 20px;
     line-height: 1.6;
     display: -webkit-box;
-    -webkit-line-clamp: 2;
+   
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -1133,22 +1159,7 @@ body {
     color: white;
 }
 
-.btn-search {
-    background: linear-gradient(to right, #eab308, #f97316);
-    color: white;
-    padding: 0.75rem 1.5rem;
-    border: none;
-    border-radius: 0.75rem;
-    font-weight: 700;
-    font-size: 1.125rem;
-    cursor: pointer;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-}
+
 
 .btn-search:hover {
     background: linear-gradient(to right, #ca8a04, #ea580c);
@@ -1640,4 +1651,325 @@ input[type="checkbox"] {
 .page-subtitle {
     margin: 0;
     text-align: left;     /* Override center alignment */
+}
+
+
+
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Make sure the body takes up full height so footer sits right */
+body {
+    min-height: 100vh;
+    /* This assumes you have the background image on the body or a main wrapper */
+    /* background: url('your-orange-bg.jpg') no-repeat center center/cover; */ 
+}
+
+/* FOOTER STYLING */
+.travio-footer {
+    /* Glassmorphism Effect: Semi-transparent white */
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(10px); /* Blurs the background behind the footer */
+    border-top: 1px solid rgba(255, 255, 255, 0.6);
+    
+    padding: 60px 0 20px 0;
+    color: #333; /* Dark grey text for contrast against peach */
+    font-size: 16px;
+    margin-top: auto; /* Pushes footer to bottom if using flex column on body */
+}
+
+.footer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between; /* Spreads columns out */
+    padding: 0 40px;
+    flex-wrap: wrap;
+    gap: 40px;
+}
+
+/* Columns */
+.footer-col {
+    flex: 1;
+    min-width: 200px;
+}
+
+.footer-col h3 {
+    color: #2c1e1e; /* Very dark brown/black to match warm theme */
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* List Styling */
+.footer-col ul {
+    list-style: none; /* Removes bullet points */
+}
+
+.footer-col ul li {
+    margin-bottom: 12px;
+}
+
+/* Link Styling */
+.footer-col ul li a {
+    text-decoration: none; /* Removes blue underline */
+    color: #4a4a4a; /* Dark grey */
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.footer-col ul li a:hover {
+    color: #000; /* Black on hover */
+    padding-left: 5px; /* Slight movement effect */
+}
+
+/* Arrow styling in routes */
+.routes-list span {
+    color: #d35400; /* Burnt orange to match the theme */
+    margin: 0 5px;
+}
+
+/* Language Button */
+.lang-selector button {
+    background-color: transparent;
+    border: 1px solid #4a4a4a;
+    border-radius: 20px;
+    padding: 8px 20px;
+    color: #2c1e1e;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 10px;
+    margin-bottom: 20px;
+    transition: 0.3s;
+}
+
+.lang-selector button:hover {
+    background-color: #2c1e1e;
+    color: #fff;
+    border-color: #2c1e1e;
+}
+
+/* Social Icons */
+.social-links {
+    display: flex;
+    gap: 15px;
+}
+
+.social-links a {
+    color: #2c1e1e;
+    font-size: 22px;
+    transition: transform 0.3s;
+}
+
+.social-links a:hover {
+    color: #d35400; /* Burnt orange hover */
+    transform: translateY(-3px); /* Bobbing effect */
+}
+
+/* Bottom Bar */
+.footer-bottom {
+    margin-top: 40px;
+    border-top: 1px solid rgba(0, 0, 0, 0.1); /* Subtle divider */
+    padding-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 40px;
+    padding-right: 40px;
+}
+
+.footer-bottom a {
+    text-decoration: none;
+    color: #555;
+    margin-right: 20px;
+    font-size: 14px;
+}
+
+.footer-bottom .copyright {
+    color: #555;
+    font-size: 14px;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .footer-container {
+        flex-direction: column; /* Stack columns on mobile */
+    }
+    
+    .footer-bottom {
+        flex-direction: column;
+        gap: 10px;
+        text-align: center;
+    }
+}
+
+
+/* FEATURES SECTION */
+.travio-features {
+    padding: 80px 20px;
+    /* Optional: If you want this section to have a specific background distinct from the body */
+    /* background-color: rgba(255, 255, 255, 0.2); */
+}
+
+.features-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+/* Section Title */
+.section-title {
+    font-size: 32px;
+    color: #2c1e1e; /* Dark brown/black */
+    font-weight: 700;
+}
+
+/* Grid Layout for 3 Items */
+.features-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 40px;
+    flex-wrap: wrap;
+}
+
+/* Individual Feature Card */
+.feature-item {
+    flex: 1;
+    min-width: 280px;
+    padding: 30px;
+    
+    /* Glass Effect Card */
+    background: rgba(255, 255, 255, 0.4); 
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 16px;
+    
+    text-align: left; /* Aligns text like the reference image */
+    transition: transform 0.3s ease;
+}
+
+.feature-item:hover {
+    transform: translateY(-5px); /* Subtle lift on hover */
+    background: rgba(255, 255, 255, 0.6);
+}
+
+/* Icon Styling */
+.icon-box {
+    font-size: 40px;
+    color: #d35400; /* Burnt Orange to match Travio theme */
+    margin-bottom: 20px;
+}
+
+/* Text Styling */
+.feature-item h3 {
+    font-size: 20px;
+    color: #2c1e1e;
+    margin-bottom: 12px;
+    font-weight: 700;
+}
+
+.feature-item p {
+    font-size: 16px;
+    color: #4a4a4a;
+    line-height: 1.6;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .features-grid {
+        flex-direction: column;
+    }
+    
+    .feature-item {
+        text-align: center; /* Center text on mobile for better look */
+    }
+}
+
+/* --- BENEFITS SECTION --- */
+.benefits-section {
+    padding: 60px 20px;
+    margin-bottom: 20px; /* Space between this and "Latest Rides" */
+}
+
+.benefits-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between; /* Spreads the 3 items out */
+    gap: 40px;
+    text-align: left; /* Aligns text to left like reference */
+}
+
+/* Individual Item */
+.benefit-item {
+    flex: 1;
+    min-width: 250px;
+    padding: 20px;
+    
+    /* Optional: Subtle background to make text readable on peach wallpaper */
+    /* background: rgba(255, 255, 255, 0.3); */
+    /* backdrop-filter: blur(5px); */
+    /* border-radius: 16px; */
+}
+
+/* Icon Styling */
+.icon-circles {
+    width: 60px;
+    height: 60px;
+    background-color: #e0f2f1; /* Light mint/blue circle like reference */
+    /* OR use this for Orange theme: background-color: #fff3e0; */
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.icon-circles i {
+    font-size: 24px;
+    color: #004d40; /* Dark Teal icon color like reference */
+    /* OR use this for Orange theme: color: #d35400; */
+}
+
+/* Text Styling */
+.benefit-item h3 {
+    font-family: 'Poppins', sans-serif; /* Using the font recommended earlier */
+    font-size: 20px;
+    font-weight: 700;
+    color: #2c1e1e; /* Your dark charcoal theme color */
+    margin-bottom: 12px;
+}
+
+.benefit-item p {
+    font-size: 16px;
+    color: #4a4a4a; /* Dark Grey */
+    line-height: 1.6;
+    max-width: 300px; /* Keeps lines from getting too long */
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .benefits-container {
+        flex-direction: column; /* Stack them vertically on phone */
+        align-items: center;
+        text-align: center;
+    }
+
+    .benefit-item {
+        margin-bottom: 30px;
+    }
+    
+    .icon-circle {
+        margin: 0 auto 20px auto; /* Centers icon on mobile */
+    }
 }
