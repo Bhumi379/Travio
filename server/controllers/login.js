@@ -1,5 +1,5 @@
 const User = require("../models/User");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 const env = require("dotenv");
 const { createSecretToken } = require("../tokenGeneration/generateToken");

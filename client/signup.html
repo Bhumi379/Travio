@@ -1,24 +1,284 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Signup - Travio</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Create Account - Travio</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #FFE5B4 0%, #FFDAA9 50%, #FFC98D 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start; /* Changed to flex-start for scrolling */
+      justify-content: center;
+      position: relative;
+      overflow-x: hidden; /* Allow vertical scroll */
+      padding-bottom: 50px; /* Space at bottom */
+    }
+
+    /* --- Background Animations (Same as Login) --- */
+    .bg-decoration { position: fixed; opacity: 0.3; pointer-events: none; }
+    
+    .building {
+      bottom: 0; left: 5%; width: 80px; height: 120px; background: #FF6B35;
+      border-radius: 5px 5px 0 0; position: fixed;
+    }
+    .building::before {
+      content: ''; position: absolute; top: 10px; left: 10px; right: 10px; bottom: 10px;
+      background: linear-gradient(#FFA500 50%, transparent 50%), linear-gradient(90deg, #FFA500 50%, transparent 50%);
+      background-size: 20px 20px;
+    }
+
+    .sun {
+      top: 10%; right: 10%; width: 80px; height: 80px; background: #FFD700;
+      border-radius: 50%; box-shadow: 0 0 40px rgba(255, 215, 0, 0.5); position: fixed;
+    }
+
+    .car {
+      position: fixed; bottom: 15%; right: 15%; width: 60px; height: 30px;
+      background: #FF6B35; border-radius: 5px; animation: drive 4s linear infinite; z-index: 2;
+    }
+    .car::after {
+      content: ''; position: absolute; bottom: -8px; left: 10px; width: 12px; height: 12px;
+      background: #333; border-radius: 50%; box-shadow: 30px 0 0 #333;
+    }
+    @keyframes drive { 0% { transform: translateX(0); } 100% { transform: translateX(-100vw); } }
+
+    /* Banasthali Gate SVG */
+    .banasthali-gate {
+      position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+      width: 800px; height: 500px; opacity: 0.35; z-index: 1; pointer-events: none;
+    }
+
+    /* Floating elements */
+    .floating-element { position: fixed; animation: float 3s ease-in-out infinite; opacity: 0.5; z-index: 50; }
+    .leaf { font-size: 20px; animation: floatLeaf 4s ease-in-out infinite; }
+    .leaf:nth-child(1) { bottom: 30%; left: 15%; } 
+    .leaf:nth-child(2) { bottom: 40%; right: 20%; animation-delay: 1.5s; }
+    .bird { position: fixed; font-size: 24px; opacity: 0.5; animation: flyBird 10s linear infinite; z-index: 50; }
+    .bird:nth-child(1) { top: 15%; }
+
+    @keyframes float { 0%, 100% { transform: translateY(0px); } 50% { transform: translateY(-20px); } }
+    @keyframes floatLeaf { 0%, 100% { transform: translateY(0px) rotate(0deg); } 50% { transform: translateY(-30px) rotate(10deg); } }
+    @keyframes flyBird { 0% { left: -50px; transform: translateY(0); } 100% { left: 100%; transform: translateY(0); } }
+
+    /* --- Header --- */
+    .header {
+      position: fixed; top: 0; left: 0; right: 0; padding: 15px 50px;
+      display: flex; align-items: center; background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); z-index: 100;
+    }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 40px; height: 40px; background: #FF8C00; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .logo-text h1 { color: #FF6B35; font-size: 24px; font-weight: 700; }
+    .logo-text p { color: #666; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* --- Signup Container --- */
+    .signup-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      padding: 40px 50px;
+      width: 100%;
+      max-width: 550px;
+      position: relative;
+      z-index: 90;
+      margin-top: 100px; /* Offset for header */
+      margin-bottom: 40px;
+    }
+
+    .signup-header { text-align: center; margin-bottom: 30px; }
+    .signup-header h2 { color: #333; font-size: 28px; margin-bottom: 5px; }
+    .signup-header p { color: #666; font-size: 14px; }
+
+    /* Form Fields */
+    .form-group { margin-bottom: 18px; }
+    .form-group label {
+      display: block; color: #333; font-weight: 600; margin-bottom: 6px; font-size: 13px;
+    }
+
+    .input-wrapper { position: relative; }
+    
+    .input-icon {
+      position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+      font-size: 16px; opacity: 0.8;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 12px 15px 12px 45px; /* Left padding for icon */
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      outline: none;
+      background: #fafafa;
+    }
+
+    .form-group input:focus {
+      border-color: #FF8C00;
+      background: #fff;
+      box-shadow: 0 0 0 3px rgba(255, 140, 0, 0.1);
+    }
+
+    /* Submit Button */
+    .create-btn {
+      width: 100%;
+      padding: 15px;
+      background: #FF6B35; /* Orange from image */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      margin-top: 10px;
+    }
+
+    .create-btn:hover { background: #e55a2b; }
+
+    .login-link {
+      text-align: center; margin-top: 20px; font-size: 13px; color: #666;
+    }
+    .login-link a { color: #FF6B35; text-decoration: none; font-weight: 600; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      .header { padding: 10px 20px; }
+      .signup-container { margin: 80px 15px 20px 15px; padding: 30px 20px; }
+      .building, .sun, .bird { display: none; }
+    }
+  </style>
 </head>
 <body>
-  <h2>Create Account</h2>
 
-  <form id="signupForm">
-    <input type="text" placeholder="College ID" id="collegeId" required/><br>
-    <input type="text" placeholder="Name" id="name" required/><br>
-    <input type="text" placeholder="Contact Number" id="contactNumber" required/><br>
-    <input type="text" placeholder="Guardian Number" id="guardianNumber"/><br>
-    <input type="email" placeholder="Email" id="email" required/><br>
-    <input type="text" placeholder="Course" id="course" required/><br>
-    <input type="text" placeholder="Profile Picture URL" id="profilePicture"/><br>
-    <input type="password" placeholder="Password" id="password" required/><br>
-    
-    <button type="submit">Signup</button>
-  </form>
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">
+        <h1>Travio</h1>
+        <p>Banasthali Vidyapith</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="bg-decoration building"></div>
+  <div class="bg-decoration sun"></div>
+  <div class="bg-decoration car"></div>
+  <div class="floating-element leaf">🍃</div>
+  <div class="floating-element leaf">🍃</div>
+  <div class="bird">🕊️</div>
+
+  <div class="banasthali-gate">
+    <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+      <path d="M 280 200 Q 400 150 520 200" fill="none" stroke="#A0826D" stroke-width="3"/>
+      <rect x="200" y="150" width="400" height="250" fill="#E8D4B8" opacity="0.5"/>
+      <rect x="300" y="240" width="90" height="160" fill="#5A4A3A"/>
+      <rect x="410" y="240" width="90" height="160" fill="#5A4A3A"/>
+    </svg>
+  </div>
+
+  <div class="signup-container">
+    <div class="signup-header">
+      <h2>Create Account</h2>
+      <p>Join the travel community</p>
+    </div>
+
+    <form id="signupForm">
+      <div class="form-group">
+        <label>College ID</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🆔</span>
+          <input type="text" id="collegeId" placeholder="Enter College ID" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Full Name</label>
+        <div class="input-wrapper">
+          <span class="input-icon">👤</span>
+          <input type="text" id="name" placeholder="Enter your name" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Contact Number</label>
+        <div class="input-wrapper">
+          <span class="input-icon">📞</span>
+          <input type="tel" id="contactNumber" placeholder="Your mobile number" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Guardian Number</label>
+        <div class="input-wrapper">
+          <span class="input-icon">☎️</span>
+          <input type="tel" id="guardianNumber" placeholder="Emergency contact (optional)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Email Address</label>
+        <div class="input-wrapper">
+          <span class="input-icon">✉️</span>
+          <input type="email" id="email" placeholder="abc@banasthali.in" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Course</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🎓</span>
+          <input type="text" id="course" placeholder="e.g. B.Tech CS" required>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Profile Picture</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🖼️</span>
+          <input type="url" id="profilePicture" placeholder="Profile picture URL (optional)">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" placeholder="Create a password" required>
+        </div>
+      </div>
+
+      <button type="submit" class="create-btn">Create Account</button>
+      
+      <div class="login-link">
+        Already have an account? <a href="login.html">Login</a>
+      </div>
+    </form>
+  </div>
 
   <script src="user/signup.js"></script>
+  <script>
+    // Input animation logic
+    const inputs = document.querySelectorAll('input');
+    inputs.forEach(input => {
+      input.addEventListener('focus', function() {
+        this.parentElement.querySelector('.input-icon').style.opacity = '1';
+        this.parentElement.querySelector('.input-icon').style.transform = 'translateY(-50%) scale(1.1)';
+      });
+      input.addEventListener('blur', function() {
+        this.parentElement.querySelector('.input-icon').style.opacity = '0.8';
+        this.parentElement.querySelector('.input-icon').style.transform = 'translateY(-50%) scale(1)';
+      });
+    });
+  </script>
 </body>
 </html>

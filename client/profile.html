@@ -33,10 +33,10 @@
     </div>
 
     <nav class="top-nav">
-        
+        <a href="index.html" class="nav-link" onclick="showPage('home')">Home</a>
         <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride')">Create a Ride</a>
         <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides')">Previous Rides</a>
-        <a href="about.html" class="nav-link" onclick="showPage('about')">About</a>
+        <a href="about.html" class="nav-link" onclick="showPage('about')">Information</a>
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
     </nav>
 
@@ -65,8 +65,8 @@
                     <div class="profile-header">
                         <div class="profile-avatar" id="profileDisplayAvatar">?</div>
                         <div class="profile-info">
-                            <h2 id="profileDisplayName">Loading...</h2>
-                            <p id="profileDisplayMeta">Loading ID • Email</p>
+                            <h2 id="profileDisplayName">Welcome to my Profile</h2>
+                            <p id="profileDisplayMeta"></p>
                         </div>
                     </div>
 
@@ -111,7 +111,10 @@
                 </div>
             </div>
 
-        <script src="index.js"></script>     
+        <script type="module" src="js/index.js"></script> 
+        
+        
+
 
 </body>
 </html>

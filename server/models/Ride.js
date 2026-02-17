@@ -95,10 +95,10 @@ const rideSchema = new mongoose.Schema(
         message: 'Departure time must be in the future',
       },
     },
-    description: {
+    notes: {
       type: String,
       trim: true,
-      minlength: [300, 'Description must be at least 300 characters'],
+      minlength: [3, 'Description must be at least 300 characters'],
       maxlength: [400, 'Description cannot exceed 400 characters'],
       // Conditional requirement based on rideType (handled in application logic)
     },
@@ -111,6 +111,17 @@ const rideSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: true,
+    },
+    seats: {
+      type: Number,
+      required: true,
+      min: [1, 'At least 1 seat must be available'],
+      max: [8, 'Seats cannot exceed 8'],
+    },
+    fare: {
+      type: Number,
+      min: [0, 'Fare cannot be negative'],
+      // Optional field
     },
     participants: [
       {

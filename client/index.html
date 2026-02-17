@@ -37,19 +37,20 @@
 
         <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride')">Create a Ride</a>
         <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides')">Previous Rides</a>
-        <a href="about.html" class="nav-link" onclick="showPage('about')">About</a>
+        <a href="about.html" class="nav-link" onclick="showPage('about')">Information</a>
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
     </nav>
 
     <div class="header-right">
-        <div class="notification">
-            <img src="images/notification.gif" alt="Notifications" class="header-icon">
+        <div class="notification" data-id="${notif._id}">
+            <img src="images/notification.gif"  alt="Notifications" class="header-icon">
             
         </div>
         
         <div class="notification">
+            <a href="chat.html">
             <img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif">
-            
+            </a>
         </div>
         
         <div class="notification">
@@ -61,27 +62,27 @@
 </header>
 </div>
 
-        <!-- Content Area -->
+      <!-- Content Area -->
         <div class="content">
             <!-- Home Page -->
             <div id="home-page" class="page">
-               <section class="welcome-section">
-    <div class="hero-visual">
-        <img src="images/Gemini_Generated_Image_93s4ce93s4ce93s4.png" alt="Hero Visual" class="hero-image">
-    </div>
-
-    <div class="hero-content">
-        <div class="grid-overlay"></div>
-        <div class="scanning-beam"></div>
+                <div class="welcome-section">
+                
+    <div class="slogan-overlay">
+    <div class="slogan-glass-box">
         
-        <div class="slogan-container">
-            <h1>INNOVATING THE FUTURE</h1>
-        </div>
+        <div class="text-mask">
+             <h1 class="slogan-text">Travio</h1>
+             <h3 class="slogan-text">Find your Travel Buddy</h3>
+            </div>
+        
+        <p class="slogan-subtext">Ride Together, Safe Together</p>
     </div>
-</section>
+</div>
+    </div>
 
              <div class="search-container">
-       <form class="search-bar" onsubmit="event.preventDefault(); searchRides();">
+    <form class="search-bar" onsubmit="event.preventDefault(); searchRides();">
         
         <div class="input-group">
             <span class="icon-circle"></span>
@@ -114,39 +115,13 @@
         </div>
 
         <button type="submit" class="search-btn">Search</button>
-           </form>
-      </div>
+    </form>
+</div>
 
 
-      <section class="benefits-section">
-    <div class="benefits-container">
-        
-        <div class="benefit-item">
-            <div class="icon-circles">
-                <i class="fa-solid fa-shield-heart"></i>
-            </div>
-            <h3>100% Verified Students</h3>
-            <p>Travel without worry. Every member is verified with a valid Banasthali ID card before they can book a ride.</p>
-        </div>
 
-        <div class="benefit-item">
-            <div class="icon-circles">
-                <i class="fa-solid fa-indian-rupee-sign"></i>
-            </div>
-            <h3>Student-Friendly Costs</h3>
-            <p>Save your pocket money. Split fuel costs with batchmates traveling to Jaipur or the Railway Station.</p>
-        </div>
 
-        <div class="benefit-item">
-            <div class="icon-circles">
-                <i class="fa-solid fa-route"></i>
-            </div>
-            <h3>Campus to Anywhere</h3>
-            <p>Direct rides from your hostel gate to Newai, Jaipur, or home. No more waiting for auto-rickshaws.</p>
-        </div>
-
-    </div>
-</section>
+     
 
                 </div>
 
@@ -158,39 +133,122 @@
                 </div>
             </div>
 
+
+             <section class="benefits-section">
+    <div class="benefits-container">
+        
+        <div class="benefit-item">
+           <div class="icon-circles">
+    <img src="images/verified-profile.gif" alt="Animated Icon" class="icon-circles">
+</div>
+            <h3>100% Verified Students</h3>
+            <p>Travel without worry. Every member is verified with a valid Banasthali ID card before they can book a ride.</p>
+        </div>
+
+        <div class="benefit-item">
+            <div class="icon-circles">
+    <img src="images/reduce-cost.gif" alt="Animated Icon" class="icon-circles">
+</div>
+            <h3>Student-Friendly Costs</h3>
+            <p>Save your pocket money. Split fuel costs with batchmates traveling to Jaipur or the Railway Station.</p>
+        </div>
+
+        <div class="benefit-item">
+            <div class="icon-circles">
+    <img src="images/school.gif" alt="Animated Icon" class="icon-circles">
+</div>
+            <h3>Campus to Anywhere</h3>
+            <p>Direct rides from your hostel gate to Newai, Jaipur, or home. No more waiting for auto-rickshaws.</p>
+        </div>
+
+    </div>
+</section>
+
+
+
+
+  <section class="travio-workflow">
+    <div class="header-center">
+        <h2>How Travio Works</h2>
+        <p>One seamless journey for all your travel needs.</p>
+    </div>
+
+    <div class="workflow-container">
+        
+        <svg class="snake-path" viewBox="0 0 1200 400" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="lineGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" style="stop-color:#7B61FF;stop-opacity:1" />
+                    <stop offset="100%" style="stop-color:#4ECDC4;stop-opacity:1" />
+                </linearGradient>
+            </defs>
+            <path d="M 150 100 L 1050 100 Q 1150 100 1150 200 Q 1150 300 1050 300 L 150 300" 
+                  vector-effect="non-scaling-stroke" />
+        </svg>
+
+        <div class="step-card">
+            <div class="step-badge">1</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-magnifying-glass-location"></i>
+            </div>
+            <h3>Search & Discover</h3>
+            <p>Enter pickup location (e.g., Priyanka Hostel) and destination. Browse profiles to find travelers.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-badge">2</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-handshake-simple"></i>
+            </div>
+            <h3>Request to Join</h3>
+            <p>Check the verified ID of the ride creator. Send a request to join their cab or auto pool.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-badge">3</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-comments"></i>
+            </div>
+            <h3>Connect & Plan</h3>
+            <p>Chat to coordinate details, plan your shared itinerary, and agree on meeting points.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-badge">4</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-car-side"></i>
+            </div>
+            <h3>Arrive & Share</h3>
+            <p>Reach your final destination, rate your experience, and share your story.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-badge">5</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+            <h3>Explore Together</h3>
+            <p>Embark on your adventure at the destination. Make lasting memories with new friends.</p>
+        </div>
+
+        <div class="step-card">
+            <div class="step-badge">6</div>
+            <div class="icon-circless">
+                <i class="fa-solid fa-user-group"></i>
+         </div>
+            <h3>Travel Together</h3>
+            <p>Meet at the pickup point. Enjoy a safe and shared journey with your batchmates.</p>
+        </div>
+
+    </div>
+</section>
+
             <!-- Profile Page -->
 
 
             <!-- Previous Rides Page -->
 
-            <!-- About Page -->
-            <div id="about-page" class="page hidden">
-                <div class="form-section">
-                    <h2 class="form-title">About Travio</h2>
-                    <div style="text-align: center; color: #6b7280; line-height: 1.6;">
-                        <p style="font-size: 18px; margin-bottom: 20px;">
-                            Travio is a safe and friendly ride-sharing platform designed specifically for Banasthali University students.
-                        </p>
-                        <p style="margin-bottom: 15px;">
-                            <strong>Features:</strong>
-                        </p>
-                        <ul style="text-align: left; max-width: 400px; margin: 0 auto;">
-                            <li>Find travel partners and rides</li>
-                            <li>Guardian sharing for safety</li>
-                            <li>Girls-only community</li>
-                            <li>Real-time notifications</li>
-                            <li>Secure messaging</li>
-                        </ul>
-                        <p style="margin-top: 30px; font-size: 14px;">
-                            Built with ❤️ for Banasthali University
-                        </p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-     
-    </div>
+           
 
 
     <section class="travio-features">
@@ -225,6 +283,112 @@
             </div>
 
         </div>
+    </div>
+</section>
+
+
+
+<section class="buddy-explainer-section" id="buddyExplainer">
+    <div class="explainer-container">
+        
+        <div class="explainer-image-wrapper reveal-element reveal-left">
+            <img src="images/Gemini_Generated_Image_4mbdfs4mbdfs4mbd.png" alt="Travio Travel Buddies exploring together" class="main-buddy-img">
+            
+            <div class="deco-blob blob-purple"></div>
+            <div class="deco-blob blob-teal"></div>
+        </div>
+
+        <div class="explainer-content-wrapper">
+            <h2 class="explainer-title reveal-element reveal-up">What is a Travel Buddy?</h2>
+            <p class="lead-text reveal-element reveal-up delay-1">More than just splitting costs—it's about sharing the journey.</p>
+            
+            <p class="body-text reveal-element reveal-up delay-2">A Travel Buddy is a like-minded explorer going your way. It’s not just about filling an empty seat; it's about connecting with verified students who share your destination and vibe. Whether you need someone to navigate with or just feel safer traveling together, the right companion transforms a trip into an experience.</p>
+
+            <ul class="buddy-features-list reveal-element reveal-up delay-3">
+                <li class="feature-item">
+                    <div class="feature-icon-box icon-purple">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <div class="feature-text">
+                        <strong>Enhanced Safety:</strong> Travel with confidence knowing you aren't alone in a new place.
+                    </div>
+                </li>
+                <li class="feature-item">
+                    <div class="feature-icon-box icon-teal">
+                        <i class="fa-solid fa-hand-holding-dollar"></i>
+                    </div>
+                    <div class="feature-text">
+                        <strong>Smart Savings:</strong> Split cabs, autos, and travel costs effortlessly.
+                    </div>
+                </li>
+                <li class="feature-item">
+                    <div class="feature-icon-box icon-orange">
+                        <i class="fa-solid fa-user-group"></i>
+                    </div>
+                    <div class="feature-text">
+                        <strong>Build Connections:</strong> Turn a boring commute into an opportunity to make new friends.
+                    </div>
+                </li>
+            </ul>
+
+            <a href="#browse-buddies" class="travio-cta-btn reveal-element reveal-up delay-4">
+                Find Your Buddy <i class="fa-solid fa-arrow-right-long"></i>
+            </a>
+        </div>
+
+    </div>
+</section>
+
+
+
+<section class="reviews-section">
+    <h2 class="section-title">Student Experiences</h2>
+    
+    <div class="reviews-grid">
+        <div class="review-card">
+            <div class="reviewer-info">
+                <img src="images/profile.gif" alt="Student" class="reviewer-img">
+                <div>
+                    <h4>Ananya S.</h4>
+                    <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified Student</span>
+                </div>
+            </div>
+            <div class="stars">★★★★★</div>
+            <p class="review-text">"Lifesaver for weekend trips to Jaipur! Found two seniors to share a cab with. It was super safe and cost half of what I usually pay."</p>
+        </div>
+
+        <div class="review-card">
+            <div class="reviewer-info">
+                <img src="images/profile.gif" alt="Student" class="reviewer-img">
+                <div>
+                    <h4>Priya M.</h4>
+                    <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified Student</span>
+                </div>
+            </div>
+            <div class="stars">★★★★☆</div>
+            <p class="review-text">"Great for finding auto-rickshaw partners from the railway station to the campus gate late at night."</p>
+        </div>
+    </div>
+
+    <div class="share-experience-container">
+        <h3>Share Your Journey</h3>
+        <p>Help the community by sharing your travel experience.</p>
+        
+        <form class="review-form" onsubmit="event.preventDefault(); submitReview();">
+            <div class="form-row">
+                <input type="text" placeholder="Your Name" required>
+                <select required>
+                    <option value="" disabled selected>Rating</option>
+                    <option value="5">★★★★★ (Excellent)</option>
+                    <option value="4">★★★★☆ (Good)</option>
+                    <option value="3">★★★☆☆ (Average)</option>
+                    <option value="2">★★☆☆☆ (Poor)</option>
+                    <option value="1">★☆☆☆☆ (Bad)</option>
+                </select>
+            </div>
+            <textarea placeholder="Tell us about your ride experience..." rows="4" required></textarea>
+            <button type="submit" class="submit-review-btn">Post Review</button>
+        </form>
     </div>
 </section>
 
@@ -282,6 +446,8 @@
             </div>
         </div>
     </footer>
-    <script src="index.js"></script>
+    <script type="module" src="./js/index.js"></script>
+
+
 </body>
 </html>

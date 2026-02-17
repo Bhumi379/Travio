@@ -1,104 +1,306 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin Dashboard</title>
+  <meta charset="UTF-8" />
+  <title>Travio Admin Dashboard</title>
+
+  <!-- Tailwind -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
-<body>
 
-<h1>Admin Dashboard</h1>
-<button onclick="logout()">Logout</button>
+<body class="bg-gray-100">
 
-<hr>
+<div class="flex min-h-screen">
 
-<h2>Stats</h2>
-<canvas id="rideChart" width="400"></canvas>
+  <!-- ================= SIDEBAR ================= -->
+  <aside class="w-64 bg-white shadow-xl p-6 flex flex-col justify-between">
+  <div>
+    <h2 class="text-2xl font-bold mb-8 text-orange-600">Travio Admin</h2>
 
-<hr>
+    <nav class="space-y-2">
+      <button onclick="showDashboard()" class="sidebar-btn">📊 Dashboard</button>
+      <button onclick="loadRides('cab')" class="sidebar-btn">🚕 Cab Rides</button>
+      <button onclick="loadRides('travelBuddy')" class="sidebar-btn">🤝 Travel Buddy</button>
+      <button onclick="loadUsers()" class="sidebar-btn">👥 Users</button>
+      <button onclick="loadAdmins()" class="sidebar-btn">🛡 Admins</button>
+      <button onclick="showSection('createAdmin')" class="sidebar-btn">➕ Create Admin</button>
+    </nav>
+  </div>
 
-<h2>All Rides</h2>
-<div id="rides"></div>
+  <button onclick="logout()" class="text-red-500 font-semibold mt-10 hover:underline">
+    Logout
+  </button>
+</aside>
 
-<hr>
 
-<h2>Create New Admin</h2>
-<form id="adminForm">
-  <input type="text" placeholder="Name" id="name" required />
-  <input type="email" placeholder="Email" id="email" required />
-  <input type="Password" placeholder="Password" id="Password" required />
-  <button type="submit">Create Admin</button>
-</form>
+  <!-- ================= MAIN ================= -->
+  <main class="flex-1 p-6 space-y-8">
 
-<p id="adminMsg"></p>
+    <!-- DASHBOARD -->
+    <section id="dashboard">
+      <h1 class="text-2xl font-semibold mb-4">Dashboard</h1>
+
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="stat-card bg-blue-100 text-blue-700">
+    Scheduled
+    <span id="scheduledCount" class="block text-2xl">0</span>
+  </div>
+
+  <div class="stat-card bg-yellow-100 text-yellow-700">
+    Ongoing
+    <span id="ongoingCount" class="block text-2xl">0</span>
+  </div>
+
+  <div class="stat-card bg-green-100 text-green-700">
+    Completed
+    <span id="completedCount" class="block text-2xl">0</span>
+  </div>
+
+  <div class="stat-card bg-red-100 text-red-700">
+    Cancelled
+    <span id="cancelledCount" class="block text-2xl">0</span>
+  </div>
+</div>
+
+
+      <div class="bg-white p-6 rounded shadow">
+        <canvas id="rideChart"></canvas>
+      </div>
+    </section>
+
+    <!-- RIDES -->
+    <section id="ridesSection" class="hidden">
+      <h2 class="text-xl font-semibold mb-4">Rides</h2>
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-100 text-gray-700 text-sm">
+
+            <tr>
+              <th class="p-3">From → To</th>
+              <th class="p-3">Type</th>
+              <th class="p-3">Status</th>
+              <th class="p-3">Participants</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="ridesTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- USERS -->
+    <section id="usersSection" class="hidden">
+      <h2 class="text-xl font-semibold mb-4">Users</h2>
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-100 text-gray-700 text-sm">
+
+            <tr>
+              <th class="p-3">Name</th>
+              <th class="p-3">College ID</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Action</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ADMINS -->
+    <section id="adminsSection" class="hidden">
+      <h2 class="text-xl font-semibold mb-4">Admins</h2>
+      <div class="bg-white rounded shadow overflow-x-auto">
+        <table class="w-full">
+          <thead class="bg-gray-100 text-gray-700 text-sm">
+
+            <tr>
+              <th class="p-3">Name</th>
+              <th class="p-3">Email</th>
+              <th class="p-3">Created At</th>
+              <th class="p-3">Last Login</th>
+            </tr>
+          </thead>
+          <tbody id="adminsTable"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- CREATE ADMIN -->
+    <section id="createAdmin" class="hidden bg-white p-6 rounded-xl shadow">
+  <h2 class="text-xl font-semibold mb-4">Create Admin</h2>
+
+  <form id="adminForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <input id="name" placeholder="Name" class="border p-3 rounded-lg" required />
+    <input id="email" type="email" placeholder="Email" class="border p-3 rounded-lg" required />
+    <input id="Password" type="password" placeholder="Password" class="border p-3 rounded-lg" required />
+
+    <button class="md:col-span-3 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
+      Create Admin
+    </button>
+  </form>
+
+  <p id="adminMsg" class="mt-3 text-green-600"></p>
+</section>
+
+
+  </main>
+</div>
+
+<style>
+.sidebar-btn {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-weight: 500;
+}
+.sidebar-btn:hover {
+  background: #fef3c7;
+}
+.stat-card {
+  padding: 20px;
+  border-radius: 12px;
+  text-align: center;
+  font-weight: 600;
+}
+</style>
+
 
 <script>
+function showSection(id) {
+  document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+}
+function showDashboard() { showSection("dashboard"); }
+
+/* ================= AUTH ================= */
 async function checkAdmin() {
-  const res = await fetch("/api/admin/admindashboard", {
-      method: "GET",
-      credentials: "include" // send the cookie
-    });
-
-    if (res.status === 401 || res.status === 403) {
-      window.location.href = "/admin/adminlogin.html";
-      return;
-    } 
+  const res = await fetch("/api/admin/dashboard", { credentials: "include" });
+  if (res.status === 401 || res.status === 403) {
+    window.location.href = "/admin/adminlogin.html";
   }
+}
 
-async function loadRides() {
+/* ================= STATS ================= */
+async function loadStats() {
   const res = await fetch("/api/admin/rides", { credentials: "include" });
   const rides = await res.json();
 
-  document.getElementById("rides").innerHTML = rides.map(r =>
-    `<p>Ride ID: ${r._id} | Status: ${r.status}</p>`
-  ).join("");
-}
+  const stats = { scheduled: 0, ongoing: 0, completed: 0, cancelled: 0 };
+  rides.forEach(r => stats[r.status]++);
 
-async function loadGraph() {
-  const ongoing = await fetch("/api/admin/rides/ongoing", { credentials: "include" }).then(r => r.json());
-  const completed = await fetch("/api/admin/rides/completed", { credentials: "include" }).then(r => r.json());
+  scheduledCount.innerText = stats.scheduled;
+  ongoingCount.innerText = stats.ongoing;
+  completedCount.innerText = stats.completed;
+  cancelledCount.innerText = stats.cancelled;
 
-  new Chart(document.getElementById("rideChart"), {
-    type: 'bar',
+  new Chart(rideChart, {
+    type: "bar",
     data: {
-      labels: ['Ongoing', 'Completed'],
-      datasets: [{
-        label: 'Rides',
-        data: [ongoing.length, completed.length]
-      }]
+      labels: Object.keys(stats),
+      datasets: [{ label: "Rides", data: Object.values(stats) }]
     }
   });
 }
 
-document.getElementById("adminForm").addEventListener("submit", async (e) => {
+/* ================= RIDES ================= */
+async function loadRides(type) {
+  showSection("ridesSection");
+  const rides = await fetch("/api/admin/rides", { credentials: "include" }).then(r => r.json());
+  const filtered = rides.filter(r => r.rideType === type);
+
+  ridesTable.innerHTML = filtered.map(r => `
+    <tr class="border-t">
+      <td class="p-3">${r.pickup.name} → ${r.destination.name}</td>
+      <td class="p-3">${r.rideType}</td>
+      <td class="p-3">${r.status}</td>
+      <td class="p-3">${r.participants.length}</td>
+      <td class="p-3">
+        <button onclick="deleteRide('${r._id}')" class="text-red-500">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+/* ================= USERS ================= */
+async function loadUsers() {
+  showSection("usersSection");
+  const users = await fetch("/api/admin/users", { credentials: "include" }).then(r => r.json());
+
+  usersTable.innerHTML = users.map(u => `
+    <tr class="border-t">
+      <td class="p-3">${u.name}</td>
+      <td class="p-3">${u.collegeId}</td>
+      <td class="p-3">${u.email}</td>
+      <td class="p-3">
+        <button onclick="deleteUser('${u._id}')" class="text-red-500">Delete</button>
+      </td>
+    </tr>
+  `).join("");
+}
+
+async function deleteUser(id) {
+  if (!confirm("Delete this user?")) return;
+  await fetch(`/api/admin/users/${id}`, { method: "DELETE", credentials: "include" });
+  loadUsers();
+}
+
+/* ================= ADMINS ================= */
+async function loadAdmins() {
+  showSection("adminsSection");
+  const admins = await fetch("/api/admin/admins", { credentials: "include" }).then(r => r.json());
+
+  adminsTable.innerHTML = admins.map(a => `
+    <tr class="border-t">
+      <td class="p-3">${a.name}</td>
+      <td class="p-3">${a.email}</td>
+      <td class="p-3">${new Date(a.createdAt).toLocaleString()}</td>
+      <td class="p-3">${a.lastLogin ? new Date(a.lastLogin).toLocaleString() : "Never"}</td>
+    </tr>
+  `).join("");
+}
+
+/* ================= CREATE ADMIN ================= */
+const adminForm = document.getElementById("adminForm");
+const nameInput = document.getElementById("name");
+const emailInput = document.getElementById("email");
+const passwordInput = document.getElementById("Password");
+const adminMsg = document.getElementById("adminMsg");
+
+adminForm.addEventListener("submit", async (e) => {
   e.preventDefault();
 
-  const nameInput = document.getElementById("name");
-  const emailInput = document.getElementById("email");
-  const passwordInput = document.getElementById("Password");
-
-  const res = await fetch("/api/admin/signup", {
+  const response = await fetch("/api/admin/signup", {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({
-      name: nameInput.value,       // ✅ now this is defined
+      name: nameInput.value,
       email: emailInput.value,
-      Password: passwordInput.value // lowercase 'password'
-    })
+      Password: passwordInput.value,
+    }),
   });
 
-  const data = await res.json();
-  document.getElementById("adminMsg").innerText = data.message;
+  const data = await response.json();
+  adminMsg.innerText = data.message;
 });
 
+/* ================= LOGOUT ================= */
 function logout() {
   fetch("/api/admin/logout", { credentials: "include" });
   window.location.href = "/admin/adminlogin.html";
 }
 
+/* ================= INIT ================= */
 checkAdmin();
-loadRides();
-loadGraph();
+loadStats();
 </script>
 
 </body>

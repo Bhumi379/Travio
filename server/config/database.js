@@ -1,5 +1,9 @@
 const mongoose = require("mongoose");
+const dns = require("dns");
 require("dotenv").config();
+
+// Use Google DNS to resolve MongoDB SRV records (fixes local DNS issues)
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const connectDB = async () => {
   try {
@@ -13,8 +17,6 @@ const connectDB = async () => {
 
     // Establish connection
     const conn = await mongoose.connect(mongoURI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
       serverSelectionTimeoutMS: 10000, // 10 seconds timeout
     });
 

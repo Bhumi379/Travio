@@ -1,6 +1,9 @@
 const Admin = require('../models/Admin');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const Ride = require('../models/Ride');
+const User = require('../models/User');
+
 
 /* ================= ADMIN LOGIN ================= */
 exports.adminLogin = async (req, res) => {
@@ -10,12 +13,15 @@ exports.adminLogin = async (req, res) => {
   const admin = await Admin.findOne({ email }).select('+Password');
   if (!admin) {
     return res.status(401).json({ message: 'Invalid credentials' });
-  }
+  }   
 
   const isMatch = await bcrypt.compare(password, admin.Password);
   if (!isMatch) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
+    // ✅ UPDATE LAST LOGIN HERE
+  admin.lastLogin = new Date();
+  await admin.save();
 
   const token = jwt.sign(
     { id: admin._id, role: 'admin' },
@@ -72,4 +78,48 @@ exports.adminSignup = async (req, res) => {
   }
 };
 
+/* ================= GET ALL RIDES ================= */
+exports.getAllRides = async (req, res) => {
+  const rides = await Ride.find()
+    .populate('initiatorId', 'name email')
+    .sort({ createdAt: -1 });
 
+  res.json(rides);
+};
+
+/* ================= DELETE RIDE ================= */
+exports.deleteRide = async (req, res) => {
+  const { id } = req.params;
+
+  await Ride.findByIdAndDelete(id);
+  res.json({ message: 'Ride deleted successfully' });
+};
+/* ================= GET ALL USERS ================= */
+exports.getAllUsers = async (req, res) => {
+  const users = await User.find().sort({ createdAt: -1 });
+  res.json(users);
+};
+
+/* ================= DELETE USER ================= */
+exports.deleteUser = async (req, res) => {
+  const { id } = req.params;
+
+  // Optional safety: remove user from rides
+  await Ride.updateMany(
+    { participants: id },
+    { $pull: { participants: id } }
+  );
+
+  await Ride.deleteMany({ initiatorId: id }); // remove rides created by user
+  await User.findByIdAndDelete(id);
+
+  res.json({ message: 'User deleted successfully' });
+};
+/* ================= GET ALL ADMINS ================= */
+exports.getAllAdmins = async (req, res) => {
+  const admins = await Admin.find()
+    .select('-Password')
+    .sort({ createdAt: -1 });
+
+  res.json(admins);
+};

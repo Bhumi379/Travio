@@ -24,7 +24,11 @@ const adminSchema = new mongoose.Schema({
   required: true,
   minlength: 8,
   select: false
+},
+lastLogin: {
+  type: Date
 }
+
 }, {
   timestamps: true // automatically creates createdAt and updatedAt
 });

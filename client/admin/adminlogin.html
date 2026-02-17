@@ -1,21 +1,647 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin Login</title>
-  <link rel="stylesheet" href="admin.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - Travio</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #FFE5B4 0%, #FFDAA9 50%, #FFC98D 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Decorative background elements */
+    .bg-decoration {
+      position: absolute;
+      opacity: 0.3;
+    }
+
+    .building {
+      bottom: 0;
+      left: 5%;
+      width: 80px;
+      height: 120px;
+      background: #FF6B35;
+      border-radius: 5px 5px 0 0;
+    }
+
+    .building::before {
+      content: '';
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      right: 10px;
+      bottom: 10px;
+      background: linear-gradient(#FFA500 50%, transparent 50%),
+                  linear-gradient(90deg, #FFA500 50%, transparent 50%);
+      background-size: 20px 20px;
+    }
+
+    .sun {
+      top: 10%;
+      right: 10%;
+      width: 80px;
+      height: 80px;
+      background: #FFD700;
+      border-radius: 50%;
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.5);
+    }
+
+    .car {
+      position: absolute;
+      bottom: 15%;
+      right: 15%;
+      width: 60px;
+      height: 30px;
+      background: #FF6B35;
+      border-radius: 5px;
+      animation: drive 4s linear infinite;
+    }
+
+    .car::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 10px;
+      width: 12px;
+      height: 12px;
+      background: #333;
+      border-radius: 50%;
+      box-shadow: 30px 0 0 #333;
+    }
+
+    @keyframes drive {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-100vw); }
+    }
+
+    /* Banasthali Gate */
+    .banasthali-gate {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      opacity: 0.35;
+      animation: fadeInGate 1s ease-out;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .banasthali-gate svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Gate animations */
+    .left-door {
+      transform-origin: left center;
+      animation: openDoorLeft 4s ease-in-out infinite;
+    }
+
+    .right-door {
+      transform-origin: right center;
+      animation: openDoorRight 4s ease-in-out infinite;
+    }
+
+    @keyframes openDoorLeft {
+      0%, 60%, 100% { transform: rotateY(0deg); }
+      30% { transform: rotateY(-45deg); }
+    }
+
+    @keyframes openDoorRight {
+      0%, 60%, 100% { transform: rotateY(0deg); }
+      30% { transform: rotateY(45deg); }
+    }
+
+    .dome-left, .dome-right {
+      animation: shimmer 2s ease-in-out infinite;
+    }
+
+    .dome-right {
+      animation-delay: 1s;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Animated floating elements */
+    .floating-element {
+      position: absolute;
+      animation: float 3s ease-in-out infinite;
+      opacity: 0.5;
+      z-index: 50;
+    }
+
+    .leaf {
+      font-size: 20px;
+      animation: floatLeaf 4s ease-in-out infinite;
+    }
+
+    .leaf:nth-child(1) {
+      bottom: 30%;
+      left: 15%;
+      animation-delay: 0s;
+    }
+
+    .leaf:nth-child(2) {
+      bottom: 40%;
+      right: 20%;
+      animation-delay: 1.5s;
+    }
+
+    .leaf:nth-child(3) {
+      bottom: 50%;
+      left: 25%;
+      animation-delay: 3s;
+    }
+
+    @keyframes fadeInGate {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) scale(0.8);
+      }
+      to {
+        opacity: 0.35;
+        transform: translateX(-50%) scale(1);
+      }
+    }
+
+    @keyframes float {
+      0%, 100% {
+        transform: translateY(0px);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    @keyframes floatLeaf {
+      0%, 100% {
+        transform: translateY(0px) rotate(0deg);
+      }
+      50% {
+        transform: translateY(-30px) rotate(10deg);
+      }
+    }
+
+    /* Birds flying animation */
+    .bird {
+      position: absolute;
+      font-size: 24px;
+      opacity: 0.5;
+      animation: flyBird 10s linear infinite;
+      z-index: 50;
+    }
+
+    .bird:nth-child(1) {
+      top: 15%;
+      animation-delay: 0s;
+    }
+
+    .bird:nth-child(2) {
+      top: 20%;
+      animation-delay: 5s;
+    }
+
+    @keyframes flyBird {
+      0% {
+        left: -50px;
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-30px);
+      }
+      100% {
+        left: calc(100% + 50px);
+        transform: translateY(0);
+      }
+    }
+
+    /* Header */
+    .header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      padding: 20px 50px;
+      display: flex;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 45px;
+      height: 45px;
+      background: #FF8C00;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+    }
+
+    .logo-text h1 {
+      color: #FF6B35;
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .logo-text p {
+      color: #666;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Login Container */
+    .login-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      padding: 50px 60px;
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      z-index: 100;
+      animation: slideUp 0.5s ease-out;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .login-header h2 {
+      color: #333;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .login-header p {
+      color: #666;
+      font-size: 16px;
+    }
+
+    /* Form Elements */
+    .form-group {
+      margin-bottom: 25px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      color: #555;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #FF8C00;
+      font-size: 18px;
+    }
+
+    .form-group input {
+      width: 100%;
+      padding: 15px 15px 15px 45px;
+      border: 2px solid #E0E0E0;
+      border-radius: 10px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      outline: none;
+    }
+
+    .form-group input:focus {
+      border-color: #FF8C00;
+      box-shadow: 0 0 0 4px rgba(255, 140, 0, 0.1);
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #999;
+      cursor: pointer;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+
+    .password-toggle:hover {
+      color: #FF8C00;
+    }
+
+    .form-options {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .remember-me {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+
+    .remember-me input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+      accent-color: #FF8C00;
+    }
+
+    .forgot-password {
+      color: #FF8C00;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .forgot-password:hover {
+      color: #FF6B35;
+    }
+
+    .login-btn {
+      width: 100%;
+      padding: 16px;
+      background: linear-gradient(135deg, #FF8C00 0%, #FF6B35 100%);
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 107, 53, 0.3);
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 107, 53, 0.4);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 30px 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #E0E0E0;
+    }
+
+    .divider::before {
+      margin-right: 15px;
+    }
+
+    .divider::after {
+      margin-left: 15px;
+    }
+
+    .signup-link {
+      text-align: center;
+      color: #666;
+      font-size: 14px;
+    }
+
+    .signup-link a {
+      color: #FF8C00;
+      text-decoration: none;
+      font-weight: 600;
+      transition: color 0.3s ease;
+    }
+
+    .signup-link a:hover {
+      color: #FF6B35;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        padding: 15px 20px;
+      }
+
+      .login-container {
+        margin: 20px;
+        padding: 40px 30px;
+      }
+
+      .building, .sun {
+        display: none;
+      }
+    }
+  </style>
 </head>
 <body>
+  <!-- Header -->
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">🚗</div>
+      <div class="logo-text">
+        <h1>Travio</h1>
+        <p>Banasthali Vidyapith</p>
+      </div>
+    </div>
+  </div>
 
-  <h2>Admin Login</h2>
+  <!-- Background Decorations -->
+  <div class="bg-decoration building"></div>
+  <div class="bg-decoration sun"></div>
+  <div class="bg-decoration car"></div>
+  
+  <!-- Banasthali Gate SVG -->
+  <div class="banasthali-gate">
+    <svg viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+      <!-- Trees -->
+      <g class="tree-left">
+        <rect x="50" y="280" width="20" height="80" fill="#8B5A3C"/>
+        <circle cx="60" cy="270" r="40" fill="#6B9F4A"/>
+        <circle cx="45" cy="250" r="35" fill="#7AB05D"/>
+        <circle cx="75" cy="255" r="30" fill="#5A8E3A"/>
+      </g>
+      
+      <g class="tree-right">
+        <rect x="730" y="280" width="20" height="80" fill="#8B5A3C"/>
+        <circle cx="740" cy="270" r="40" fill="#6B9F4A"/>
+        <circle cx="725" cy="250" r="35" fill="#7AB05D"/>
+        <circle cx="755" cy="255" r="30" fill="#5A8E3A"/>
+      </g>
+      
+      <!-- Main Gate Structure -->
+      <rect x="200" y="150" width="400" height="250" fill="#E8D4B8" stroke="#C19A6B" stroke-width="2"/>
+      
+      <!-- Domes on top -->
+      <g class="dome-left">
+        <rect x="180" y="120" width="60" height="40" fill="#D4B896" stroke="#C19A6B" stroke-width="2"/>
+        <ellipse cx="210" cy="120" rx="30" ry="20" fill="#C8AD7F"/>
+        <circle cx="210" cy="105" r="8" fill="#B8860B"/>
+        <rect x="206" y="95" width="8" height="15" fill="#B8860B"/>
+      </g>
+      
+      <g class="dome-right">
+        <rect x="560" y="120" width="60" height="40" fill="#D4B896" stroke="#C19A6B" stroke-width="2"/>
+        <ellipse cx="590" cy="120" rx="30" ry="20" fill="#C8AD7F"/>
+        <circle cx="590" cy="105" r="8" fill="#B8860B"/>
+        <rect x="586" y="95" width="8" height="15" fill="#B8860B"/>
+      </g>
+      
+      <!-- Hindi Text "बनस्थली विद्यापीठ" -->
+      <text x="400" y="180" font-family="Arial" font-size="20" fill="#8B4513" text-anchor="middle" font-weight="bold">बनस्थली विद्यापीठ</text>
+      
+      <!-- Arch -->
+      <path d="M 280 200 Q 400 150 520 200" fill="none" stroke="#A0826D" stroke-width="3"/>
+      <path d="M 280 200 L 280 380 L 520 380 L 520 200" fill="none" stroke="#A0826D" stroke-width="3"/>
+      
+      <!-- Decorative pillars -->
+      <rect x="260" y="250" width="30" height="150" fill="#C8AD7F" stroke="#A0826D" stroke-width="2"/>
+      <rect x="510" y="250" width="30" height="150" fill="#C8AD7F" stroke="#A0826D" stroke-width="2"/>
+      
+      <!-- Gate doors -->
+      <g class="left-door">
+        <rect x="300" y="240" width="90" height="160" fill="#5A4A3A" stroke="#3A2A1A" stroke-width="2"/>
+        <line x1="310" y1="250" x2="310" y2="390" stroke="#3A2A1A" stroke-width="1"/>
+        <line x1="320" y1="250" x2="320" y2="390" stroke="#3A2A1A" stroke-width="1"/>
+        <circle cx="370" cy="320" r="5" fill="#B8860B"/>
+      </g>
+      
+      <g class="right-door">
+        <rect x="410" y="240" width="90" height="160" fill="#5A4A3A" stroke="#3A2A1A" stroke-width="2"/>
+        <line x1="480" y1="250" x2="480" y2="390" stroke="#3A2A1A" stroke-width="1"/>
+        <line x1="490" y1="250" x2="490" y2="390" stroke="#3A2A1A" stroke-width="1"/>
+        <circle cx="430" cy="320" r="5" fill="#B8860B"/>
+      </g>
+      
+      <!-- Decorative circles -->
+      <circle cx="240" cy="180" r="15" fill="none" stroke="#A0826D" stroke-width="2"/>
+      <circle cx="560" cy="180" r="15" fill="none" stroke="#A0826D" stroke-width="2"/>
+    </svg>
+  </div>
+  
+  <!-- Floating leaves -->
+  <div class="floating-element leaf">🍃</div>
+  <div class="floating-element leaf">🍃</div>
+  <div class="floating-element leaf">🍃</div>
+  
+  <!-- Flying birds -->
+  <div class="bird">🕊️</div>
+  <div class="bird">🕊️</div>
 
-  <form id="adminLoginForm">
-    <input type="email" id="email" placeholder="Admin Email" required />
-    <input type="Password" id="Password" placeholder="Password" required />
-    <button type="submit">Login</button>
-  </form>
+  <!-- Login Container -->
+  <div class="login-container">
+    <div class="login-header">
+      <h2>Admin Access</h2>
+      <p>Authorized users only</p>
+    </div>
 
-  <p id="error"></p>
+    <form id="adminLoginForm">
+      <div class="form-group">
+        <label for="email">Admin Email</label>
 
+        <div class="input-wrapper">
+          <span class="input-icon">📧</span>
+          <input type="email" id="email" placeholder="Admin Email" required />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-wrapper">
+          <span class="input-icon">🔒</span>
+          <input type="password" id="password" placeholder="Password" required />
+
+          <button type="button" class="password-toggle" onclick="togglePassword()">
+            👁️
+          </button>
+        </div>
+      </div>
+
+      
+
+      <button type="submit" class="login-btn">Admin Login</button>
+
+    </form>
+
+    
+
+    <p id="error" style="color:red;text-align:center;margin-top:15px;"></p>
+
+  </div>
+
+  <!-- External JavaScript file for backend connection -->
   <script src="admin.js"></script>
+  
+  <script>
+function togglePassword() {
+  const input = document.getElementById("password");
+  const btn = document.querySelector(".password-toggle");
+
+  if (input.type === "password") {
+    input.type = "text";
+    btn.textContent = "🙈";
+  } else {
+    input.type = "password";
+    btn.textContent = "👁️";
+  }
+}
+</script>
+
 </body>
 </html>

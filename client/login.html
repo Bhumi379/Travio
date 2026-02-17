@@ -301,6 +301,13 @@
       }
     }
 
+    .header-logo-img {
+    height: 50px; /* Increased height to show gate detail */
+    width: auto;
+    object-fit: contain;
+    margin-right: 12px;
+}
+
     .login-header {
       text-align: center;
       margin-bottom: 40px;
@@ -494,7 +501,7 @@
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <div class="logo-icon">🚗</div>
+      <div class="logo-icon"><img src="images/logo.png" alt="Travio Logo" class="header-logo-img"></div>
       <div class="logo-text">
         <h1>Travio</h1>
         <p>Banasthali Vidyapith</p>
@@ -635,7 +642,7 @@
     <div class="divider">OR</div>
 
     <div class="signup-link">
-      Don't have an account? <a href="#">Sign Up</a>
+      Don't have an account? <a href="signup.html">Sign Up</a>
     </div>
   </div>
 
@@ -655,22 +662,6 @@
         toggleBtn.textContent = '👁️';
       }
     }
-
-    document.getElementById('loginForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const email = document.getElementById('email').value;
-      const password = document.getElementById('password').value;
-      
-      // Call external login function if available
-      if (typeof handleLogin === 'function') {
-        handleLogin(email, password);
-      } else {
-        // Fallback for demo purposes
-        console.log('Login attempted with:', { email, password });
-        alert('Login successful! (This is a demo - connect your backend in user/login.js)');
-      }
-    });
 
     // Add input animation
     const inputs = document.querySelectorAll('input[type="email"], input[type="password"]');

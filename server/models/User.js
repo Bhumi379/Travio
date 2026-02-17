@@ -42,7 +42,8 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: [emailRegex, 'Please enter a valid email address'],
+    
+      match: [/^[a-zA-Z0-9._%+-]+@banasthali\.in$/, 'Email must be a valid Banasthali email address'],
     },
 
     // NEW: course (as asked)
