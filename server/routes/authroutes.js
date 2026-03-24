@@ -7,10 +7,10 @@ const verifyOtp = require("../controllers/verifyOtp");
 const resendOtp = require("../controllers/resendOtp");
 const authMiddleware = require("../middleware/authmiddleware");
 const User = require("../models/User");
-<<<<<<< HEAD
+
 const bcrypt = require("bcryptjs");
-=======
->>>>>>> 4f7add497b85b05eb7590c7b96a254948486a55f
+
+
 
 // ---------------- AUTH ROUTES ----------------
 
