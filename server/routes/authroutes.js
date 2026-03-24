@@ -7,10 +7,7 @@ const verifyOtp = require("../controllers/verifyOtp");
 const resendOtp = require("../controllers/resendOtp");
 const authMiddleware = require("../middleware/authmiddleware");
 const User = require("../models/User");
-
 const bcrypt = require("bcryptjs");
-
-
 
 // ---------------- AUTH ROUTES ----------------
 
@@ -60,7 +57,6 @@ router.get("/me", authMiddleware, async (req, res) => {
     res.status(500).json({
       message: "Server error",
     });
-
   }
 });
 
@@ -122,8 +118,8 @@ router.put("/me", authMiddleware, async (req, res) => {
       message: "Server error",
       error: error.message,
     });
-
   }
 });
 
 module.exports = router;
+

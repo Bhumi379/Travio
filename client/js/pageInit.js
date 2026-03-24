@@ -1,10 +1,6 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
-<<<<<<< HEAD
 import { fetchCurrentUser, updateCurrentUserProfile } from './auth.js';
-=======
-import { fetchCurrentUser } from './auth.js';
->>>>>>> 4f7add497b85b05eb7590c7b96a254948486a55f
 import { loadRides, loadPreviousRides, createRide, loadProfileRides } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
