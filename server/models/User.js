@@ -42,8 +42,9 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-    
-      match: [/^[a-zA-Z0-9._%+-]+@banasthali\.in$/, 'Email must be a valid Banasthali email address'],
+      match: [emailRegex, 'Email must be a valid email address'],
+    // /^[a-zA-Z0-9._%+-]+@banasthali\.in$/,
+      // match: [ 'Email must be a valid Banasthali email address'],
     },
 
     // NEW: course (as asked)
@@ -67,6 +68,29 @@ const userSchema = new mongoose.Schema(
       minlength: [8, 'Password must be at least 8 characters'],
       select: false, // never return by default
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    otp: {
+      type: String,
+      required: false,
+      select: false,
+    },
+    otpExpiry: {
+      type: Date,
+      required: false,
+    },
+    resetToken: {
+  type: String,
+  required: false,
+  select: false,
+},
+
+resetTokenExpire: {
+  type: Date,
+  required: false,
+},
   },
   {
     timestamps: true, // createdAt default now(), updatedAt auto-updates

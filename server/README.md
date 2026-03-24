@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Travio Backend API
 
 A Node.js, Express.js, and MongoDB backend for a cab and travel partner finding website.
@@ -158,3 +159,25 @@ All API responses follow this format:
 The server runs on port 5000 by default. You can change this by setting the `PORT` environment variable.
 
 For development, use `npm run dev` which will automatically restart the server when files change.
+=======
+# Travio
+Travio is a web-platform exclusively designed for Banasthali Vidyapith Students for find a travel partner or cab sharing purpose
+## Features
+
+- **Home Page**: Browse available rides with search functionality
+- **Profile Management**: Update user profile information
+- **Create Rides**: Post new rides with pickup, destination, and details
+- **Previous Rides**: View ride history
+- **Responsive Design**: Works on desktop and mobile devices
+
+## Tech Stack
+
+- HTML5
+- CSS3 (with modern features like Grid and Flexbox)
+- Vanilla JavaScript
+- RESTful API integration
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+>>>>>>> 2aef941b3dd5c4703ee281608c42311423c43ed8
