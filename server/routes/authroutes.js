@@ -60,7 +60,7 @@ router.get("/me", authMiddleware, async (req, res) => {
     res.status(500).json({
       message: "Server error",
     });
-<<<<<<< HEAD
+
   }
 });
 
@@ -122,8 +122,7 @@ router.put("/me", authMiddleware, async (req, res) => {
       message: "Server error",
       error: error.message,
     });
-=======
->>>>>>> 4f7add497b85b05eb7590c7b96a254948486a55f
+
   }
 });
 
