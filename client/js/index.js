@@ -9,6 +9,7 @@ import { setupSearchAutocomplete } from './autocomplete.js';
 import { openChat, requestRide, searchRides, openRideDetails } from './rides.js';
 import { 
   loadNotifications, 
+  loadChatUnreadCount,
   closeNotificationPanel,
   acceptRequest,
   rejectRequest 
@@ -41,11 +42,15 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Fetch current user first
   await fetchCurrentUser();
   
-  // Load notifications initially
+  // Load notification + chat unread counters initially
   loadNotifications();
+  loadChatUnreadCount();
   
-  // Check for new notifications every 5 seconds
-  const interval = setInterval(loadNotifications, 5000);
+  // Check for new notifications/messages every 5 seconds
+  const interval = setInterval(() => {
+    loadNotifications();
+    loadChatUnreadCount();
+  }, 5000);
   setNotificationCheckInterval(interval);
   
   // Initialize based on current page

@@ -8,6 +8,8 @@ const {
   createRide,
   updateRide,
   deleteRide,
+  cancelRideByOwner,
+  removeParticipantFromRide,
   getRidesByUser,
   getMyRides,
 } = require("../controllers/rideController");
@@ -35,10 +37,14 @@ router.get("/user/:userId", getRidesByUser);
 // GET one ride by ID
 router.get("/:id", getRideById);
 
+// Creator actions on a ride
+router.delete("/:id/cancel", protect, cancelRideByOwner);
+router.delete("/:id/participants/:participantUserId", protect, removeParticipantFromRide);
+
 // UPDATE ride
-router.put("/:id", updateRide);
+router.put("/:id", protect, updateRide);
 
 // DELETE ride
-router.delete("/:id", deleteRide);
+router.delete("/:id", protect, deleteRide);
 
 module.exports = router;

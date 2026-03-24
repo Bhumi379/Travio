@@ -68,6 +68,20 @@
         <div class="form-card">
 
             <form id="createRideForm">
+                <div class="ride-type-selector">
+                    <p class="ride-type-heading">Post this ride as</p>
+                    <div class="ride-type-options">
+                        <label class="ride-type-option">
+                            <input type="radio" name="ridePostType" id="rideTypeTravelBuddy" value="travelBuddy" checked>
+                            <span>🤝 Travel Buddy</span>
+                        </label>
+                        <label class="ride-type-option">
+                            <input type="radio" name="ridePostType" id="rideTypeCab" value="cab">
+                            <span>🚖 Cab Sharing</span>
+                        </label>
+                    </div>
+                </div>
+
                 <div class="form-group">
     <label for="pickup">
         <img src="images/location-food.gif" class="icon" alt="map">
@@ -129,17 +143,6 @@
                         Notes
                     </label>
                     <textarea id="notes" placeholder="Any preferences or details"></textarea>
-                </div>
-
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="buddyRequest">
-                        <span>🤝 Post as a travel buddy request</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="checkbox" id="immediateStart">
-                        <span> Post as a cab ride</span>
-                    </label>
                 </div>
 
                 <div id="driverDetailsSection" style="display: none;">

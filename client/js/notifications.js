@@ -33,7 +33,7 @@ export async function loadNotifications() {
 
 export async function markAllNotificationsAsRead() {
   try {
-    const res = await fetch(`${API_BASE}/notifications/mark-all-read`, {
+    const res = await fetch(`${API_BASE}/notifications/read-all`, {
       method: 'PUT',
       credentials: 'include',
     });
@@ -60,13 +60,13 @@ export function displayNotifications(notifications, unreadCount) {
     const parent = notificationIcon.closest('.notification');
     
     // Remove existing badge if any
-    const existingBadge = parent.querySelector('.notification-badge');
+    const existingBadge = parent.querySelector('.notification-badge:not(.chat-unread-badge)');
     if (existingBadge) existingBadge.remove();
     
     // Add badge if there are unread notifications
     if (unreadCount > 0) {
       const badge = document.createElement('span');
-      badge.className = 'notification-badge';
+      badge.className = 'notification-badge notif-unread-badge';
       badge.textContent = unreadCount;
 
       parent.appendChild(badge);
@@ -74,7 +74,7 @@ export function displayNotifications(notifications, unreadCount) {
     }
     else {
   console.log("📭 No unread notifications — removing badge if exists");
-  const badge = document.querySelector('.notification-badge');
+  const badge = document.querySelector('.notification-badge.notif-unread-badge');
   if (badge) badge.remove();
 }
 
@@ -112,7 +112,9 @@ export function displayNotifications(notifications, unreadCount) {
         <div class="notif-type" style="font-size: 11px; color: #999; margin: 5px 0;">
           ${notif.type === 'join_request' ? '📋 Join Request' : 
             notif.type === 'request_accepted' ? '✅ Request Accepted' : 
-            '❌ Request Rejected'}
+            notif.type === 'request_rejected' ? '❌ Request Rejected' :
+            notif.type === 'ride_cancelled' ? '🚫 Ride Cancelled' :
+            '👤 Removed From Ride'}
         </div>
         ${actionButtons}
       </div>
@@ -165,7 +167,7 @@ export function removeNotificationFromUI(notificationId) {
 }
 
 export function updateNotificationBadge(change) {
-  const badge = document.querySelector(".notification-badge");
+  const badge = document.querySelector(".notification-badge.notif-unread-badge");
   if (badge) {
     let count = parseInt(badge.textContent, 10) + change;
     if (count <= 0) {
@@ -188,6 +190,33 @@ export function toggleNotificationPanel(e) {
   if (!isVisible) {
     console.log("🔔 Notification panel opened — marking all as read");
     markAllNotificationsAsRead(); // 👈 this function below
+  }
+}
+
+export async function loadChatUnreadCount() {
+  try {
+    const res = await fetch(`${API_BASE}/chats/unread-count`, {
+      credentials: "include",
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (!data.success) return;
+
+    const chatIcon = document.querySelector('.notification .chat-gif');
+    const chatParent = chatIcon?.closest('.notification');
+    if (!chatParent) return;
+
+    const existing = chatParent.querySelector('.chat-unread-badge');
+    if (existing) existing.remove();
+
+    if (data.unreadCount > 0) {
+      const badge = document.createElement('span');
+      badge.className = 'notification-badge chat-unread-badge';
+      badge.textContent = data.unreadCount > 99 ? '99+' : String(data.unreadCount);
+      chatParent.appendChild(badge);
+    }
+  } catch (err) {
+    console.error("Error loading chat unread count:", err);
   }
 }
 

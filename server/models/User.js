@@ -81,6 +81,16 @@ const userSchema = new mongoose.Schema(
       type: Date,
       required: false,
     },
+    resetToken: {
+  type: String,
+  required: false,
+  select: false,
+},
+
+resetTokenExpire: {
+  type: Date,
+  required: false,
+},
   },
   {
     timestamps: true, // createdAt default now(), updatedAt auto-updates
@@ -102,4 +112,3 @@ userSchema.set('toJSON', {
 });
 
 module.exports = mongoose.model('User', userSchema);
-

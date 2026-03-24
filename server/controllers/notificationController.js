@@ -1,3 +1,4 @@
+
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const mongoose = require('mongoose');
@@ -76,7 +77,7 @@ const markAsRead = async (req, res) => {
 ===================================================== */
 const markAllAsRead = async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user.id || req.user._id;
 
     await Notification.updateMany(
       { recipientUserId: userId, status: 'unread' },
@@ -172,3 +173,4 @@ module.exports = {
   deleteNotification,
   createNotification,
 };
+

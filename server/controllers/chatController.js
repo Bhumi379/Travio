@@ -31,6 +31,55 @@ const getChatsByUser = async (req, res) => {
   }
 };
 
+const getUnreadCount = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const chats = await Chat.find({ participants: userId }).select('messages senderId participants');
+
+    let unreadCount = 0;
+    chats.forEach((chat) => {
+      (chat.messages || []).forEach((msg) => {
+        const isMine = String(msg.senderId) === String(userId);
+        const readBy = Array.isArray(msg.readBy) ? msg.readBy.map(String) : [];
+        if (!isMine && !readBy.includes(String(userId))) unreadCount += 1;
+      });
+    });
+
+    res.status(200).json({ success: true, unreadCount });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching unread chat count', error: error.message });
+  }
+};
+
+const markChatAsRead = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const { chatId } = req.params;
+    const chat = await Chat.findById(chatId);
+    if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
+
+    if (!chat.participants.map(String).includes(String(userId))) {
+      return res.status(403).json({ success: false, message: 'Not allowed for this chat' });
+    }
+
+    let updated = 0;
+    (chat.messages || []).forEach((msg) => {
+      const isMine = String(msg.senderId) === String(userId);
+      msg.readBy = Array.isArray(msg.readBy) ? msg.readBy : [];
+      const alreadyRead = msg.readBy.map(String).includes(String(userId));
+      if (!isMine && !alreadyRead) {
+        msg.readBy.push(userId);
+        updated += 1;
+      }
+    });
+
+    if (updated > 0) await chat.save();
+    res.status(200).json({ success: true, message: 'Chat marked as read', updated });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error marking chat as read', error: error.message });
+  }
+};
+
 // POST /api/chats  { participants: [userId1, userId2, ...] }
 const createChat = async (req, res) => {
   try {
@@ -115,6 +164,8 @@ module.exports = {
   getAllChats,
   getChatById,
   getChatsByUser,
+  getUnreadCount,
+  markChatAsRead,
   createChat,
   addMessage,
   markMessageRead,

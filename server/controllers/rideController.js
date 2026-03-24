@@ -1,5 +1,6 @@
 const Ride = require("../models/Ride");
 const RideRequest = require("../models/RideRequest");
+const { createNotification } = require("./notificationController");
 
 console.log("✅ rideController loaded");
 /* =====================================================
@@ -191,6 +192,119 @@ const deleteRide = async (req, res) => {
   }
 };
 
+const cancelRideByOwner = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const { id: rideId } = req.params;
+    const ride = await Ride.findById(rideId).lean();
+
+    if (!ride) {
+      return res.status(404).json({ success: false, message: "Ride not found" });
+    }
+
+    if (String(ride.initiatorId) !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the ride creator can cancel this ride",
+      });
+    }
+
+    const acceptedRequests = await RideRequest.find({
+      rideId,
+      status: "accepted",
+    }).select("userId");
+
+    const participants = acceptedRequests
+      .map((r) => r.userId)
+      .filter((uid) => String(uid) !== String(userId));
+
+    await Promise.all(
+      participants.map((participantId) =>
+        createNotification(
+          participantId,
+          userId,
+          rideId,
+          "ride_cancelled",
+          `A ride you joined (${ride.pickup?.name || "Pickup"} to ${ride.destination?.name || "Destination"}) was cancelled by the creator`
+        )
+      )
+    );
+
+    await RideRequest.deleteMany({ rideId });
+    await Ride.findByIdAndDelete(rideId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Ride cancelled successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error cancelling ride",
+      error: error.message,
+    });
+  }
+};
+
+const removeParticipantFromRide = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    const { id: rideId, participantUserId } = req.params;
+
+    const ride = await Ride.findById(rideId).lean();
+    if (!ride) {
+      return res.status(404).json({ success: false, message: "Ride not found" });
+    }
+
+    if (String(ride.initiatorId) !== String(userId)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the ride creator can remove participants",
+      });
+    }
+
+    const acceptedRequest = await RideRequest.findOne({
+      rideId,
+      userId: participantUserId,
+      status: "accepted",
+    });
+
+    if (!acceptedRequest) {
+      return res.status(404).json({
+        success: false,
+        message: "Participant not found in this ride",
+      });
+    }
+
+    await RideRequest.findByIdAndDelete(acceptedRequest._id);
+
+    if (typeof ride.seats === "number") {
+      await Ride.findByIdAndUpdate(rideId, {
+        $set: { seats: Number(ride.seats) + 1 },
+      });
+    }
+
+    await createNotification(
+      participantUserId,
+      userId,
+      rideId,
+      "removed_from_ride",
+      `You were removed from a ride (${ride.pickup?.name || "Pickup"} to ${ride.destination?.name || "Destination"}) by the creator`
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Participant removed successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error removing participant",
+      error: error.message,
+    });
+  }
+};
+
 /* =====================================================
    GET RIDES BY USER
 ===================================================== */
@@ -284,6 +398,8 @@ module.exports = {
   createRide,
   updateRide,
   deleteRide,
+  cancelRideByOwner,
+  removeParticipantFromRide,
   getRidesByUser,
   getMyRides,
 };
