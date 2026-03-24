@@ -8,7 +8,6 @@ const mongoose = require('mongoose');
 const getNotifications = async (req, res) => {
   try {
     const userId = req.user.id || req.user._id;
-    console.log("📬 Fetching notifications for user:", userId);
 
     const notifications = await Notification.find({ recipientUserId: userId })
       .populate('senderUserId', 'name email profilePicture')
@@ -20,8 +19,6 @@ const getNotifications = async (req, res) => {
       recipientUserId: userId,
       status: 'unread',
     });
-
-    console.log("✅ Found", notifications.length, "notifications, unread:", unreadCount);
 
     res.json({
       success: true,

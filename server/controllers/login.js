@@ -12,7 +12,9 @@ const login = async (req, res) => {
     return res.status(400).json({ message: "All input is required" });
   }
   const user = await User.findOne({ email }).select("+hashedPassword");//hashedPassword not by default ;
-  if (!(user && (await bcrypt.compare(password, user.hashedPassword)))) {
+  if (!user) return res.status(404).json({ message: "Invalid credentials" });
+  if (!user.isVerified) return res.status(403).json({ message: "Email not verified" });
+  if (!(await bcrypt.compare(password, user.hashedPassword))) {
     return res.status(404).json({ message: "Invalid credentials" });
   }
   const token = createSecretToken(user._id);

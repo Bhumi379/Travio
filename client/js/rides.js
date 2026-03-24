@@ -43,6 +43,38 @@ export async function loadPreviousRides() {
 }
 
 /* ==============================
+   LOAD RIDES FOR PROFILE PAGE
+================================ */
+export async function loadProfileRides() {
+  try {
+    const res = await fetch(`${API_BASE}/rides/my-rides`, {
+      credentials: "include",
+    });
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.message);
+
+    const allRides = Array.isArray(data.data) ? data.data : [];
+    const now = new Date();
+
+    const currentRides = allRides.filter((ride) => {
+      const rideTime = new Date(ride.departureTime || ride.createdAt);
+      return rideTime >= now;
+    });
+
+    const previousRides = allRides.filter((ride) => {
+      const rideTime = new Date(ride.departureTime || ride.createdAt);
+      return rideTime < now;
+    });
+
+    displayProfileRides(currentRides, "profileCurrentRidesGrid");
+    displayProfileRides(previousRides, "profilePreviousRidesGrid");
+  } catch (err) {
+    showError(err.message);
+  }
+}
+
+/* ==============================
    DISPLAY RIDES
 ================================ */
 export function displayRides(ridesData, containerId) {
@@ -74,7 +106,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
 }
 
     return `
-      <div class="ride-card">
+      <div class="ride-card" onclick="openRideDetails('${ride._id}')">
         <div class="ride-header">
           <div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>
           <div class="ride-info">
@@ -100,8 +132,8 @@ if (ride.rideType?.toLowerCase() === "cab") {
         </div>
 
         <div class="ride-actions">
-          <button class="btn btn-secondary" onclick="openChat('${ride._id}')">Chat</button>
-          <button class="btn btn-primary" onclick="requestRide('${ride._id}')">Request</button>
+          <button class="btn btn-secondary" onclick="event.stopPropagation(); openChat('${ride._id}')">Chat</button>
+          <button class="btn btn-primary" onclick="event.stopPropagation(); requestRide('${ride._id}')">Request</button>
         </div>
       </div>
     `;
@@ -210,4 +242,68 @@ export async function requestRide(rideId) {
   } catch (err) {
     showError(err.message);
   }
+}
+
+// Navigate to ride details page
+export function openRideDetails(rideId) {
+  if (!rideId) return;
+  window.location.href = `ride_details.html?rideId=${encodeURIComponent(rideId)}`;
+}
+
+function displayProfileRides(ridesData, containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  if (!ridesData || !ridesData.length) {
+    container.innerHTML = `
+      <p style="text-align:center;color:#6b7280;padding:40px;">
+        No rides found
+      </p>`;
+    return;
+  }
+
+  container.innerHTML = ridesData
+    .map((ride) => {
+      const isCab = ride.rideType?.toLowerCase() === "cab";
+      const roleLabel =
+        ride.role === "creator" ? "You created this ride" : "You joined this ride";
+
+      return `
+      <div class="ride-card" onclick="openRideDetails('${ride._id}')">
+        <div class="ride-header">
+          <div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>
+          <div class="ride-info">
+            <h3>
+              ${new Date(ride.departureTime || ride.createdAt).toLocaleDateString()} • 
+              ${new Date(ride.departureTime || ride.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </h3>
+            <p>${isCab ? "🚖 Cab Ride" : "🤝 Travel Buddy"} • ${roleLabel}</p>
+          </div>
+        </div>
+
+        <div class="route">
+          ${ride.pickup?.name || "Pickup"} → ${ride.destination?.name || "Destination"}
+        </div>
+
+        <div class="description">
+          ${ride.notes || "No additional notes"}
+        </div>
+
+        <div class="ride-footer">
+          <div class="seats">👥 ${ride.seats ?? "N/A"} seats</div>
+          ${
+            isCab
+              ? `<div class="price">${ride.fare != null ? `₹${ride.fare} (Total)` : "₹TBD"}</div>`
+              : ""
+          }
+        </div>
+
+        <div class="ride-actions">
+          <button class="btn btn-secondary" onclick="event.stopPropagation(); openChat('${ride._id}')">Chat</button>
+          <button class="btn btn-primary" onclick="event.stopPropagation(); openRideDetails('${ride._id}')">View</button>
+        </div>
+      </div>
+    `;
+    })
+    .join("");
 }

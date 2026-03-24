@@ -51,3 +51,24 @@ export function logout() {
     credentials: "include",
   }).then(() => window.location.href = "/login.html");
 }
+
+export async function updateCurrentUserProfile(payload) {
+  const res = await fetch(`${API_BASE}/auth/me`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify(payload),
+  });
+
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    const errors = Array.isArray(data.errors) ? data.errors.join(", ") : null;
+    throw new Error(errors || data.message || "Failed to update profile");
+  }
+
+  if (data.user) {
+    setCurrentUser(data.user);
+  }
+
+  return data;
+}

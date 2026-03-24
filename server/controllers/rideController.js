@@ -1,4 +1,5 @@
 const Ride = require("../models/Ride");
+const RideRequest = require("../models/RideRequest");
 
 console.log("✅ rideController loaded");
 /* =====================================================
@@ -215,6 +216,68 @@ const getRidesByUser = async (req, res) => {
   }
 };
 
+/* =====================================================
+   GET MY RIDES (CREATED + JOINED)
+===================================================== */
+const getMyRides = async (req, res) => {
+  try {
+    const userId = req.user?.id || req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized",
+      });
+    }
+
+    const [createdRides, acceptedRequests] = await Promise.all([
+      Ride.find({ initiatorId: userId }).lean(),
+      RideRequest.find({ userId, status: "accepted" }).select("rideId").lean(),
+    ]);
+
+    const joinedRideIds = acceptedRequests.map((reqDoc) => reqDoc.rideId);
+    const joinedRides = joinedRideIds.length
+      ? await Ride.find({ _id: { $in: joinedRideIds } }).lean()
+      : [];
+
+    const normalizeRide = (ride, role) => ({
+      ...ride,
+      role,
+    });
+
+    const createdWithRole = createdRides.map((ride) =>
+      normalizeRide(ride, "creator")
+    );
+    const joinedWithRole = joinedRides
+      .filter(
+        (ride) => String(ride.initiatorId) !== String(userId)
+      )
+      .map((ride) => normalizeRide(ride, "participant"));
+
+    const rideMap = new Map();
+    [...createdWithRole, ...joinedWithRole].forEach((ride) => {
+      rideMap.set(String(ride._id), ride);
+    });
+
+    const myRides = Array.from(rideMap.values()).sort(
+      (a, b) =>
+        new Date(b.departureTime || b.createdAt) -
+        new Date(a.departureTime || a.createdAt)
+    );
+
+    return res.status(200).json({
+      success: true,
+      count: myRides.length,
+      data: myRides,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching your rides",
+      error: error.message,
+    });
+  }
+};
+
 module.exports = {
   getAllRides,
   getRideById,
@@ -222,4 +285,5 @@ module.exports = {
   updateRide,
   deleteRide,
   getRidesByUser,
+  getMyRides,
 };
