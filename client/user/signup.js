@@ -27,9 +27,15 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
   console.log(result);
 
   if (res.ok) {
-    alert("Signup successful!");
-    window.location.href = "/login.html";
-  } else {
+  alert("OTP sent to your email. Please verify.");
+
+  // Save email for verify page
+  localStorage.setItem("userEmail", data.email);
+
+  // Go to verify page
+  window.location.href = "/verify.html";
+}
+else {
     alert(result.message || "Signup failed");
   }
 });

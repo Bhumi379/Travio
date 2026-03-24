@@ -1,0 +1,199 @@
+import { API_BASE } from "./config.js";
+import { showError } from "./utils.js";
+
+function getRideId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("rideId");
+}
+
+function formatTime(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return "";
+  return new Date(dateStr).toLocaleDateString(undefined, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+function buildDetailsHTML(ride, requests = []) {
+  const departure = ride.departureTime || ride.createdAt;
+  const pickupName = ride.pickup?.name || "Pickup";
+  const pickupAddr = ride.pickup?.address || "";
+  const destName = ride.destination?.name || "Destination";
+  const destAddr = ride.destination?.address || "";
+  const avatar = (ride.initiatorName?.charAt(0) || "?").toUpperCase();
+  const initiatorName = ride.initiatorName || "Driver / Host";
+
+  const isCab = ride.rideType === "cab";
+  const price =
+    isCab && ride.fare != null ? `₹${Number(ride.fare).toFixed(0)} (Total)` : "—";
+
+  const accepted = requests.filter((r) => r.status === "accepted");
+  const pending = requests.filter((r) => r.status === "pending");
+
+  return `
+    <section class="details-card">
+      <div class="route-strip">
+        <div>
+          <div>${formatDate(departure)}</div>
+          <small>${formatTime(departure)}</small>
+        </div>
+        <div>
+          <small>${isCab ? "🚖 Cab ride" : "🤝 Travel buddy ride"}</small>
+        </div>
+      </div>
+
+      <div class="segment-row">
+        <div class="seg-time">${formatTime(departure)}</div>
+        <div class="seg-body">
+          <div class="seg-city">${pickupName}</div>
+          <div class="seg-address">${pickupAddr}</div>
+        </div>
+      </div>
+
+      <div class="segment-row">
+        <div class="seg-time">${formatTime(departure)}</div>
+        <div class="seg-body">
+          <div class="seg-city">${destName}</div>
+          <div class="seg-address">${destAddr}</div>
+        </div>
+      </div>
+
+      <div class="driver-block">
+        <div class="driver-avatar-big">${avatar}</div>
+        <div class="driver-info">
+          <h3>${initiatorName}</h3>
+          <p>${isCab ? "Cab driver" : "Ride creator"}</p>
+        </div>
+      </div>
+
+      <div class="badge-row">
+        <span class="pill-badge"><i class="fa-solid fa-id-card"></i> Verified profile</span>
+        <span class="pill-badge"><i class="fa-solid fa-clock"></i> Instant booking</span>
+        <span class="pill-badge"><i class="fa-solid fa-user-group"></i> ${
+          typeof ride.seats === "number" ? `${ride.seats} seats` : "Seats info"
+        }</span>
+      </div>
+
+      <ul class="rules-list">
+        <li><i class="fa-solid fa-bolt"></i> Your booking will be confirmed instantly.</li>
+        <li><i class="fa-solid fa-ban-smoking"></i> No smoking, please.</li>
+        <li><i class="fa-solid fa-dog"></i> I'd prefer not to travel with pets.</li>
+        ${
+          ride.driver?.vehicleNumber
+            ? `<li><i class="fa-solid fa-car-side"></i> Vehicle: ${ride.driver.vehicleNumber}</li>`
+            : ""
+        }
+      </ul>
+
+      ${
+        accepted.length
+          ? `<h3 style="margin-top:18px;font-size:15px;font-weight:800;color:#111827;">Passengers who joined</h3>
+        <ul class="rules-list">
+          ${accepted
+            .map(
+              (req) => `
+            <li>
+              <i class="fa-solid fa-user-check"></i>
+              <span>${req.userId?.name || "Passenger"} (${req.userId?.email || ""})</span>
+            </li>`
+            )
+            .join("")}
+        </ul>`
+          : ""
+      }
+
+      ${
+        pending.length
+          ? `<h3 style="margin-top:18px;font-size:15px;font-weight:800;color:#111827;">Join requests</h3>
+        <ul class="rules-list">
+          ${pending
+            .map(
+              (req) => `
+            <li>
+              <i class="fa-solid fa-user-clock"></i>
+              <span>${req.userId?.name || "Student"} – pending</span>
+            </li>`
+            )
+            .join("")}
+        </ul>`
+          : ""
+      }
+
+      <div class="report-link">Report ride</div>
+    </section>
+
+    <aside class="summary-card">
+      <h4>Ride summary</h4>
+      <div class="summary-line">
+        <span>From</span>
+        <span>${pickupName}</span>
+      </div>
+      <div class="summary-line">
+        <span>To</span>
+        <span>${destName}</span>
+      </div>
+      <div class="summary-line">
+        <span>Passengers</span>
+        <span>${typeof ride.seats === "number" ? ride.seats : "1"} passenger</span>
+      </div>
+      <div class="summary-price">${price}</div>
+
+      <div class="summary-actions">
+        <button class="summary-btn" onclick="openChat('${ride._id}')">Chat</button>
+        <button class="summary-btn primary" onclick="requestRide('${ride._id}')">Request</button>
+      </div>
+    </aside>
+  `;
+}
+
+async function loadRideDetails() {
+  try {
+    const rideId = getRideId();
+    if (!rideId) {
+      showError("Ride ID is missing");
+      return;
+    }
+
+    const res = await fetch(`${API_BASE}/rides/${encodeURIComponent(rideId)}`, {
+      credentials: "include",
+    });
+    const data = await res.json();
+
+    if (!data.success) {
+      throw new Error(data.message || "Failed to load ride");
+    }
+
+    // Try to fetch join requests (only works for ride creator)
+    let requests = [];
+    try {
+      const reqRes = await fetch(
+        `${API_BASE}/ride-requests/${encodeURIComponent(rideId)}/requests`,
+        { credentials: "include" }
+      );
+      if (reqRes.ok) {
+        const reqData = await reqRes.json();
+        if (reqData.success && Array.isArray(reqData.data)) {
+          requests = reqData.data;
+        }
+      }
+    } catch (_err) {
+      // Silently ignore; section just won't show
+    }
+
+    const root = document.getElementById("rideDetailsRoot");
+    if (!root) return;
+
+    root.innerHTML = buildDetailsHTML(data.data, requests);
+  } catch (err) {
+    showError(err.message || "Something went wrong");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", loadRideDetails);
+

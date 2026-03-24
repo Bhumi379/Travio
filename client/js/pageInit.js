@@ -1,10 +1,11 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
 import { fetchCurrentUser } from './auth.js';
-import { loadRides, loadPreviousRides, createRide } from './rides.js';
+import { loadRides, loadPreviousRides, createRide, loadProfileRides } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
 import { showError } from './utils.js';
+import { initReviewSection } from './reviews.js';
 
 export async function initHomePage() {
   console.log("🏠 Initializing Home Page");
@@ -23,6 +24,8 @@ export async function initHomePage() {
   if (searchBtn) {
     searchBtn.addEventListener('click', searchRides);
   }
+
+  initReviewSection();
 }
 
 export function initCreateRidePage() {
@@ -64,16 +67,48 @@ export function initCreateRidePage() {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (!localSelectedPickup || !localSelectedDestination) {
-        showError("Please select pickup and destination from suggestions");
-        return;
-      }
-
+      const pickupInput = document.getElementById("pickup");
+      const destinationInput = document.getElementById("destination");
       const date = document.getElementById("rideDate").value;
       const time = document.getElementById("rideTime").value;
       const seats = document.getElementById("seats")?.value || 1;
       const fare = document.getElementById("fare")?.value;
       const notes = document.getElementById("notes")?.value;
+
+      // Basic empty checks first
+      if (!pickupInput?.value.trim() || !destinationInput?.value.trim()) {
+        showError("Please enter pickup and destination");
+        return;
+      }
+
+      // Fallback: if user typed manually and didn't click a suggestion,
+      // still build a minimal place object so the ride can be created.
+      if (!localSelectedPickup) {
+        const name = pickupInput.value.trim();
+        localSelectedPickup = {
+          name,
+          address: name,
+          location: {
+            type: "Point",
+            // Fallback coordinates (0,0) – backend requires a point
+            coordinates: [0, 0],
+          },
+        };
+        setSelectedPickup(localSelectedPickup);
+      }
+
+      if (!localSelectedDestination) {
+        const name = destinationInput.value.trim();
+        localSelectedDestination = {
+          name,
+          address: name,
+          location: {
+            type: "Point",
+            coordinates: [0, 0],
+          },
+        };
+        setSelectedDestination(localSelectedDestination);
+      }
 
       if (!date || !time) {
         showError("Please select date and time");
@@ -82,17 +117,32 @@ export function initCreateRidePage() {
 
       const departureTime = new Date(`${date}T${time}:00`).toISOString();
 
+      const isTravelBuddy = document.getElementById("buddyRequest")?.checked;
+      const rideType = isTravelBuddy ? "travelBuddy" : "cab";
+
       const rideData = {
         pickup: localSelectedPickup,
         destination: localSelectedDestination,
-        rideType: document.getElementById("buddyRequest")?.checked
-          ? "travelBuddy"
-          : "cab",
+        rideType,
         departureTime,
         seats: parseInt(seats),
         fare: fare ? parseFloat(fare) : undefined,
-        notes: notes || undefined
+        notes: notes || undefined,
       };
+
+      // For cab rides, include minimal driver details so backend validation passes
+      if (rideType === "cab") {
+        const driverNameInput = document.getElementById("driverName");
+        const carNumberInput = document.getElementById("carNumber");
+
+        const driverName = driverNameInput?.value?.trim();
+        const carNumber = carNumberInput?.value?.trim();
+
+        rideData.driver = {
+          name: driverName || undefined,
+          vehicleNumber: carNumber || undefined,
+        };
+      }
 
       await createRide(rideData);
     });
@@ -107,6 +157,7 @@ export function initPreviousRidesPage() {
 export function initProfilePage() {
   console.log("👤 Initializing Profile Page");
   // Profile form is already populated by fetchCurrentUser()
+  loadProfileRides();
   
   // You can add profile update functionality here
   const profileForm = document.getElementById("profileForm");

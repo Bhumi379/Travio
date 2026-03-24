@@ -1,6 +1,7 @@
 const User = require("../models/User");
-const { createSecretToken } = require("../tokenGeneration/generateToken");
 const bcrypt = require("bcryptjs");
+const sendMail = require("../config/mailer");
+
 
 const createUser = async (req, res) => {
   try {
@@ -12,24 +13,72 @@ const createUser = async (req, res) => {
       email,
       course,
       profilePicture,
-      password
+      password,
     } = req.body;
 
     // ------------------ VALIDATION --------------------
     if (!collegeId || !name || !contactNumber || !email || !course || !password) {
-      return res.status(400).json({ message: "All required fields must be filled" });
+      return res.status(400).json({
+        message: "All required fields must be filled",
+      });
     }
 
     // ------------------ CHECK IF USER EXISTS ------------------
     const oldUser = await User.findOne({ email });
+
+
     if (oldUser) {
-      return res.status(409).json({ message: "User already exists. Please login." });
+      // If already verified → block
+      if (oldUser.isVerified) {
+        return res.status(409).json({
+          message: "User already exists. Please login.",
+        });
+      }
+
+      // If NOT verified → resend OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+      const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+      oldUser.otp = otp;
+      oldUser.otpExpiry = otpExpiry;
+
+      await oldUser.save();
+
+      try {
+        
+
+        const subject = "Your Travio verification code (Resent)";
+        const text = `Your OTP is ${otp}. It will expire in 10 minutes.`;
+        const html = `<p>Your OTP is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`;
+
+        await sendMail(email, subject, html);
+
+
+      } catch (mailErr) {
+        console.error("Error resending OTP:", mailErr);
+
+        return res.status(500).json({
+          message: "Failed to resend OTP. Please try again.",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "OTP resent. Please verify your email.",
+        email: oldUser.email,
+      });
     }
 
     // ------------------ HASH PASSWORD ------------------
+    
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // ------------------ CREATE USER ------------------
+    // ------------------ GENERATE OTP ------------------
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    // ------------------ CREATE NEW USER ------------------
     const newUser = new User({
       collegeId,
       name,
@@ -38,39 +87,53 @@ const createUser = async (req, res) => {
       email,
       course,
       profilePicture,
-      hashedPassword
+      hashedPassword,
+      isVerified: false,
+      otp,
+      otpExpiry,
     });
 
     const user = await newUser.save();
 
-    // ------------------ CREATE TOKEN ------------------
-    const token = createSecretToken(user._id);
+    // ------------------ SEND OTP EMAIL ------------------
+    try {
+      
 
-//     res.cookie("token", token, {
-//   httpOnly: true,
-//   secure: false,        // 👈 MUST be false on localhost
-//   sameSite: "Lax",      // 👈 works on localhost
-//   maxAge: 24 * 60 * 60 * 1000
-// });
-const isProd = process.env.NODE_ENV === "production";
+      const subject = "Your Travio verification code";
+      const text = `Your OTP is ${otp}. It will expire in 10 minutes.`;
+      const html = `<p>Your OTP is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`;
 
-res.cookie("token", token, {
-  httpOnly: true,
-  secure: isProd,
-  sameSite: isProd ? "None" : "Lax",
-  maxAge: 24 * 60 * 60 * 1000
+      await sendMail({
+  to: email,
+  subject,
+  text,
+  html,
 });
-    console.log("Cookie set successfully");
+
+
+    } catch (mailErr) {
+      console.error("Error sending OTP email:", mailErr);
+
+      await User.deleteOne({ _id: user._id });
+
+
+      return res.status(500).json({
+        message: "Failed to send verification email. Please try again.",
+      });
+    }
 
     res.status(201).json({
       success: true,
-      message: "User created successfully",
-      user,
+      message: "User created. OTP sent to email. Verify to complete signup.",
+      email: user.email,
     });
 
   } catch (error) {
     console.error("Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
 };
 

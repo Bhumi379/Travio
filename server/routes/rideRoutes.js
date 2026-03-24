@@ -9,6 +9,7 @@ const {
   updateRide,
   deleteRide,
   getRidesByUser,
+  getMyRides,
 } = require("../controllers/rideController");
 
 /* =====================================
@@ -21,6 +22,8 @@ const {
 router.post("/create", protect, createRide);
 // GET all rides (geo + filters + search)
 router.get("/", getAllRides);
+// GET current user's rides (created + joined)
+router.get("/my-rides", protect, getMyRides);
 
 // GET rides by a specific user
 router.get("/user/:userId", getRidesByUser);

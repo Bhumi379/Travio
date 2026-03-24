@@ -6,7 +6,7 @@ import { setNotificationCheckInterval } from './config.js';
 import { getCurrentPage } from './utils.js';
 import { fetchCurrentUser, logout } from './auth.js';
 import { setupSearchAutocomplete } from './autocomplete.js';
-import { openChat, requestRide, searchRides } from './rides.js';
+import { openChat, requestRide, searchRides, openRideDetails } from './rides.js';
 import { 
   loadNotifications, 
   closeNotificationPanel,
@@ -19,15 +19,18 @@ import {
   initPreviousRidesPage, 
   initProfilePage 
 } from './pageInit.js';
+import { submitReview } from './reviews.js';
 
 // Make functions available globally (for onclick handlers in HTML)
 window.logout = logout;
 window.openChat = openChat;
 window.requestRide = requestRide;
 window.searchRides = searchRides;
+window.openRideDetails = openRideDetails;
 window.closeNotificationPanel = closeNotificationPanel;
 window.acceptRequest = acceptRequest;
 window.rejectRequest = rejectRequest;
+window.submitReview = submitReview;
 
 /* ==============================
    MAIN INITIALIZATION

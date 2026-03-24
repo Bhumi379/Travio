@@ -3,7 +3,9 @@ const Review = require('../models/review');
 // GET /api/reviews
 const getAllReviews = async (_req, res) => {
   try {
-    const reviews = await Review.find().sort({ createdAt: -1 });
+    const reviews = await Review.find()
+      .populate('userId', 'name')
+      .sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: reviews.length, data: reviews });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching reviews', error: error.message });
@@ -34,9 +36,21 @@ const getReviewsByUser = async (req, res) => {
 // POST /api/reviews
 const createReview = async (req, res) => {
   try {
-    const { userId, rating, comment } = req.body;
+    const authUserId = req.user?.id || req.user?._id;
+    const { rating, comment } = req.body;
 
-    const review = await Review.create({ userId, rating, comment });
+    if (!authUserId) {
+      return res.status(401).json({
+        success: false,
+        message: 'Unauthorized',
+      });
+    }
+
+    const review = await Review.create({
+      userId: authUserId,
+      rating,
+      comment,
+    });
 
     res.status(201).json({ success: true, message: 'Review created', data: review });
   } catch (error) {
