@@ -79,24 +79,24 @@ document.addEventListener('DOMContentLoaded', () => {
 // Driver details toggle functionality
 document.addEventListener('DOMContentLoaded', function() {
     
-    // Select the checkbox and the section to toggle
-    const immediateStartCheckbox = document.getElementById('immediateStart');
+    // Select ride type controls and toggle driver section for cab rides
+    const rideTypeCab = document.getElementById('rideTypeCab');
+    const rideTypeTravelBuddy = document.getElementById('rideTypeTravelBuddy');
     const driverDetailsSection = document.getElementById('driverDetailsSection');
 
     // Only run if these elements exist on the current page
-    if (immediateStartCheckbox && driverDetailsSection) {
-        
-        immediateStartCheckbox.addEventListener('change', function() {
+    if (rideTypeCab && rideTypeTravelBuddy && driverDetailsSection) {
+        const toggleDriverSection = () => {
             // Select the inputs inside the driver section
             const driverNameInput = document.getElementById('driverName');
             const carNumberInput = document.getElementById('carNumber');
             const aadharInput = document.getElementById('aadharPhoto');
 
-            if (this.checked) {
+            if (rideTypeCab.checked) {
                 // Show the section
                 driverDetailsSection.style.display = 'block';
                 
-                // Make inputs required (so user can't submit empty fields if they chose this option)
+                // Make inputs required when cab sharing is selected
                 if(driverNameInput) driverNameInput.required = true;
                 if(carNumberInput) carNumberInput.required = true;
                 if(aadharInput) aadharInput.required = true;
@@ -105,11 +105,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Hide the section
                 driverDetailsSection.style.display = 'none';
                 
-                // Remove required attribute (so user CAN submit the form without these fields)
+                // Remove required attributes for travel buddy posts
                 if(driverNameInput) driverNameInput.required = false;
                 if(carNumberInput) carNumberInput.required = false;
                 if(aadharInput) aadharInput.required = false;
             }
-        });
+        };
+
+        rideTypeCab.addEventListener('change', toggleDriverSection);
+        rideTypeTravelBuddy.addEventListener('change', toggleDriverSection);
+        toggleDriverSection();
     }
 });

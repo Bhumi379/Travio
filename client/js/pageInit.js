@@ -117,8 +117,9 @@ export function initCreateRidePage() {
 
       const departureTime = new Date(`${date}T${time}:00`).toISOString();
 
-      const isTravelBuddy = document.getElementById("buddyRequest")?.checked;
-      const rideType = isTravelBuddy ? "travelBuddy" : "cab";
+      const selectedRideType =
+        document.querySelector('input[name="ridePostType"]:checked')?.value || "travelBuddy";
+      const rideType = selectedRideType === "cab" ? "cab" : "travelBuddy";
 
       const rideData = {
         pickup: localSelectedPickup,

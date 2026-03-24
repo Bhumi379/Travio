@@ -3,6 +3,12 @@ import { API_BASE, setRides, rides } from './config.js';
 import { showError, showSuccess } from './utils.js';
 import { loadNotifications } from './notifications.js';
 
+function isCurrentOrFutureRide(ride) {
+  const rideDate = new Date(ride.departureTime || ride.createdAt);
+  if (Number.isNaN(rideDate.getTime())) return true;
+  return rideDate >= new Date();
+}
+
 /* ==============================
    LOAD ALL RIDES (Home Page)
 ================================ */
@@ -16,8 +22,9 @@ export async function loadRides(search = "") {
 
     if (!data.success) throw new Error(data.message);
 
-    setRides(data.data);
-    await displayRides(data.data, "ridesGrid");
+    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isCurrentOrFutureRide);
+    setRides(visibleRides);
+    await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
     showError(err.message);
   }
@@ -166,7 +173,8 @@ async function loadRidesWithParams(queryString = "") {
 
     if (!data.success) throw new Error(data.message);
 
-    await displayRides(data.data, "ridesGrid");
+    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isCurrentOrFutureRide);
+    await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
     showError(err.message);
   }

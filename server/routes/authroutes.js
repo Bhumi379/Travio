@@ -1,13 +1,13 @@
 const express = require("express");
 const router = express.Router();
 
-// ✅ Correct imports
-const { login, forgotPassword, resetPassword } = require("../controllers/login");
+const login = require("../controllers/login");
 const createUser = require("../controllers/signup");
 const verifyOtp = require("../controllers/verifyOtp");
 const resendOtp = require("../controllers/resendOtp");
 const authMiddleware = require("../middleware/authmiddleware");
 const User = require("../models/User");
+const bcrypt = require("bcryptjs");
 
 // ---------------- AUTH ROUTES ----------------
 
@@ -37,12 +37,6 @@ router.post("/logout", (req, res) => {
   });
 });
 
-// Forgot Password
-router.post("/forgot-password", forgotPassword);
-
-// Reset Password
-router.post("/reset-password/:token", resetPassword);
-
 // ---------------- PROTECTED ROUTE ----------------
 
 // Get logged-in user info
@@ -62,6 +56,67 @@ router.get("/me", authMiddleware, async (req, res) => {
     console.error("Error in /me route:", error);
     res.status(500).json({
       message: "Server error",
+    });
+  }
+});
+
+// Update logged-in user profile
+router.put("/me", authMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { name, email, contactNumber, guardianNumber, password } = req.body;
+
+    const user = await User.findById(userId).select("+hashedPassword");
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    if (name !== undefined) user.name = name;
+    if (contactNumber !== undefined) user.contactNumber = contactNumber;
+    if (guardianNumber !== undefined) user.guardianNumber = guardianNumber;
+
+    if (email !== undefined && email !== user.email) {
+      const existing = await User.findOne({
+        email,
+        _id: { $ne: userId },
+      });
+      if (existing) {
+        return res.status(409).json({
+          success: false,
+          message: "Email already in use",
+        });
+      }
+      user.email = email;
+    }
+
+    if (password && password.trim()) {
+      user.hashedPassword = await bcrypt.hash(password.trim(), 10);
+    }
+
+    await user.save();
+
+    const safeUser = await User.findById(userId).select("-hashedPassword");
+    return res.json({
+      success: true,
+      message: "Profile updated successfully",
+      user: safeUser,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors,
+      });
+    }
+    return res.status(500).json({
+      success: false,
+      message: "Server error",
+      error: error.message,
     });
   }
 });
