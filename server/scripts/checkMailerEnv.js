@@ -12,7 +12,7 @@ console.log('NODE_ENV:', process.env.NODE_ENV || '<unset>');
 
 try {
   const mailer = require('../config/mailer');
-  console.log('Mailer module loaded. sendMail available:', typeof mailer.sendMail === 'function');
+  console.log('Mailer module loaded. sendMail available:', typeof mailer === 'function');
 } catch (err) {
   console.error('Error loading mailer module:', err.message);
 }

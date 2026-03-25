@@ -136,7 +136,7 @@
 .welcome-section {
     /* 1. IMAGE SETUP */
     /* Make sure this filename matches exactly what is in your folder */
-    background-image: url('images/Gemini_Generated_Image_1101311013110131.png');
+    background-image: url('images/Gemini_Generated_Image_1101311013110131.jpg');
     
     /* 2. SCALING & POSITION */
     background-size: cover;       /* Ensures it covers the area without whitespace */

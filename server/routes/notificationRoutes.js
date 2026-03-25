@@ -14,6 +14,7 @@ router.get('/', protect, getNotifications);
 
 // Mark all notifications as read (MUST BE BEFORE /:notificationId)
 router.put('/read-all', protect, markAllAsRead);
+router.put('/mark-all-read', protect, markAllAsRead);
 
 // Mark specific notification as read
 router.put('/:notificationId/read', protect, markAsRead);

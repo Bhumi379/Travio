@@ -1,5 +1,5 @@
 import { API_BASE } from "./config.js";
-import { showError } from "./utils.js";
+import { showError, showSuccess } from "./utils.js";
 
 function getRideId() {
   const params = new URLSearchParams(window.location.search);
@@ -20,14 +20,14 @@ function formatDate(dateStr) {
   });
 }
 
-function buildDetailsHTML(ride, requests = []) {
+function buildDetailsHTML(ride, requests = [], currentUserId = null) {
   const departure = ride.departureTime || ride.createdAt;
   const pickupName = ride.pickup?.name || "Pickup";
   const pickupAddr = ride.pickup?.address || "";
   const destName = ride.destination?.name || "Destination";
   const destAddr = ride.destination?.address || "";
   const avatar = (ride.initiatorName?.charAt(0) || "?").toUpperCase();
-  const initiatorName = ride.initiatorName || "Driver / Host";
+  const initiatorName = ride.initiatorName || "Host";
 
   const isCab = ride.rideType === "cab";
   const price =
@@ -35,6 +35,7 @@ function buildDetailsHTML(ride, requests = []) {
 
   const accepted = requests.filter((r) => r.status === "accepted");
   const pending = requests.filter((r) => r.status === "pending");
+  const isOwner = currentUserId && String(ride.initiatorId) === String(currentUserId);
 
   return `
     <section class="details-card">
@@ -81,9 +82,7 @@ function buildDetailsHTML(ride, requests = []) {
       </div>
 
       <ul class="rules-list">
-        <li><i class="fa-solid fa-bolt"></i> Your booking will be confirmed instantly.</li>
-        <li><i class="fa-solid fa-ban-smoking"></i> No smoking, please.</li>
-        <li><i class="fa-solid fa-dog"></i> I'd prefer not to travel with pets.</li>
+        
         ${
           ride.driver?.vehicleNumber
             ? `<li><i class="fa-solid fa-car-side"></i> Vehicle: ${ride.driver.vehicleNumber}</li>`
@@ -101,6 +100,11 @@ function buildDetailsHTML(ride, requests = []) {
             <li>
               <i class="fa-solid fa-user-check"></i>
               <span>${req.userId?.name || "Passenger"} (${req.userId?.email || ""})</span>
+              ${
+                isOwner
+                  ? `<button class="summary-btn" style="margin-left:auto;padding:6px 10px;font-size:12px;" onclick="removeParticipant('${ride._id}','${req.userId?._id || req.userId}','${req.userId?.name || "Passenger"}')">Remove</button>`
+                  : ""
+              }
             </li>`
             )
             .join("")}
@@ -146,10 +150,67 @@ function buildDetailsHTML(ride, requests = []) {
 
       <div class="summary-actions">
         <button class="summary-btn" onclick="openChat('${ride._id}')">Chat</button>
-        <button class="summary-btn primary" onclick="requestRide('${ride._id}')">Request</button>
+        ${
+          isOwner
+            ? `<button class="summary-btn primary" style="background:#ef4444;box-shadow:none;" onclick="cancelRide('${ride._id}')">Cancel Ride</button>`
+            : `<button class="summary-btn primary" onclick="requestRide('${ride._id}')">Request</button>`
+        }
       </div>
     </aside>
   `;
+}
+
+async function getCurrentUserId() {
+  try {
+    const res = await fetch(`${API_BASE}/auth/me`, { credentials: "include" });
+    const data = await res.json();
+    return data?.user?._id || data?.user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+async function cancelRide(rideId) {
+  const ok = window.confirm("Are you sure you want to cancel this ride for everyone?");
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API_BASE}/rides/${encodeURIComponent(rideId)}/cancel`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) throw new Error(data.message || "Failed to cancel ride");
+    showSuccess("Ride cancelled successfully");
+    setTimeout(() => {
+      window.location.href = "previous_ride.html";
+    }, 1000);
+  } catch (err) {
+    showError(err.message || "Failed to cancel ride");
+  }
+}
+
+async function removeParticipant(rideId, participantUserId, participantName = "participant") {
+  const ok = window.confirm(`Remove ${participantName} from this ride?`);
+  if (!ok) return;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/rides/${encodeURIComponent(rideId)}/participants/${encodeURIComponent(participantUserId)}`,
+      {
+        method: "DELETE",
+        credentials: "include",
+      }
+    );
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || "Failed to remove participant");
+    }
+    showSuccess("Participant removed");
+    await loadRideDetails();
+  } catch (err) {
+    showError(err.message || "Failed to remove participant");
+  }
 }
 
 async function loadRideDetails() {
@@ -189,11 +250,15 @@ async function loadRideDetails() {
     const root = document.getElementById("rideDetailsRoot");
     if (!root) return;
 
-    root.innerHTML = buildDetailsHTML(data.data, requests);
+    const currentUserId = await getCurrentUserId();
+    root.innerHTML = buildDetailsHTML(data.data, requests, currentUserId);
   } catch (err) {
     showError(err.message || "Something went wrong");
   }
 }
+
+window.cancelRide = cancelRide;
+window.removeParticipant = removeParticipant;
 
 document.addEventListener("DOMContentLoaded", loadRideDetails);
 

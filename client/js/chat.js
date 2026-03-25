@@ -85,6 +85,7 @@ function connectSocket() {
   socket.on('new-message', (data) => {
     if (data.chatId === chatId) {
       appendMessage(data.message);
+      markChatRead(chatId);
     }
   });
 
@@ -102,6 +103,18 @@ function joinChat(cId) {
 function leaveChat(cId) {
   if (socket && cId) {
     socket.emit('leave-chat', cId);
+  }
+}
+
+async function markChatRead(cId) {
+  if (!cId) return;
+  try {
+    await fetchJSON(`${API_BASE}/chats/${cId}/read`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch {
+    // Ignore read-sync failures in UI flow
   }
 }
 
@@ -156,6 +169,11 @@ async function showChatList() {
       : null;
     const preview = lastMsg ? lastMsg.encryptedMessage : 'No messages yet';
     const time = lastMsg ? formatDate(lastMsg.timestamp) : '';
+    const unreadCount = (chat.messages || []).filter((msg) => {
+      const isMine = String(msg.senderId) === String(userId);
+      const readBy = Array.isArray(msg.readBy) ? msg.readBy.map(String) : [];
+      return !isMine && !readBy.includes(String(userId));
+    }).length;
 
     return `
       <div class="chat-list-item" data-chat-id="${chat._id}" data-partner-id="${pid}">
@@ -165,6 +183,7 @@ async function showChatList() {
           <div class="chat-preview">${preview}</div>
         </div>
         <div class="chat-time">${time}</div>
+        ${unreadCount > 0 ? `<span class="notification-badge" style="position:static;width:auto;min-width:20px;padding:0 6px;border-radius:999px;">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}
       </div>`;
   }).join('');
 
@@ -204,6 +223,7 @@ async function openConversation(cId, pId) {
   };
 
   await loadMessages();
+  await markChatRead(chatId);
   joinChat(chatId);
 }
 

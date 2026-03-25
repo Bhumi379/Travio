@@ -3,19 +3,14 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js",
+    "seed": "node seed.js",
     "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Bhumi379/Travio.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Bhumi379/Travio/issues"
-  },
-  "homepage": "https://github.com/Bhumi379/Travio#readme",
   "description": "",
   "dependencies": {
     "bcryptjs": "^3.0.3",
@@ -29,5 +24,8 @@
     "multer": "^2.0.2",
     "nodemailer": "^7.0.13",
     "socket.io": "^4.8.3"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
   }
 }

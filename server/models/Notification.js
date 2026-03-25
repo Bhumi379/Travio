@@ -26,7 +26,7 @@ const notificationSchema = new mongoose.Schema(
     // Type of notification (for future extensibility)
     type: {
       type: String,
-      enum: ['join_request', 'request_accepted', 'request_rejected'],
+      enum: ['join_request', 'request_accepted', 'request_rejected', 'ride_cancelled', 'removed_from_ride'],
       default: 'join_request',
     },
 
