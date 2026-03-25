@@ -16,7 +16,7 @@ const resendOtp = async (req, res) => {
   await user.save();
 
   try {
-    const  sendMail = require("../config/mailer").default;
+    const sendMail = require("../config/mailer");
     const subject = "Your Travio verification code (resend)";
     const text = `Your new OTP is ${otp}. It will expire in 10 minutes.`;
     const html = `<p>Your new OTP is <strong>${otp}</strong>. It will expire in 10 minutes.</p>`;

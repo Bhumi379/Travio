@@ -1,28 +1,24 @@
 const express = require("express");
 const router = express.Router();
 
-const login = require("../controllers/login");
-const createUser = require("../controllers/signup");
+const loginController = require("../controllers/login");
+const createUser = require("../controllers/signup"); // ✅ ADD THIS
 const verifyOtp = require("../controllers/verifyOtp");
 const resendOtp = require("../controllers/resendOtp");
+
 const authMiddleware = require("../middleware/authmiddleware");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 
 // ---------------- AUTH ROUTES ----------------
 
-// Signup
 router.post("/signup", createUser);
-
-// Verify OTP
 router.post("/verify-otp", verifyOtp);
-
-// Resend OTP
 router.post("/resend-otp", resendOtp);
 
-// Login
-router.post("/login", login);
-
+router.post("/login", loginController.login);
+router.post("/forgot-password", loginController.forgotPassword);
+router.post("/reset-password/:token", loginController.resetPassword);
 // Logout
 router.post("/logout", (req, res) => {
   res.clearCookie("token", {
