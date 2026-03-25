@@ -576,6 +576,16 @@
     gap: 24px;
 }
 
+/* Full vertical list for search-results page */
+.search-results-page .rides-grid,
+.search-results-main .rides-grid {
+    max-height: none;
+    overflow: visible;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 0;
+}
+
 /* Custom Scrollbar */
 .rides-grid::-webkit-scrollbar {
     width: 8px;

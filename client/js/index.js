@@ -18,7 +18,8 @@ import {
   initHomePage, 
   initCreateRidePage, 
   initPreviousRidesPage, 
-  initProfilePage 
+  initProfilePage, 
+  initSearchResultsPage 
 } from './pageInit.js';
 import { submitReview } from './reviews.js';
 
@@ -69,6 +70,9 @@ document.addEventListener("DOMContentLoaded", async () => {
       break;
     case 'profile':
       initProfilePage();
+      break;
+    case 'search_results':
+      initSearchResultsPage();
       break;
     default:
       console.warn("⚠️ Unknown page:", currentPage);

@@ -15,20 +15,29 @@ function escapeHtml(input = "") {
     .replace(/'/g, "&#39;");
 }
 
-function renderReviews(reviews = []) {
+function renderReviews(reviews = [], filter = 'all') {
   const container = document.getElementById("reviewsGrid");
   if (!container) return;
 
-  if (!reviews.length) {
+  let filteredReviews = reviews;
+
+  if (filter === 'my-reviews' && currentUser) {
+    filteredReviews = reviews.filter(review => review.userId?._id === currentUser._id);
+  } else if (filter !== 'all' && !isNaN(filter)) {
+    const rating = parseInt(filter);
+    filteredReviews = reviews.filter(review => review.rating === rating);
+  }
+
+  if (!filteredReviews.length) {
     container.innerHTML = `
       <div class="review-card">
-        <p class="review-text">No reviews yet. Be the first to share your experience.</p>
+        <p class="review-text">No reviews match the selected filter.</p>
       </div>
     `;
     return;
   }
 
-  container.innerHTML = reviews
+  container.innerHTML = filteredReviews
     .map((review) => {
       const name = escapeHtml(review.userId?.name || "Travio Student");
       const comment = escapeHtml(review.comment || "No comment provided.");
@@ -51,6 +60,8 @@ function renderReviews(reviews = []) {
     .join("");
 }
 
+let allReviews = [];
+
 export async function loadReviews() {
   try {
     const res = await fetch(`${API_BASE}/reviews`, {
@@ -62,7 +73,9 @@ export async function loadReviews() {
       throw new Error(data.message || "Failed to load reviews");
     }
 
-    renderReviews(Array.isArray(data.data) ? data.data : []);
+    allReviews = Array.isArray(data.data) ? data.data : [];
+    const filter = document.getElementById("reviewFilter")?.value || 'all';
+    renderReviews(allReviews, filter);
   } catch (err) {
     showError(err.message || "Unable to load reviews");
   }
@@ -120,6 +133,15 @@ export function initReviewSection() {
     event.preventDefault();
     await submitReview();
   });
+
+  // Add filter event listener
+  const filterSelect = document.getElementById("reviewFilter");
+  if (filterSelect) {
+    filterSelect.addEventListener("change", () => {
+      const filter = filterSelect.value;
+      renderReviews(allReviews, filter);
+    });
+  }
 
   loadReviews();
 }

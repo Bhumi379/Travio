@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Search Results - Travio</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <ul class="bg-bubbles">
+    <li style="left: 10%; width: 80px; height: 80px;"></li>
+    <li style="left: 20%; width: 30px; height: 30px; animation-delay: 2s; animation-duration: 17s;"></li>
+    <li style="left: 25%; animation-delay: 4s;"></li>
+    <li style="left: 40%; width: 60px; height: 60px; animation-duration: 22s;"></li>
+    <li style="left: 70%; width: 120px; height: 120px;"></li>
+  </ul>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <img src="images/logo.png" alt="Travio Logo" class="header-logo-img" />
+        <div class="logo-info">
+          <h2>Travio</h2>
+          <p>Travel Buddy</p>
+        </div>
+      </div>
+      <nav class="top-nav">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="create_a_ride.html" class="nav-link">Create a Ride</a>
+        <a href="profile.html" class="nav-link">Profile</a>
+      </nav>
+      <div class="header-right">
+        <div class="notification"><a href="chat.html"><img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif" /></a></div>
+        <div class="notification"><a href="profile.html"><img src="images/profile.gif" alt="User" class="header-avatar" /></a></div>
+      </div>
+    </header>
+  </div>
+
+  <div class="content">
+    <section class="reviews-section search-results-page" style="padding: 24px 20px; max-width: 1200px; margin: 0 auto;">
+      <h2 class="section-title">Search Results</h2>
+      <p id="searchSummary" style="color:#f97316; font-weight:700; margin-bottom: 12px;">Loading search results...</p>
+      <a class="back-btn" href="index.html" style="display:inline-block; margin-bottom:16px;">← Back to home</a>
+
+      <div class="rides-section" style="background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,.08);">
+        <div class="rides-grid" id="searchResultsGrid"></div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module" src="js/index.js"></script>
+  <script type="module">
+    import { loadSearchResults } from './js/rides.js';
+    document.addEventListener('DOMContentLoaded', loadSearchResults);
+  </script>
+</body>
+</html>

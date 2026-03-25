@@ -9,8 +9,18 @@ function isCurrentOrFutureRide(ride) {
   return rideDate >= new Date();
 }
 
+function isTodayRide(ride) {
+  const rideDate = new Date(ride.departureTime || ride.createdAt);
+  if (Number.isNaN(rideDate.getTime())) return false;
+  const today = new Date();
+  return rideDate.getFullYear() === today.getFullYear() &&
+         rideDate.getMonth() === today.getMonth() &&
+         rideDate.getDate() === today.getDate();
+}
+
 /* ==============================
    LOAD ALL RIDES (Home Page)
+   - Today only
 ================================ */
 export async function loadRides(search = "") {
   try {
@@ -22,7 +32,7 @@ export async function loadRides(search = "") {
 
     if (!data.success) throw new Error(data.message);
 
-    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isCurrentOrFutureRide);
+    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isTodayRide);
     setRides(visibleRides);
     await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
@@ -156,12 +166,71 @@ export function searchRides() {
   const date = document.getElementById("dateSearch")?.value;
 
   const params = new URLSearchParams();
-
   if (pickup) params.append("pickup", pickup);
   if (destination) params.append("destination", destination);
   if (date) params.append("date", date);
 
+  if (date) {
+    window.location.href = `search-results.html?${params.toString()}`;
+    return;
+  }
+
   loadRidesWithParams(params.toString());
+}
+
+/* ==============================
+   SEARCH RESULTS PAGE
+================================ */
+export async function loadSearchResults() {
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pickup = urlParams.get('pickup');
+    const destination = urlParams.get('destination');
+    const date = urlParams.get('date');
+
+    const pickupInput = document.getElementById('pickupSearch');
+    const destinationInput = document.getElementById('destinationSearch');
+    const dateInput = document.getElementById('dateSearch');
+    if (pickupInput && pickup !== null) pickupInput.value = pickup;
+    if (destinationInput && destination !== null) destinationInput.value = destination;
+    if (dateInput && date !== null) dateInput.value = date;
+
+    const summaryEl = document.getElementById('searchSummary');
+    if (summaryEl) {
+      let txt = 'Showing rides';
+      if (date) txt += ` for ${new Date(date).toLocaleDateString()}`;
+      if (pickup) txt += ` from ${pickup}`;
+      if (destination) txt += ` to ${destination}`;
+      summaryEl.textContent = txt;
+    }
+
+    const query = new URLSearchParams();
+    if (pickup) query.set('pickup', pickup);
+    if (destination) query.set('destination', destination);
+    if (date) query.set('date', date);
+
+    const apiUrl = `${API_BASE}/rides${query.toString() ? '?' + query.toString() : ''}`;
+    const res = await fetch(apiUrl, { credentials: 'include' });
+    const data = await res.json();
+
+    if (!data.success) throw new Error(data.message || 'Failed to load search results');
+
+    const results = Array.isArray(data.data) ? data.data : [];
+    await displayRides(results, 'searchResultsGrid');
+
+    const searchForm = document.getElementById('searchResultsForm');
+    if (searchForm && !searchForm.dataset.bound) {
+      searchForm.dataset.bound = 'true';
+      searchForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        searchRides();
+      });
+    }
+  } catch (err) {
+    showError(err.message);
+    const summaryEl = document.getElementById('searchSummary');
+    if (summaryEl) summaryEl.textContent = 'Error loading search results';
+  }
 }
 
 async function loadRidesWithParams(queryString = "") {

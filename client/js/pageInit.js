@@ -1,7 +1,7 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
 import { fetchCurrentUser, updateCurrentUserProfile } from './auth.js';
-import { loadRides, loadPreviousRides, createRide, loadProfileRides } from './rides.js';
+import { loadRides, loadPreviousRides, createRide, loadProfileRides, loadSearchResults } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
 import { showError } from './utils.js';
@@ -197,4 +197,9 @@ export function initProfilePage() {
       }
     });
   }
+}
+
+export function initSearchResultsPage() {
+  console.log("🔎 Initializing Search Results Page");
+  loadSearchResults();
 }
