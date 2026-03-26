@@ -1,9 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Profile - Travio</title>
+    <title>Create Ride - Travio</title>
      <link rel="stylesheet" href="styles.css"> 
     </head>
 <body>
@@ -31,6 +32,7 @@
     <nav class="top-nav">
         <a href="index.html" class="nav-link" onclick="showPage('home')">Home</a>
         <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride')">Create a Ride</a>
+        <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides')">Previous Rides</a>
         <a href="about.html" class="nav-link" onclick="showPage('about')">Information</a>
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
     </nav>
@@ -66,7 +68,7 @@
 </div>
         <div class="form-card">
 
-            <form id="createRideForm">
+            <form id="createRideForm" enctype="multipart/form-data">
                 <div class="ride-type-selector">
                     <p class="ride-type-heading">Post this ride as</p>
                     <div class="ride-type-options">
@@ -176,6 +178,20 @@
                                 📤 Choose File
                             </button>
                             <span id="fileName" class="file-name">No file chosen</span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="licensePhoto">
+                            <span class="icon">🪪</span>
+                            Driver License Photo
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="licensePhoto" accept="image/*,.pdf" style="display: none;">
+                            <button type="button" class="file-upload-btn" onclick="document.getElementById('licensePhoto').click()">
+                                📤 Choose File
+                            </button>
+                            <span id="licenseFileName" class="file-name">No file chosen</span>
                         </div>
                     </div>
                 </div>

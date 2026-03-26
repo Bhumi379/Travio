@@ -186,12 +186,14 @@
         }
 
         .page-header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            background: -webkit-linear-gradient(#F37021, #e65100);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
+    background: linear-gradient(#F37021, #e65100);
+
+    background-clip: text;          /* ✅ ADD THIS */
+    -webkit-background-clip: text;  /* already there */
+
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
 
         .page-header p {
             color: var(--text-light);

@@ -100,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const driverNameInput = document.getElementById('driverName');
             const carNumberInput = document.getElementById('carNumber');
             const aadharInput = document.getElementById('aadharPhoto');
+            const licenseInput = document.getElementById('licensePhoto');
 
             if (rideTypeCab.checked) {
                 // Show the section
@@ -108,7 +109,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Make inputs required when cab sharing is selected
                 if(driverNameInput) driverNameInput.required = true;
                 if(carNumberInput) carNumberInput.required = true;
-                if(aadharInput) aadharInput.required = true;
+                // Keep hidden file inputs non-required in native validation.
+                // We validate these in JS submit handler to avoid blocked submit.
+                if(aadharInput) aadharInput.required = false;
+                if(licenseInput) licenseInput.required = false;
                 
             } else {
                 // Hide the section
@@ -118,6 +122,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if(driverNameInput) driverNameInput.required = false;
                 if(carNumberInput) carNumberInput.required = false;
                 if(aadharInput) aadharInput.required = false;
+                if(licenseInput) licenseInput.required = false;
             }
         };
 
@@ -125,4 +130,23 @@ document.addEventListener('DOMContentLoaded', function() {
         rideTypeTravelBuddy.addEventListener('change', toggleDriverSection);
         toggleDriverSection();
     }
+});
+
+// File name previews for upload inputs on create ride page
+document.addEventListener("DOMContentLoaded", () => {
+  const aadharInput = document.getElementById("aadharPhoto");
+  const aadharName = document.getElementById("fileName");
+  if (aadharInput && aadharName) {
+    aadharInput.addEventListener("change", () => {
+      aadharName.textContent = aadharInput.files?.[0]?.name || "No file chosen";
+    });
+  }
+
+  const licenseInput = document.getElementById("licensePhoto");
+  const licenseName = document.getElementById("licenseFileName");
+  if (licenseInput && licenseName) {
+    licenseInput.addEventListener("change", () => {
+      licenseName.textContent = licenseInput.files?.[0]?.name || "No file chosen";
+    });
+  }
 });

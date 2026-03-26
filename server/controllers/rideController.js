@@ -58,9 +58,17 @@ const getAllRides = async (req, res) => {
     // Normal search (no geo)
     const rides = await Ride.find(matchQuery)
       .sort({ departureTime: 1 })
+      .populate('initiatorId', 'name profilePicture')
       .lean();
 
-    res.json({ success: true, count: rides.length, data: rides });
+    // Add initiatorName and initiatorProfilePicture to each ride for frontend compatibility
+    const ridesWithInitiatorInfo = rides.map(ride => ({
+      ...ride,
+      initiatorName: ride.initiatorId?.name || 'Host',
+      initiatorProfilePicture: ride.initiatorId?.profilePicture || null,
+    }));
+
+    res.json({ success: true, count: ridesWithInitiatorInfo.length, data: ridesWithInitiatorInfo });
   } catch (err) {
     res.status(500).json({
       success: false,
@@ -104,9 +112,30 @@ const createRide = async (req, res) => {
   try {
     console.log("🔥 CREATE RIDE CONTROLLER HIT");
 
-    const ride = await Ride.create({
+    // Parse JSON fields from FormData
+    const rideData = {
       ...req.body,
-      initiatorId: req.user.id || req.user._id, // 🔥 FIX
+      pickup: req.body.pickup ? JSON.parse(req.body.pickup) : req.body.pickup,
+      destination: req.body.destination ? JSON.parse(req.body.destination) : req.body.destination,
+      driver: req.body.driver ? JSON.parse(req.body.driver) : req.body.driver,
+      seats: req.body.seats ? parseInt(req.body.seats) : req.body.seats,
+      fare: req.body.fare ? parseFloat(req.body.fare) : req.body.fare,
+    };
+
+    // Handle file uploads
+    if (req.files) {
+      if (!rideData.driver) rideData.driver = {};
+      if (req.files.license) {
+        rideData.driver.driverLicenseImage = req.files.license[0].path;
+      }
+      if (req.files.aadhar) {
+        rideData.driver.aadharImage = req.files.aadhar[0].path;
+      }
+    }
+
+    const ride = await Ride.create({
+      ...rideData,
+      initiatorId: req.user.id || req.user._id,
     });
 
     res.status(201).json({
@@ -314,12 +343,19 @@ const getRidesByUser = async (req, res) => {
       initiatorId: req.params.userId,
     })
       .sort({ createdAt: -1 })
+      .populate('initiatorId', 'name profilePicture')
       .lean();
+
+    const ridesWithInitiatorInfo = rides.map(ride => ({
+      ...ride,
+      initiatorName: ride.initiatorId?.name || 'Host',
+      initiatorProfilePicture: ride.initiatorId?.profilePicture || null,
+    }));
 
     res.status(200).json({
       success: true,
-      count: rides.length,
-      data: rides,
+      count: ridesWithInitiatorInfo.length,
+      data: ridesWithInitiatorInfo,
     });
   } catch (error) {
     res.status(500).json({
@@ -344,18 +380,20 @@ const getMyRides = async (req, res) => {
     }
 
     const [createdRides, acceptedRequests] = await Promise.all([
-      Ride.find({ initiatorId: userId }).lean(),
+      Ride.find({ initiatorId: userId }).populate('initiatorId', 'name profilePicture').lean(),
       RideRequest.find({ userId, status: "accepted" }).select("rideId").lean(),
     ]);
 
     const joinedRideIds = acceptedRequests.map((reqDoc) => reqDoc.rideId);
     const joinedRides = joinedRideIds.length
-      ? await Ride.find({ _id: { $in: joinedRideIds } }).lean()
+      ? await Ride.find({ _id: { $in: joinedRideIds } }).populate('initiatorId', 'name profilePicture').lean()
       : [];
 
     const normalizeRide = (ride, role) => ({
       ...ride,
       role,
+      initiatorName: ride.initiatorId?.name || 'Host',
+      initiatorProfilePicture: ride.initiatorId?.profilePicture || null,
     });
 
     const createdWithRole = createdRides.map((ride) =>
@@ -363,7 +401,7 @@ const getMyRides = async (req, res) => {
     );
     const joinedWithRole = joinedRides
       .filter(
-        (ride) => String(ride.initiatorId) !== String(userId)
+        (ride) => String(ride.initiatorId._id) !== String(userId)
       )
       .map((ride) => normalizeRide(ride, "participant"));
 

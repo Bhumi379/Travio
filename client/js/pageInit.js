@@ -1,7 +1,7 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
 import { fetchCurrentUser, updateCurrentUserProfile } from './auth.js';
-import { loadRides, loadPreviousRides, createRide, loadProfileRides, loadSearchResults } from './rides.js';
+import { loadRides, loadPreviousRides, createRide, loadProfileRides } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
 import { showError } from './utils.js';
@@ -33,6 +33,7 @@ export function initCreateRidePage() {
   
   let localSelectedPickup = null;
   let localSelectedDestination = null;
+  let isSubmitting = false;
   
   // Setup create ride form autocomplete
   setupOSMAutocomplete("pickup", place => {
@@ -66,6 +67,15 @@ export function initCreateRidePage() {
   if (form) {
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
+      if (isSubmitting) return;
+
+      const submitBtn = form.querySelector('button[type="submit"]');
+      isSubmitting = true;
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Publishing...";
+      }
+      try {
 
       const pickupInput = document.getElementById("pickup");
       const destinationInput = document.getElementById("destination");
@@ -121,31 +131,50 @@ export function initCreateRidePage() {
         document.querySelector('input[name="ridePostType"]:checked')?.value || "travelBuddy";
       const rideType = selectedRideType === "cab" ? "cab" : "travelBuddy";
 
-      const rideData = {
-        pickup: localSelectedPickup,
-        destination: localSelectedDestination,
-        rideType,
-        departureTime,
-        seats: parseInt(seats),
-        fare: fare ? parseFloat(fare) : undefined,
-        notes: notes || undefined,
-      };
+      // Build FormData for multipart upload
+      const formData = new FormData();
+      formData.append("pickup", JSON.stringify(localSelectedPickup));
+      formData.append("destination", JSON.stringify(localSelectedDestination));
+      formData.append("rideType", rideType);
+      formData.append("departureTime", departureTime);
+      formData.append("seats", parseInt(seats));
+      if (fare) formData.append("fare", parseFloat(fare));
+      if (notes) formData.append("notes", notes);
 
-      // For cab rides, include minimal driver details so backend validation passes
+      // For cab rides, include driver details
       if (rideType === "cab") {
         const driverNameInput = document.getElementById("driverName");
         const carNumberInput = document.getElementById("carNumber");
+        const aadharFile = document.getElementById("aadharPhoto")?.files?.[0];
+        const licenseFile = document.getElementById("licensePhoto")?.files?.[0];
 
         const driverName = driverNameInput?.value?.trim();
         const carNumber = carNumberInput?.value?.trim();
 
-        rideData.driver = {
+        const driver = {
           name: driverName || undefined,
           vehicleNumber: carNumber || undefined,
         };
+        formData.append("driver", JSON.stringify(driver));
+
+        if (!aadharFile || !licenseFile) {
+          showError("Please upload both Aadhar and License files for cab rides");
+          return;
+        }
+
+        // Append files
+        if (aadharFile) formData.append("aadhar", aadharFile);
+        if (licenseFile) formData.append("license", licenseFile);
       }
 
-      await createRide(rideData);
+      await createRide(formData);
+      } finally {
+        isSubmitting = false;
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = "🎉 Publish Ride";
+        }
+      }
     });
   }
 }
@@ -155,10 +184,13 @@ export function initPreviousRidesPage() {
   loadPreviousRides();
 }
 
-export function initProfilePage() {
+export async function initProfilePage() {
   console.log("👤 Initializing Profile Page");
   // Profile form is already populated by fetchCurrentUser()
   loadProfileRides();
+  
+  // Load profile pictures
+  loadProfilePictures();
   
   const profileForm = document.getElementById("profileForm");
   if (profileForm) {
@@ -170,18 +202,31 @@ export function initProfilePage() {
         const contactNumber = document.getElementById("phone")?.value?.trim();
         const guardianNumber = document.getElementById("guardianPhone")?.value?.trim();
         const password = document.getElementById("password")?.value || "";
+        const profilePicture = document.getElementById("selectedProfilePicture")?.value || "";
 
+        console.log("📤 Sending profile update with picture:", profilePicture);
+        
         await updateCurrentUserProfile({
           name,
           email,
           contactNumber,
           guardianNumber,
           password: password.trim() ? password : undefined,
+          profilePicture: profilePicture || "",
         });
 
         const avatarDiv = document.querySelector(".profile-avatar");
         if (avatarDiv) {
-          avatarDiv.textContent = name?.charAt(0)?.toUpperCase() || "U";
+          // If profile picture is set, show it; else show initial
+          if (profilePicture) {
+            avatarDiv.style.backgroundImage = `url('${profilePicture}')`;
+            avatarDiv.style.backgroundSize = 'cover';
+            avatarDiv.style.backgroundPosition = 'center';
+            avatarDiv.textContent = '';
+          } else {
+            avatarDiv.style.backgroundImage = '';
+            avatarDiv.textContent = name?.charAt(0)?.toUpperCase() || "U";
+          }
         }
         const displayName = document.getElementById("profileDisplayName");
         if (displayName) {
@@ -199,7 +244,75 @@ export function initProfilePage() {
   }
 }
 
-export function initSearchResultsPage() {
-  console.log("🔎 Initializing Search Results Page");
-  loadSearchResults();
+async function loadProfilePictures() {
+  try {
+    // Try multiple paths to find the JSON file
+    let res = await fetch('/images/profile-pictures-mapping.json');
+    
+    if (!res.ok) {
+      console.warn("Failed to load from /images, trying ./images");
+      res = await fetch('./images/profile-pictures-mapping.json');
+    }
+    
+    if (!res.ok) {
+      console.warn("Failed to load from ./images, trying ../images");
+      res = await fetch('../images/profile-pictures-mapping.json');
+    }
+    
+    if (!res.ok) {
+      throw new Error(`Failed to load profile pictures: ${res.status} ${res.statusText}`);
+    }
+    
+    const pictures = await res.json();
+    console.log("✅ Profile pictures loaded:", Object.keys(pictures).length);
+    
+    const grid = document.getElementById('profilePicturesGrid');
+    if (!grid) {
+      console.error("❌ Grid element not found");
+      return;
+    }
+    
+    // Get the current user's profile picture
+    const { currentUser } = await import('./config.js');
+    const savedPicture = currentUser?.profilePicture;
+    console.log("💾 Currently saved picture:", savedPicture);
+    
+    for (const [key, url] of Object.entries(pictures)) {
+      const picDiv = document.createElement('div');
+      picDiv.className = 'profile-pic-option';
+      picDiv.innerHTML = `<img src="${url}" alt="Profile Picture" loading="lazy">`;
+      
+      // Test if image loads
+      const img = picDiv.querySelector('img');
+      img.addEventListener('error', () => {
+        console.error("❌ Image failed to load:", url);
+      });
+      img.addEventListener('load', () => {
+        console.log("✅ Image loaded:", url);
+      });
+      
+      // If this is the saved picture, select it
+      if (savedPicture && url === savedPicture) {
+        picDiv.classList.add('selected');
+        document.getElementById('selectedProfilePicture').value = url;
+        console.log("🎯 Auto-selected saved picture:", url);
+      }
+      
+      picDiv.addEventListener('click', () => {
+        // Remove selected from all
+        document.querySelectorAll('.profile-pic-option').forEach(el => {
+          el.classList.remove('selected');
+        });
+        // Add selected to this one
+        picDiv.classList.add('selected');
+        // Store the URL
+        document.getElementById('selectedProfilePicture').value = url;
+        console.log("Selected profile picture:", url);
+      });
+      
+      grid.appendChild(picDiv);
+    }
+  } catch (err) {
+    console.error("❌ Error loading profile pictures:", err);
+  }
 }

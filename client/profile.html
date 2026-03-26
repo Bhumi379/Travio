@@ -74,7 +74,7 @@
             margin-bottom: 12px;
             border: 3px solid rgba(255,255,255,0.5);
             box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-            background: rgba(255,255,255,0.25) !important;
+            
         }
 
         .sidebar-name {
@@ -275,6 +275,62 @@
             cursor: not-allowed;
         }
 
+        .profile-pictures-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 8px 0 12px 0;
+            padding: 10px;
+            background: #fff;
+            border-radius: 8px;
+            border: 1px solid #fcd9b6;
+        }
+
+        .profile-pic-option {
+            position: relative;
+            cursor: pointer;
+            border-radius: 8px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .profile-pic-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .profile-pic-option:hover {
+            transform: scale(1.05);
+            border-color: #ff8c00;
+        }
+
+        .profile-pic-option.selected {
+            border-color: #ff8c00;
+            box-shadow: 0 0 8px rgba(255, 140, 0, 0.5);
+        }
+
+        .profile-pic-option.selected::after {
+            content: "✓";
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #ff8c00;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
         /* ══ MAIN AREA: offset from sidebar, below header ══ */
         .profile-page-wrapper {
             margin-left: 290px;
@@ -413,6 +469,10 @@
             <label for="guardianPhone">Guardian No.</label>
             <input type="tel" id="guardianPhone" placeholder="Emergency contact">
 
+            <label>Profile Picture</label>
+            <div id="profilePicturesGrid" class="profile-pictures-grid"></div>
+            <input type="hidden" id="selectedProfilePicture" name="profilePicture">
+
             <label for="password">New Password (optional)</label>
             <input type="password" id="password" placeholder="Leave blank to keep current">
 
@@ -465,7 +525,20 @@
             const phone    = document.getElementById('phone').value.trim();
             const guardian = document.getElementById('guardianPhone').value.trim();
 
-            document.getElementById('profileDisplayAvatar').textContent = name ? name.charAt(0).toUpperCase() : '?';
+            // If a profile picture is selected/saved, show image instead of letter
+            const avatarEl = document.getElementById('profileDisplayAvatar');
+            const selectedPic = document.getElementById('selectedProfilePicture')?.value?.trim() || "";
+            if (avatarEl) {
+                if (selectedPic) {
+                    avatarEl.style.backgroundImage = `url('${selectedPic}')`;
+                    avatarEl.style.backgroundSize = 'cover';
+                    avatarEl.style.backgroundPosition = 'center';
+                    avatarEl.textContent = '';
+                } else {
+                    avatarEl.style.backgroundImage = 'none';
+                    avatarEl.textContent = name ? name.charAt(0).toUpperCase() : '?';
+                }
+            }
             document.getElementById('sidebarName').textContent = name || '—';
             document.getElementById('sidebarId').textContent   = id   || 'BTBT...';
 
@@ -483,6 +556,8 @@
             document.getElementById(id).addEventListener('input',  syncSidebar);
             document.getElementById(id).addEventListener('change', syncSidebar);
         });
+        // Also resync avatar when user selects a new profile picture
+        document.getElementById('profilePicturesGrid')?.addEventListener('click', syncSidebar);
 
         /* Poll so Firebase-filled values are caught after load */
         let n = 0;

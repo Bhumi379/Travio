@@ -122,10 +122,18 @@ if (ride.rideType?.toLowerCase() === "cab") {
   `;
 }
 
+    // Build avatar HTML - show profile picture if available
+    let avatarHTML = "";
+    if (ride.initiatorProfilePicture) {
+      avatarHTML = `<div class="avatar" style="background-image: url('${ride.initiatorProfilePicture}'); background-size: cover; background-position: center;"></div>`;
+    } else {
+      avatarHTML = `<div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>`;
+    }
+
     return `
       <div class="ride-card" onclick="openRideDetails('${ride._id}')">
         <div class="ride-header">
-          <div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>
+          ${avatarHTML}
           <div class="ride-info">
             <h3>
               ${new Date(ride.departureTime || ride.createdAt).toLocaleDateString()} • 
@@ -254,17 +262,23 @@ async function loadRidesWithParams(queryString = "") {
 ================================ */
 export async function createRide(data) {
   try {
+    const isFormData = data instanceof FormData;
     const res = await fetch(`${API_BASE}/rides/create`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: isFormData ? {} : { "Content-Type": "application/json" },
       credentials: "include",
-      body: JSON.stringify(data),
+      body: isFormData ? data : JSON.stringify(data),
     });
 
     const result = await res.json();
 
     if (!res.ok) {
-      throw new Error(result.errors?.join(", ") || result.message);
+      throw new Error(
+        result.errors?.join(", ") ||
+        result.error ||
+        result.message ||
+        "Failed to create ride"
+      );
     }
 
     showSuccess("Ride created successfully!");
@@ -345,10 +359,18 @@ function displayProfileRides(ridesData, containerId) {
       const roleLabel =
         ride.role === "creator" ? "You created this ride" : "You joined this ride";
 
+      // Build avatar HTML - show profile picture if available
+      let avatarHTML = "";
+      if (ride.initiatorProfilePicture) {
+        avatarHTML = `<div class="avatar" style="background-image: url('${ride.initiatorProfilePicture}'); background-size: cover; background-position: center;"></div>`;
+      } else {
+        avatarHTML = `<div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>`;
+      }
+
       return `
       <div class="ride-card" onclick="openRideDetails('${ride._id}')">
         <div class="ride-header">
-          <div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>
+          ${avatarHTML}
           <div class="ride-info">
             <h3>
               ${new Date(ride.departureTime || ride.createdAt).toLocaleDateString()} • 
