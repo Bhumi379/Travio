@@ -502,6 +502,14 @@
         const sidebarEditBtn = document.getElementById('sidebarEditBtn');
         const sidebarSaveBtn = document.getElementById('sidebarSaveBtn');
 
+        // Show the profile editor immediately so the profile picture picker is visible.
+        // (By default, CSS hides #profileForm until it has the `profile-form-visible` class.)
+        if (profileForm) {
+            profileForm.classList.add('profile-form-visible');
+            if (sidebarSaveBtn) sidebarSaveBtn.style.display = 'block';
+            if (sidebarEditBtn) sidebarEditBtn.textContent = '❌ Close Edit';
+        }
+
         /* Show/hide editable form */
         sidebarEditBtn.addEventListener('click', () => {
             profileForm.classList.toggle('profile-form-visible');
