@@ -14,13 +14,7 @@ import {
   acceptRequest,
   rejectRequest 
 } from './notifications.js';
-import { 
-  initHomePage, 
-  initCreateRidePage, 
-  initPreviousRidesPage, 
-  initProfilePage, 
-  initSearchResultsPage 
-} from './pageInit.js';
+import * as pageInit from './pageInit.js';
 import { submitReview } from './reviews.js';
 
 // Make functions available globally (for onclick handlers in HTML)
@@ -60,19 +54,19 @@ document.addEventListener("DOMContentLoaded", async () => {
   
   switch(currentPage) {
     case 'home':
-      initHomePage();
+      pageInit.initHomePage?.();
       break;
     case 'create_ride':
-      initCreateRidePage();
+      pageInit.initCreateRidePage?.();
       break;
     case 'previous':
-      initPreviousRidesPage();
+      pageInit.initPreviousRidesPage?.();
       break;
     case 'profile':
-      initProfilePage();
+      pageInit.initProfilePage?.();
       break;
     case 'search_results':
-      initSearchResultsPage();
+      pageInit.initSearchResultsPage?.();
       break;
     default:
       console.warn("⚠️ Unknown page:", currentPage);
