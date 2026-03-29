@@ -1,7 +1,7 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
 import { fetchCurrentUser, updateCurrentUserProfile } from './auth.js';
-import { loadRides, loadPreviousRides, createRide, loadProfileRides } from './rides.js';
+import { loadRides, loadPreviousRides, createRide, loadProfileRides, loadSearchResults } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
 import { showError } from './utils.js';
@@ -127,21 +127,20 @@ export function initCreateRidePage() {
 
       const departureTime = new Date(`${date}T${time}:00`).toISOString();
 
-      const selectedRideType =
-        document.querySelector('input[name="ridePostType"]:checked')?.value || "travelBuddy";
-      const rideType = selectedRideType === "cab" ? "cab" : "travelBuddy";
+      const isTravelBuddy = document.getElementById("buddyRequest")?.checked;
+      const rideType = isTravelBuddy ? "travelBuddy" : "cab";
 
-      // Build FormData for multipart upload
-      const formData = new FormData();
-      formData.append("pickup", JSON.stringify(localSelectedPickup));
-      formData.append("destination", JSON.stringify(localSelectedDestination));
-      formData.append("rideType", rideType);
-      formData.append("departureTime", departureTime);
-      formData.append("seats", parseInt(seats));
-      if (fare) formData.append("fare", parseFloat(fare));
-      if (notes) formData.append("notes", notes);
+      const rideData = {
+        pickup: localSelectedPickup,
+        destination: localSelectedDestination,
+        rideType,
+        departureTime,
+        seats: parseInt(seats),
+        fare: fare ? parseFloat(fare) : undefined,
+        notes: notes || undefined,
+      };
 
-      // For cab rides, include driver details
+      let payload;
       if (rideType === "cab") {
         const driverNameInput = document.getElementById("driverName");
         const carNumberInput = document.getElementById("carNumber");
@@ -155,19 +154,31 @@ export function initCreateRidePage() {
           name: driverName || undefined,
           vehicleNumber: carNumber || undefined,
         };
-        formData.append("driver", JSON.stringify(driver));
 
         if (!aadharFile || !licenseFile) {
           showError("Please upload both Aadhar and License files for cab rides");
           return;
         }
 
-        // Append files
-        if (aadharFile) formData.append("aadhar", aadharFile);
-        if (licenseFile) formData.append("license", licenseFile);
+        const formData = new FormData();
+        formData.append("pickup", JSON.stringify(rideData.pickup));
+        formData.append("destination", JSON.stringify(rideData.destination));
+        formData.append("rideType", rideData.rideType);
+        formData.append("departureTime", rideData.departureTime);
+        formData.append("seats", String(rideData.seats));
+        if (rideData.fare != null && !Number.isNaN(rideData.fare)) {
+          formData.append("fare", String(rideData.fare));
+        }
+        if (rideData.notes) formData.append("notes", rideData.notes);
+        formData.append("driver", JSON.stringify(driver));
+        formData.append("aadhar", aadharFile);
+        formData.append("license", licenseFile);
+        payload = formData;
+      } else {
+        payload = rideData;
       }
 
-      await createRide(formData);
+      await createRide(payload);
       } finally {
         isSubmitting = false;
         if (submitBtn) {
@@ -242,6 +253,11 @@ export async function initProfilePage() {
       }
     });
   }
+}
+
+export function initSearchResultsPage() {
+  console.log("🔎 Initializing Search Results Page");
+  loadSearchResults();
 }
 
 async function loadProfilePictures() {
