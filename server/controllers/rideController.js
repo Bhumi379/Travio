@@ -3,23 +3,68 @@ const RideRequest = require("../models/RideRequest");
 const { createNotification } = require("./notificationController");
 
 console.log("✅ rideController loaded");
+
+function parseIfString(val) {
+  if (val == null) return val;
+  if (typeof val === "string") {
+    try {
+      return JSON.parse(val);
+    } catch {
+      return val;
+    }
+  }
+  return val;
+}
 /* =====================================================
    GET ALL RIDES (GEO + FILTERS + EFFICIENT SEARCH)
    /api/rides?lat=&lng=&distance=&type=&search=
 ===================================================== */
 const getAllRides = async (req, res) => {
   try {
-    const { pickup, destination, date, lat, lng, distance = 5000 } = req.query;
+    const {
+      pickup,
+      destination,
+      date,
+      lat,
+      lng,
+      pickupLat,
+      pickupLng,
+      destLat,
+      destLng,
+      distance,
+    } = req.query;
+
+    // Meters. Default ~15 km so typed addresses match nearby pickups/destinations.
+    const radiusM = Number(distance) > 0 ? Number(distance) : 15000;
+    const earthRadiusM = 6378100;
+    const sphereRad = radiusM / earthRadiusM;
 
     let matchQuery = {};
 
-    // Pickup search
-    if (pickup) {
+    // Pickup: prefer radius around geocoded point; else substring on name.
+    const pLat = pickupLat || lat;
+    const pLng = pickupLng || lng;
+    const pLatNum = Number(pLat);
+    const pLngNum = Number(pLng);
+    if (pLat != null && pLng != null && pLat !== "" && pLng !== "" && Number.isFinite(pLatNum) && Number.isFinite(pLngNum)) {
+      matchQuery["pickup.location"] = {
+        $geoWithin: {
+          $centerSphere: [[pLngNum, pLatNum], sphereRad],
+        },
+      };
+    } else if (pickup) {
       matchQuery["pickup.name"] = { $regex: pickup, $options: "i" };
     }
 
-    // Destination search
-    if (destination) {
+    const dLatNum = Number(destLat);
+    const dLngNum = Number(destLng);
+    if (destLat != null && destLng != null && destLat !== "" && destLng !== "" && Number.isFinite(dLatNum) && Number.isFinite(dLngNum)) {
+      matchQuery["destination.location"] = {
+        $geoWithin: {
+          $centerSphere: [[dLngNum, dLatNum], sphereRad],
+        },
+      };
+    } else if (destination) {
       matchQuery["destination.name"] = { $regex: destination, $options: "i" };
     }
 
@@ -34,28 +79,6 @@ const getAllRides = async (req, res) => {
       matchQuery.departureTime = { $gte: start, $lte: end };
     }
 
-    // GEO search (pickup-based)
-    if (lat && lng) {
-      const rides = await Ride.aggregate([
-        {
-          $geoNear: {
-            near: {
-              type: "Point",
-              coordinates: [Number(lng), Number(lat)],
-            },
-            distanceField: "distance",
-            maxDistance: Number(distance),
-            spherical: true,
-            query: matchQuery,
-          },
-        },
-        { $sort: { departureTime: 1 } },
-      ]);
-
-      return res.json({ success: true, count: rides.length, data: rides });
-    }
-
-    // Normal search (no geo)
     const rides = await Ride.find(matchQuery)
       .sort({ departureTime: 1 })
       .populate('initiatorId', 'name profilePicture')
@@ -115,11 +138,11 @@ const createRide = async (req, res) => {
     // Parse JSON fields from FormData
     const rideData = {
       ...req.body,
-      pickup: req.body.pickup ? JSON.parse(req.body.pickup) : req.body.pickup,
-      destination: req.body.destination ? JSON.parse(req.body.destination) : req.body.destination,
-      driver: req.body.driver ? JSON.parse(req.body.driver) : req.body.driver,
-      seats: req.body.seats ? parseInt(req.body.seats) : req.body.seats,
-      fare: req.body.fare ? parseFloat(req.body.fare) : req.body.fare,
+      pickup: parseIfString(req.body.pickup),
+      destination: parseIfString(req.body.destination),
+      driver: parseIfString(req.body.driver),
+      seats: req.body.seats != null && req.body.seats !== "" ? parseInt(req.body.seats, 10) : req.body.seats,
+      fare: req.body.fare != null && req.body.fare !== "" ? parseFloat(req.body.fare) : req.body.fare,
     };
 
     // Handle file uploads

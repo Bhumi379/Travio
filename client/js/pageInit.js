@@ -1,7 +1,7 @@
 // Page-Specific Initialization Functions
 import { currentUser, setSelectedPickup, setSelectedDestination } from './config.js';
 import { fetchCurrentUser, updateCurrentUserProfile } from './auth.js';
-import { loadRides, loadPreviousRides, createRide, loadProfileRides, loadSearchResults } from './rides.js';
+import { loadRides, loadPreviousRides, createRide, loadProfileRides, loadSearchResults, consumeCreateRidePrefill } from './rides.js';
 import { setupOSMAutocomplete, setupSearchAutocomplete } from './autocomplete.js';
 import { searchRides } from './rides.js';
 import { showError } from './utils.js';
@@ -34,6 +34,49 @@ export function initCreateRidePage() {
   let localSelectedPickup = null;
   let localSelectedDestination = null;
   let isSubmitting = false;
+
+  const prefill = consumeCreateRidePrefill();
+  if (prefill) {
+    const pickupEl = document.getElementById("pickup");
+    const destEl = document.getElementById("destination");
+    const dateEl = document.getElementById("rideDate");
+
+    if (prefill.pickupGeo && pickupEl) {
+      const g = prefill.pickupGeo;
+      pickupEl.value = g.displayName || g.name || prefill.pickupText || "";
+      localSelectedPickup = {
+        name: g.name,
+        address: g.displayName || g.name,
+        location: {
+          type: "Point",
+          coordinates: [g.lng, g.lat],
+        },
+      };
+      setSelectedPickup(localSelectedPickup);
+    } else if (prefill.pickupText && pickupEl) {
+      pickupEl.value = prefill.pickupText;
+    }
+
+    if (prefill.destGeo && destEl) {
+      const g = prefill.destGeo;
+      destEl.value = g.displayName || g.name || prefill.destinationText || "";
+      localSelectedDestination = {
+        name: g.name,
+        address: g.displayName || g.name,
+        location: {
+          type: "Point",
+          coordinates: [g.lng, g.lat],
+        },
+      };
+      setSelectedDestination(localSelectedDestination);
+    } else if (prefill.destinationText && destEl) {
+      destEl.value = prefill.destinationText;
+    }
+
+    if (prefill.date && dateEl) {
+      dateEl.value = prefill.date;
+    }
+  }
   
   // Setup create ride form autocomplete
   setupOSMAutocomplete("pickup", place => {
@@ -127,8 +170,8 @@ export function initCreateRidePage() {
 
       const departureTime = new Date(`${date}T${time}:00`).toISOString();
 
-      const isTravelBuddy = document.getElementById("buddyRequest")?.checked;
-      const rideType = isTravelBuddy ? "travelBuddy" : "cab";
+      const ridePostType = document.querySelector('input[name="ridePostType"]:checked')?.value;
+      const rideType = ridePostType === "cab" ? "cab" : "travelBuddy";
 
       const rideData = {
         pickup: localSelectedPickup,

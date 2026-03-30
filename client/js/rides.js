@@ -2,6 +2,77 @@
 import { API_BASE, setRides, rides } from './config.js';
 import { showError, showSuccess } from './utils.js';
 import { loadNotifications } from './notifications.js';
+import { geocodePlace } from './geocode.js';
+
+const SEARCH_RADIUS_METERS = 15000;
+const PREFILL_STORAGE_KEY = 'travio_create_ride_prefill';
+
+async function buildRideSearchQuery(pickupText, destinationText, dateStr) {
+  const query = new URLSearchParams();
+  if (pickupText) query.set('pickup', pickupText);
+  if (destinationText) query.set('destination', destinationText);
+  if (dateStr) query.set('date', dateStr);
+  query.set('distance', String(SEARCH_RADIUS_METERS));
+
+  const pickupGeo = pickupText ? await geocodePlace(pickupText) : null;
+  const destGeo = destinationText ? await geocodePlace(destinationText) : null;
+
+  if (pickupGeo && Number.isFinite(pickupGeo.lat) && Number.isFinite(pickupGeo.lng)) {
+    query.set('pickupLat', String(pickupGeo.lat));
+    query.set('pickupLng', String(pickupGeo.lng));
+  }
+  if (destGeo && Number.isFinite(destGeo.lat) && Number.isFinite(destGeo.lng)) {
+    query.set('destLat', String(destGeo.lat));
+    query.set('destLng', String(destGeo.lng));
+  }
+  return {
+    query,
+    pickupGeo,
+    destGeo,
+  };
+}
+
+function goToCreateRidePrefill({ pickupText, destinationText, date, pickupGeo, destGeo }) {
+  const payload = {
+    pickupText: pickupText || '',
+    destinationText: destinationText || '',
+    date: date || null,
+    pickupGeo: pickupGeo
+      ? {
+          name: pickupGeo.name,
+          displayName: pickupGeo.displayName,
+          lat: pickupGeo.lat,
+          lng: pickupGeo.lng,
+        }
+      : null,
+    destGeo: destGeo
+      ? {
+          name: destGeo.name,
+          displayName: destGeo.displayName,
+          lat: destGeo.lat,
+          lng: destGeo.lng,
+        }
+      : null,
+  };
+  try {
+    sessionStorage.setItem(PREFILL_STORAGE_KEY, JSON.stringify(payload));
+  } catch (e) {
+    console.warn('Could not store create-ride prefill', e);
+  }
+  window.location.href = 'create_a_ride.html';
+}
+
+/** Read and clear one-shot prefill from search (create ride page). */
+export function consumeCreateRidePrefill() {
+  try {
+    const raw = sessionStorage.getItem(PREFILL_STORAGE_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PREFILL_STORAGE_KEY);
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
 
 function isCurrentOrFutureRide(ride) {
   const rideDate = new Date(ride.departureTime || ride.createdAt);
@@ -168,7 +239,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
 /* ==============================
    SEARCH RIDES (Home Page)
 ================================ */
-export function searchRides() {
+export async function searchRides() {
   const pickup = document.getElementById("pickupSearch")?.value.trim();
   const destination = document.getElementById("destinationSearch")?.value.trim();
   const date = document.getElementById("dateSearch")?.value;
@@ -183,7 +254,7 @@ export function searchRides() {
     return;
   }
 
-  loadRidesWithParams(params.toString());
+  await loadRidesWithParams(pickup, destination, date);
 }
 
 /* ==============================
@@ -199,24 +270,24 @@ export async function loadSearchResults() {
     const pickupInput = document.getElementById('pickupSearch');
     const destinationInput = document.getElementById('destinationSearch');
     const dateInput = document.getElementById('dateSearch');
-    if (pickupInput && pickup !== null) pickupInput.value = pickup;
-    if (destinationInput && destination !== null) destinationInput.value = destination;
-    if (dateInput && date !== null) dateInput.value = date;
+    if (pickupInput && pickup !== null) pickupInput.value = pickup || '';
+    if (destinationInput && destination !== null) destinationInput.value = destination || '';
+    if (dateInput && date !== null) dateInput.value = date || '';
 
     const summaryEl = document.getElementById('searchSummary');
     if (summaryEl) {
-      let txt = 'Showing rides';
+      let txt = 'Showing rides (within ~15 km of each place when we can geocode your search)';
       if (date) txt += ` for ${new Date(date).toLocaleDateString()}`;
       if (pickup) txt += ` from ${pickup}`;
       if (destination) txt += ` to ${destination}`;
       summaryEl.textContent = txt;
     }
 
-    const query = new URLSearchParams();
-    if (pickup) query.set('pickup', pickup);
-    if (destination) query.set('destination', destination);
-    if (date) query.set('date', date);
-
+    const { query, pickupGeo, destGeo } = await buildRideSearchQuery(
+      pickup || '',
+      destination || '',
+      date || ''
+    );
     const apiUrl = `${API_BASE}/rides${query.toString() ? '?' + query.toString() : ''}`;
     const res = await fetch(apiUrl, { credentials: 'include' });
     const data = await res.json();
@@ -224,7 +295,29 @@ export async function loadSearchResults() {
     if (!data.success) throw new Error(data.message || 'Failed to load search results');
 
     const results = Array.isArray(data.data) ? data.data : [];
-    await displayRides(results, 'searchResultsGrid');
+    const container = document.getElementById('searchResultsGrid');
+
+    if (!results.length && container) {
+      container.innerHTML = `
+        <div class="search-empty-state" style="text-align:center;padding:40px 20px;">
+          <p style="color:#6b7280;margin-bottom:12px;font-size:1.05rem;">No rides found for this search.</p>
+          <p style="color:#9ca3af;font-size:0.95rem;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto;">
+            Post this trip so others can join. We’ll fill pickup, destination${date ? ', and date' : ''} from your search.
+          </p>
+          <button type="button" class="btn btn-primary" id="createRideFromSearchBtn">Create a ride with these details</button>
+        </div>`;
+      document.getElementById('createRideFromSearchBtn')?.addEventListener('click', () => {
+        goToCreateRidePrefill({
+          pickupText: pickup || '',
+          destinationText: destination || '',
+          date: date || null,
+          pickupGeo,
+          destGeo,
+        });
+      });
+    } else {
+      await displayRides(results, 'searchResultsGrid');
+    }
 
     const searchForm = document.getElementById('searchResultsForm');
     if (searchForm && !searchForm.dataset.bound) {
@@ -241,9 +334,14 @@ export async function loadSearchResults() {
   }
 }
 
-async function loadRidesWithParams(queryString = "") {
+async function loadRidesWithParams(pickupText, destinationText, dateStr) {
   try {
-    const url = `${API_BASE}/rides${queryString ? "?" + queryString : ""}`;
+    const { query } = await buildRideSearchQuery(
+      pickupText || '',
+      destinationText || '',
+      dateStr || ''
+    );
+    const url = `${API_BASE}/rides${query.toString() ? '?' + query.toString() : ''}`;
 
     const res = await fetch(url, { credentials: "include" });
     const data = await res.json();
