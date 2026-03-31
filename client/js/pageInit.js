@@ -124,8 +124,6 @@ export function initCreateRidePage() {
       const destinationInput = document.getElementById("destination");
       const date = document.getElementById("rideDate").value;
       const time = document.getElementById("rideTime").value;
-      const seats = document.getElementById("seats")?.value || 1;
-      const fare = document.getElementById("fare")?.value;
       const notes = document.getElementById("notes")?.value;
 
       // Basic empty checks first
@@ -178,10 +176,15 @@ export function initCreateRidePage() {
         destination: localSelectedDestination,
         rideType,
         departureTime,
-        seats: parseInt(seats),
-        fare: fare ? parseFloat(fare) : undefined,
         notes: notes || undefined,
       };
+
+      if (rideType === "cab") {
+        const seats = document.getElementById("seats")?.value || 1;
+        const fare = document.getElementById("fare")?.value;
+        rideData.seats = parseInt(seats, 10);
+        rideData.fare = fare ? parseFloat(fare) : undefined;
+      }
 
       let payload;
       if (rideType === "cab") {
@@ -208,7 +211,9 @@ export function initCreateRidePage() {
         formData.append("destination", JSON.stringify(rideData.destination));
         formData.append("rideType", rideData.rideType);
         formData.append("departureTime", rideData.departureTime);
-        formData.append("seats", String(rideData.seats));
+        if (rideData.seats != null && !Number.isNaN(rideData.seats)) {
+          formData.append("seats", String(rideData.seats));
+        }
         if (rideData.fare != null && !Number.isNaN(rideData.fare)) {
           formData.append("fare", String(rideData.fare));
         }

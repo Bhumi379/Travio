@@ -140,7 +140,7 @@ router.delete("/:id/participants/:participantUserId", protect, removeParticipant
 
 /* ================= DYNAMIC ROUTES (must be last) ================= */
 
-router.get("/:id",    getRideById);
+router.get("/:id",    protect, getRideById);
 router.put("/:id",    protect, updateRide);
 router.delete("/:id", protect, deleteRide);
 

@@ -106,7 +106,9 @@ const rideSchema = new mongoose.Schema(
 
     seats: {
       type:     Number,
-      required: true,
+      required: function () {
+        return this.rideType === 'cab';
+      },
       min:      1,
       max:      8,
     },
@@ -114,6 +116,12 @@ const rideSchema = new mongoose.Schema(
     fare: {
       type: Number,
       min:  0,
+      validate: {
+        validator: function (v) {
+          return this.rideType === 'cab' || v == null;
+        },
+        message: 'Fare is only allowed for cab rides',
+      },
     },
 
     participants: [

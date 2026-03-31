@@ -86,6 +86,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const rideTypeCab = document.getElementById('rideTypeCab');
     const rideTypeTravelBuddy = document.getElementById('rideTypeTravelBuddy');
     const driverDetailsSection = document.getElementById('driverDetailsSection');
+    const seatFareSection = document.getElementById('seatFareSection');
 
     // Only run if these elements exist on the current page
     if (rideTypeCab && rideTypeTravelBuddy && driverDetailsSection) {
@@ -95,14 +96,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const carNumberInput = document.getElementById('carNumber');
             const aadharInput = document.getElementById('aadharPhoto');
             const licenseInput = document.getElementById('licensePhoto');
+            const seatsInput = document.getElementById('seats');
+            const fareInput = document.getElementById('fare');
 
             if (rideTypeCab.checked) {
                 // Show the section
                 driverDetailsSection.style.display = 'block';
+                if (seatFareSection) seatFareSection.style.display = 'block';
                 
                 // Make inputs required when cab sharing is selected
                 if(driverNameInput) driverNameInput.required = true;
                 if(carNumberInput) carNumberInput.required = true;
+                if(seatsInput) seatsInput.required = true;
                 // Keep hidden file inputs non-required in native validation.
                 // We validate these in JS submit handler to avoid blocked submit.
                 if(aadharInput) aadharInput.required = false;
@@ -111,12 +116,18 @@ document.addEventListener('DOMContentLoaded', function() {
             } else {
                 // Hide the section
                 driverDetailsSection.style.display = 'none';
+                if (seatFareSection) seatFareSection.style.display = 'none';
                 
                 // Remove required attributes for travel buddy posts
                 if(driverNameInput) driverNameInput.required = false;
                 if(carNumberInput) carNumberInput.required = false;
                 if(aadharInput) aadharInput.required = false;
                 if(licenseInput) licenseInput.required = false;
+                if(seatsInput) {
+                    seatsInput.required = false;
+                    seatsInput.value = 1;
+                }
+                if(fareInput) fareInput.value = "";
             }
         };
 

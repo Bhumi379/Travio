@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Travio Admin Dashboard</title>
 
   <!-- Tailwind -->
@@ -167,6 +168,35 @@
   border-radius: 12px;
   text-align: center;
   font-weight: 600;
+}
+
+@media (max-width: 768px) {
+  body > div.flex {
+    flex-direction: column;
+  }
+
+  aside {
+    width: 100% !important;
+    padding: 14px !important;
+  }
+
+  main {
+    padding: 12px !important;
+  }
+
+  .sidebar-btn {
+    padding: 11px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  h1, h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .stat-card {
+    padding: 14px;
+  }
 }
 </style>
 

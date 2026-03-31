@@ -370,6 +370,64 @@
                 padding: 20px 16px 30px;
             }
         }
+        @media (max-width: 768px) {
+            .main-content .header {
+                padding: 12px 14px !important;
+            }
+            .profile-sidebar {
+                padding-bottom: 18px;
+            }
+            .sidebar-top-band {
+                padding: 20px 14px 16px;
+                margin-bottom: 14px;
+            }
+            .profile-sidebar .profile-avatar {
+                width: 72px;
+                height: 72px;
+                font-size: 26px;
+            }
+            .sidebar-name {
+                font-size: 14px;
+            }
+            .sidebar-rides-row {
+                grid-template-columns: 1fr 1fr;
+            }
+            .profile-page-wrapper {
+                gap: 14px;
+                padding: 14px 10px 22px;
+            }
+            .profile-pictures-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .top-nav {
+                gap: 10px !important;
+                justify-content: flex-start;
+            }
+            .sidebar-info-list,
+            .sidebar-rides-row {
+                padding: 0 10px;
+            }
+            .sidebar-save-btn,
+            .sidebar-edit-btn,
+            .profile-edit-panel {
+                width: calc(100% - 20px);
+                margin-left: 10px;
+                margin-right: 10px;
+            }
+            .profile-pictures-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 8px;
+                padding: 8px;
+            }
+            .sidebar-info-item {
+                padding: 8px 10px;
+            }
+            .sidebar-info-value {
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 <body>

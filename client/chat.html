@@ -284,6 +284,53 @@
             .chat-header { padding: 10px 14px; }
             .input-bar { padding: 10px 12px; }
         }
+
+        @media (max-width: 480px) {
+            .chat-header {
+                gap: 8px;
+                padding: 9px 10px;
+            }
+
+            .chat-header .partner-avatar {
+                width: 34px;
+                height: 34px;
+                font-size: 14px;
+            }
+
+            .chat-header .partner-name {
+                font-size: 14px;
+            }
+
+            .chat-header .header-logo {
+                height: 26px;
+            }
+
+            .chat-list-container {
+                padding: 10px 8px;
+            }
+
+            .message {
+                max-width: 92%;
+                font-size: 13px;
+                padding: 9px 11px;
+            }
+
+            .input-bar {
+                padding: 8px 10px;
+                gap: 8px;
+            }
+
+            .input-bar textarea {
+                min-height: 42px;
+                max-height: 110px;
+                font-size: 14px;
+            }
+
+            .input-bar .send-btn {
+                width: 40px;
+                height: 40px;
+            }
+        }
     </style>
 </head>
 <body>

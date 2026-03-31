@@ -1,5 +1,5 @@
 // Ride Management Functions
-import { API_BASE, setRides, rides } from './config.js';
+import { API_BASE, setRides, rides, currentUser } from './config.js';
 import { showError, showSuccess } from './utils.js';
 import { loadNotifications } from './notifications.js';
 import { geocodePlace } from './geocode.js';
@@ -165,7 +165,50 @@ export async function loadProfileRides() {
 /* ==============================
    DISPLAY RIDES
 ================================ */
-export function displayRides(ridesData, containerId) {
+function getRideCreatorId(ride) {
+  if (!ride?.initiatorId) return null;
+  if (typeof ride.initiatorId === "string") return ride.initiatorId;
+  return ride.initiatorId._id || null;
+}
+
+async function getRideRequestStatusMap(ridesData) {
+  const statusEntries = await Promise.all(
+    ridesData.map(async (ride) => {
+      try {
+        const res = await fetch(`${API_BASE}/ride-requests/${ride._id}/request-status`, {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (!data.success || !data.hasRequest) return [ride._id, null];
+        return [ride._id, data.data?.status || null];
+      } catch {
+        return [ride._id, null];
+      }
+    })
+  );
+  return Object.fromEntries(statusEntries);
+}
+
+function buildRequestButton(ride, requestStatus) {
+  const creatorId = getRideCreatorId(ride);
+  if (creatorId && currentUser?._id && String(creatorId) === String(currentUser._id)) {
+    return `<button class="btn btn-request-status btn-status-own" disabled>Your Ride</button>`;
+  }
+
+  if (requestStatus === "pending") {
+    return `<button class="btn btn-request-status btn-status-pending" disabled>Pending</button>`;
+  }
+  if (requestStatus === "accepted") {
+    return `<button class="btn btn-request-status btn-status-accepted" disabled>Accepted</button>`;
+  }
+  if (requestStatus === "rejected") {
+    return `<button class="btn btn-request-status btn-status-rejected" disabled>Rejected</button>`;
+  }
+
+  return `<button class="btn btn-primary" onclick="event.stopPropagation(); requestRide('${ride._id}')">Request</button>`;
+}
+
+export async function displayRides(ridesData, containerId) {
   const container = document.getElementById(containerId);
 
   if (!container) {
@@ -180,6 +223,8 @@ export function displayRides(ridesData, containerId) {
       </p>`;
     return;
   }
+
+  const requestStatusMap = await getRideRequestStatusMap(ridesData);
 
   container.innerHTML = ridesData.map(ride => {
     // ✅ Build price HTML safely (NO nested template strings)
@@ -200,6 +245,8 @@ if (ride.rideType?.toLowerCase() === "cab") {
     } else {
       avatarHTML = `<div class="avatar">${ride.initiatorName?.charAt(0) || "?"}</div>`;
     }
+
+    const requestButtonHTML = buildRequestButton(ride, requestStatusMap[ride._id]);
 
     return `
       <div class="ride-card" onclick="openRideDetails('${ride._id}')">
@@ -229,7 +276,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
 
         <div class="ride-actions">
           <button class="btn btn-secondary" onclick="event.stopPropagation(); openChat('${ride._id}')">Chat</button>
-          <button class="btn btn-primary" onclick="event.stopPropagation(); requestRide('${ride._id}')">Request</button>
+          ${requestButtonHTML}
         </div>
       </div>
     `;
@@ -424,8 +471,12 @@ export async function requestRide(rideId) {
     }
 
     showSuccess("Request sent successfully!");
-    // Reload rides to update button state
-    await loadRides();
+    // Reload cards to reflect request status
+    if (window.location.pathname.includes("search-results.html")) {
+      await loadSearchResults();
+    } else {
+      await loadRides();
+    }
     // Reload notifications to show new notification for ride creator
     loadNotifications();
   } catch (err) {

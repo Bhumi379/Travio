@@ -1,4 +1,3 @@
-require('dotenv').config();
 
 const mask = (s) => (s ? s.slice(0, 2) + '...' : '<unset>');
 

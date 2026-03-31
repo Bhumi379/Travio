@@ -243,16 +243,18 @@ const acceptJoinRequest = async (req, res) => {
         message: 'Request not found',
       });
 
-    if (ride.seats && Number(ride.seats) > 0) {
-  ride.seats = Number(ride.seats) - 1;
-  // Disable full validation so past departureTime doesn’t break the save
-  await ride.save({ validateBeforeSave: false });
-} else {
-  return res.status(400).json({
-    success: false,
-    message: 'No available seats left',
-  });
-}
+    if (ride.rideType === "cab") {
+      if (ride.seats && Number(ride.seats) > 0) {
+        ride.seats = Number(ride.seats) - 1;
+        // Disable full validation so past departureTime doesn’t break the save
+        await ride.save({ validateBeforeSave: false });
+      } else {
+        return res.status(400).json({
+          success: false,
+          message: 'No available seats left',
+        });
+      }
+    }
 
 
     // Send notification
@@ -429,10 +431,43 @@ const getUserRequestStatus = async (req, res) => {
   }
 };
 
+const getAcceptedPassengers = async (req, res) => {
+  try {
+    const { rideId } = req.params;
+    const ride = await Ride.findById(rideId).select("initiatorId");
+    if (!ride) {
+      return res.status(404).json({
+        success: false,
+        message: "Ride not found",
+      });
+    }
+
+    const acceptedRequests = await RideRequest.find({
+      rideId,
+      status: "accepted",
+    })
+      .populate("userId", "name email profilePicture")
+      .select("userId status")
+      .lean();
+
+    return res.json({
+      success: true,
+      data: acceptedRequests,
+    });
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: "Error fetching accepted passengers",
+      error: err.message,
+    });
+  }
+};
+
 module.exports = {
   sendJoinRequest,
   getRideRequests,
   acceptJoinRequest,
   rejectJoinRequest,
   getUserRequestStatus,
+  getAcceptedPassengers,
 };

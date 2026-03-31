@@ -1,6 +1,7 @@
 const Ride = require("../models/Ride");
 const RideRequest = require("../models/RideRequest");
 const { createNotification } = require("./notificationController");
+const path = require("path");
 
 console.log("✅ rideController loaded");
 
@@ -14,6 +15,19 @@ function parseIfString(val) {
     }
   }
   return val;
+}
+
+function toPublicFileUrl(req, fileObj) {
+  if (!fileObj) return null;
+  if (fileObj.path && /^https?:\/\//i.test(fileObj.path)) return fileObj.path;
+  if (fileObj.filename) {
+    return `${req.protocol}://${req.get("host")}/uploads/${fileObj.filename}`;
+  }
+  if (fileObj.path && fileObj.path.includes(`${path.sep}uploads${path.sep}`)) {
+    const fileName = path.basename(fileObj.path);
+    return `${req.protocol}://${req.get("host")}/uploads/${fileName}`;
+  }
+  return fileObj.path || null;
 }
 /* =====================================================
    GET ALL RIDES (GEO + FILTERS + EFFICIENT SEARCH)
@@ -106,7 +120,9 @@ const getAllRides = async (req, res) => {
 ===================================================== */
 const getRideById = async (req, res) => {
   try {
-    const ride = await Ride.findById(req.params.id).lean();
+    const ride = await Ride.findById(req.params.id)
+      .populate("initiatorId", "name profilePicture")
+      .lean();
 
     if (!ride) {
       return res.status(404).json({
@@ -117,7 +133,11 @@ const getRideById = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      data: ride,
+      data: {
+        ...ride,
+        initiatorName: ride.initiatorId?.name || "Host",
+        initiatorProfilePicture: ride.initiatorId?.profilePicture || null,
+      },
     });
   } catch (error) {
     res.status(500).json({
@@ -149,11 +169,17 @@ const createRide = async (req, res) => {
     if (req.files) {
       if (!rideData.driver) rideData.driver = {};
       if (req.files.license) {
-        rideData.driver.driverLicenseImage = req.files.license[0].path;
+        rideData.driver.driverLicenseImage = toPublicFileUrl(req, req.files.license[0]);
       }
       if (req.files.aadhar) {
-        rideData.driver.aadharImage = req.files.aadhar[0].path;
+        rideData.driver.aadharImage = toPublicFileUrl(req, req.files.aadhar[0]);
       }
+    }
+
+    if (rideData.rideType === "travelBuddy") {
+      delete rideData.seats;
+      delete rideData.fare;
+      rideData.driver = null;
     }
 
     const ride = await Ride.create({
@@ -190,9 +216,21 @@ const createRide = async (req, res) => {
 ===================================================== */
 const updateRide = async (req, res) => {
   try {
+    const updateData = { ...req.body };
+    let updateQuery = updateData;
+    if (updateData.rideType === "travelBuddy") {
+      delete updateData.seats;
+      delete updateData.fare;
+      updateQuery = {
+        ...updateData,
+        driver: null,
+        $unset: { seats: 1, fare: 1 },
+      };
+    }
+
     const updatedRide = await Ride.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      updateQuery,
       { new: true, runValidators: true }
     ).lean();
 

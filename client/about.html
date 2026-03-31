@@ -500,10 +500,32 @@
                 padding: 1rem;
             }
             .top-nav {
-                display: none; /* Hidden on mobile for simplicity */
+                display: flex;
+                overflow-x: auto;
+                gap: 8px;
+                width: 100%;
+                justify-content: flex-start;
+                scrollbar-width: none;
+            }
+            .top-nav::-webkit-scrollbar {
+                display: none;
+            }
+            .nav-link {
+                white-space: nowrap;
+                font-size: 0.82rem;
+                padding: 8px 10px;
+                border-radius: 8px;
+                background: rgba(255,255,255,0.75);
             }
             .page-header h1 {
                 font-size: 2rem;
+            }
+            .container {
+                padding: 0 10px;
+            }
+            .card,
+            .contact-card {
+                border-radius: 14px;
             }
             .flex-row {
                 flex-direction: column;
@@ -512,6 +534,37 @@
             }
             .meta-icon {
                 margin: 0 auto;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header {
+                padding: 10px 8px;
+            }
+            .header-right {
+                gap: 10px;
+            }
+            .header-icon,
+            .header-avatar {
+                width: 26px;
+                height: 26px;
+            }
+            .page-header {
+                margin: 14px auto;
+                padding: 18px 12px;
+                border-radius: 14px;
+            }
+            .page-header h1 {
+                font-size: 1.5rem;
+            }
+            .page-header p {
+                font-size: 0.9rem;
+            }
+            .section-title h2 {
+                font-size: 1.1rem;
+            }
+            .time-big {
+                font-size: 1rem;
             }
         }
     </style>

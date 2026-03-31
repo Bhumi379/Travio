@@ -20,7 +20,17 @@ function formatDate(dateStr) {
   });
 }
 
-function buildDetailsHTML(ride, requests = [], currentUserId = null) {
+function toDownloadUrl(rawUrl) {
+  if (!rawUrl) return null;
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  const uploadsIndex = rawUrl.indexOf("/uploads/");
+  if (uploadsIndex >= 0) {
+    return `${window.location.origin}${rawUrl.slice(uploadsIndex)}`;
+  }
+  return rawUrl;
+}
+
+function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriverDetails = false) {
   const departure = ride.departureTime || ride.createdAt;
   const pickupName = ride.pickup?.name || "Pickup";
   const pickupAddr = ride.pickup?.address || "";
@@ -28,6 +38,7 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null) {
   const destAddr = ride.destination?.address || "";
   const avatar = (ride.initiatorName?.charAt(0) || "?").toUpperCase();
   const initiatorName = ride.initiatorName || "Host";
+  const creatorPic = ride.initiatorProfilePicture || "";
 
   const isCab = ride.rideType === "cab";
   const price =
@@ -35,7 +46,11 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null) {
 
   const accepted = requests.filter((r) => r.status === "accepted");
   const pending = requests.filter((r) => r.status === "pending");
-  const isOwner = currentUserId && String(ride.initiatorId) === String(currentUserId);
+  const rideOwnerId =
+    typeof ride.initiatorId === "object" ? ride.initiatorId?._id : ride.initiatorId;
+  const isOwner = currentUserId && String(rideOwnerId) === String(currentUserId);
+  const aadharUrl = toDownloadUrl(ride.driver?.aadharImage);
+  const licenseUrl = toDownloadUrl(ride.driver?.driverLicenseImage);
 
   return `
     <section class="details-card">
@@ -66,7 +81,11 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null) {
       </div>
 
       <div class="driver-block">
-        <div class="driver-avatar-big">${avatar}</div>
+        <div class="driver-avatar-big" ${
+          creatorPic
+            ? `style="background-image:url('${creatorPic}');background-size:cover;background-position:center;color:transparent;"`
+            : ""
+        }>${avatar}</div>
         <div class="driver-info">
           <h3>${initiatorName}</h3>
           <p>${isCab ? "Cab driver" : "Ride creator"}</p>
@@ -82,10 +101,21 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null) {
       </div>
 
       <ul class="rules-list">
-        
+        ${canViewDriverDetails && ride.driver?.name ? `<li><i class="fa-solid fa-user-tie"></i> Driver: ${ride.driver.name}</li>` : ""}
+        ${canViewDriverDetails && ride.driver?.vehicleNumber ? `<li><i class="fa-solid fa-car-side"></i> Vehicle: ${ride.driver.vehicleNumber}</li>` : ""}
         ${
-          ride.driver?.vehicleNumber
-            ? `<li><i class="fa-solid fa-car-side"></i> Vehicle: ${ride.driver.vehicleNumber}</li>`
+          canViewDriverDetails && aadharUrl
+            ? `<li><i class="fa-solid fa-id-card"></i> Aadhar: <a href="${aadharUrl}" download target="_blank" rel="noopener noreferrer">Download</a></li>`
+            : ""
+        }
+        ${
+          canViewDriverDetails && licenseUrl
+            ? `<li><i class="fa-solid fa-file-lines"></i> Driving License: <a href="${licenseUrl}" download target="_blank" rel="noopener noreferrer">Download</a></li>`
+            : ""
+        }
+        ${
+          isCab && !canViewDriverDetails
+            ? `<li><i class="fa-solid fa-lock"></i> Driver details are visible after your request is accepted</li>`
             : ""
         }
       </ul>
@@ -230,17 +260,52 @@ async function loadRideDetails() {
       throw new Error(data.message || "Failed to load ride");
     }
 
-    // Try to fetch join requests (only works for ride creator)
+    const currentUserId = await getCurrentUserId();
+    const rideOwnerId =
+      typeof data.data?.initiatorId === "object" ? data.data?.initiatorId?._id : data.data?.initiatorId;
+    const isOwner = currentUserId && String(rideOwnerId) === String(currentUserId);
+
     let requests = [];
+    let myRequestStatus = null;
+
     try {
-      const reqRes = await fetch(
-        `${API_BASE}/ride-requests/${encodeURIComponent(rideId)}/requests`,
+      const statusRes = await fetch(
+        `${API_BASE}/ride-requests/${encodeURIComponent(rideId)}/request-status`,
         { credentials: "include" }
       );
-      if (reqRes.ok) {
-        const reqData = await reqRes.json();
-        if (reqData.success && Array.isArray(reqData.data)) {
-          requests = reqData.data;
+      if (statusRes.ok) {
+        const statusData = await statusRes.json();
+        if (statusData.success && statusData.hasRequest) {
+          myRequestStatus = statusData.data?.status || null;
+        }
+      }
+    } catch (_err) {
+      myRequestStatus = null;
+    }
+
+    // Try to fetch join requests (owner gets pending+accepted)
+    try {
+      if (isOwner) {
+        const reqRes = await fetch(
+          `${API_BASE}/ride-requests/${encodeURIComponent(rideId)}/requests`,
+          { credentials: "include" }
+        );
+        if (reqRes.ok) {
+          const reqData = await reqRes.json();
+          if (reqData.success && Array.isArray(reqData.data)) {
+            requests = reqData.data;
+          }
+        }
+      } else {
+        const paxRes = await fetch(
+          `${API_BASE}/ride-requests/${encodeURIComponent(rideId)}/passengers`,
+          { credentials: "include" }
+        );
+        if (paxRes.ok) {
+          const paxData = await paxRes.json();
+          if (paxData.success && Array.isArray(paxData.data)) {
+            requests = paxData.data;
+          }
         }
       }
     } catch (_err) {
@@ -250,8 +315,8 @@ async function loadRideDetails() {
     const root = document.getElementById("rideDetailsRoot");
     if (!root) return;
 
-    const currentUserId = await getCurrentUserId();
-    root.innerHTML = buildDetailsHTML(data.data, requests, currentUserId);
+    const canViewDriverDetails = Boolean(isOwner || myRequestStatus === "accepted");
+    root.innerHTML = buildDetailsHTML(data.data, requests, currentUserId, canViewDriverDetails);
   } catch (err) {
     showError(err.message || "Something went wrong");
   }

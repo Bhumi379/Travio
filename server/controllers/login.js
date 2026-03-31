@@ -1,12 +1,11 @@
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const crypto = require("crypto");
-const env = require("dotenv");
 const { createSecretToken } = require("../tokenGeneration/generateToken");
 const sendMail = require("../config/mailer");
 
 
-env.config();
+
 
 const login = async (req, res) => {
   const { email, password } = req.body;

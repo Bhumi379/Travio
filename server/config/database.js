@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const dns = require("dns");
-require("dotenv").config();
+
 
 // Use Google DNS to resolve MongoDB SRV records (fixes local DNS issues)
 dns.setServers(["8.8.8.8", "8.8.4.4"]);

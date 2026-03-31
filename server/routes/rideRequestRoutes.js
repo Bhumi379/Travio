@@ -8,6 +8,7 @@ const {
   acceptJoinRequest,
   rejectJoinRequest,
   getUserRequestStatus,
+  getAcceptedPassengers,
 } = require('../controllers/rideRequestController');
 
 // TEST: Unprotected version to debug route matching
@@ -30,6 +31,9 @@ router.post('/:rideId/request', protect, (req, res, next) => {
 
 // Get request status for a ride (check if user already requested)
 router.get('/:rideId/request-status', protect, getUserRequestStatus);
+
+// Get accepted passengers for a ride
+router.get('/:rideId/passengers', protect, getAcceptedPassengers);
 
 // Get all requests for a ride (only ride creator can view)
 router.get('/:rideId/requests', protect, async (req, res, next) => {

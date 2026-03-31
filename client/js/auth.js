@@ -9,10 +9,9 @@ function applyUserProfilePictureToUI(user) {
 
   // Update all header avatar <img> tags across pages
   document.querySelectorAll("img.header-avatar").forEach((img) => {
-    // Keep the header "notification/profile" icon as the default gif.
-    if (img.closest(".notification")) return;
     if (profileUrl) {
       img.src = profileUrl;
+      img.style.objectFit = "cover";
     } else if (!img.getAttribute("src")) {
       img.src = fallbackHeaderAvatar;
     }

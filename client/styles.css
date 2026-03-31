@@ -791,6 +791,36 @@
     box-shadow: 0 6px 16px rgba(245, 158, 11, 0.4);
 }
 
+.btn-request-status {
+    cursor: not-allowed;
+    border: 2px solid transparent;
+    box-shadow: none;
+}
+
+.btn-status-own {
+    background: #e5e7eb;
+    color: #4b5563;
+    border-color: #d1d5db;
+}
+
+.btn-status-pending {
+    background: #fef3c7;
+    color: #92400e;
+    border-color: #fbbf24;
+}
+
+.btn-status-accepted {
+    background: #dcfce7;
+    color: #166534;
+    border-color: #22c55e;
+}
+
+.btn-status-rejected {
+    background: #fee2e2;
+    color: #991b1b;
+    border-color: #f87171;
+}
+
 .hidden {
     display: none;
 }
@@ -2865,4 +2895,634 @@ p {
   background: #dc2626;
 }
 
+/* ==============================
+   GLOBAL RESPONSIVE OVERRIDES
+================================ */
+@media (max-width: 1024px) {
+  .header {
+    padding: 12px 20px !important;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .top-nav {
+    gap: 14px !important;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .main-container {
+    width: 92% !important;
+    min-width: 0 !important;
+    padding: 0 1rem !important;
+  }
+
+  .welcome-section {
+    height: 380px !important;
+    padding-left: 1.2rem !important;
+    background-position: center !important;
+  }
+
+  .workflow-container {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .header-left,
+  .header-right {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .logo-info h2 {
+    font-size: 1.1rem;
+  }
+
+  .logo-info p {
+    font-size: 0.75rem;
+  }
+
+  .header-logo-img {
+    height: 40px !important;
+  }
+
+  .main-container {
+    width: 100% !important;
+    min-width: 0 !important;
+    padding: 0 0.75rem !important;
+  }
+
+  .form-card {
+    padding: 1.2rem !important;
+    border-radius: 14px;
+  }
+
+  .title-wrapper {
+    gap: 10px !important;
+  }
+
+  .title-gif {
+    width: 52px !important;
+  }
+
+  .page-title {
+    font-size: 1.55rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.92rem !important;
+  }
+
+  .rides-section {
+    padding: 18px !important;
+    margin: 18px 10px !important;
+  }
+
+  .rides-grid {
+    grid-template-columns: 1fr !important;
+    padding: 10px 2px !important;
+    gap: 14px !important;
+    max-height: none;
+  }
+
+  .ride-card {
+    padding: 16px !important;
+    border-radius: 14px;
+  }
+
+  .ride-info h3 {
+    font-size: 15px !important;
+  }
+
+  .ride-actions {
+    flex-direction: column !important;
+  }
+
+  .workflow-container {
+    grid-template-columns: 1fr !important;
+  }
+
+  .features-grid,
+  .benefits-container,
+  .explainer-container {
+    flex-direction: column !important;
+    gap: 18px !important;
+  }
+
+  .share-experience-container {
+    padding: 18px !important;
+  }
+
+  .footer-container,
+  .footer-bottom {
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .content {
+    padding: 14px !important;
+  }
+
+  .top-nav {
+    gap: 10px !important;
+  }
+
+  .nav-link {
+    font-size: 0.9rem;
+  }
+
+  .welcome-section {
+    height: 280px !important;
+  }
+
+  .slogan-glass-box {
+    padding: 18px !important;
+    border-radius: 14px !important;
+  }
+
+  .slogan-text {
+    font-size: 1.9rem !important;
+  }
+
+  .slogan-subtext {
+    font-size: 1rem !important;
+  }
+
+  .search-container {
+    padding: 0 10px !important;
+  }
+
+  .autocomplete-dropdown {
+    min-width: 240px !important;
+    left: 0 !important;
+    right: 0;
+  }
+
+  .header-icon,
+  .header-avatar {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .btn,
+  .summary-btn {
+    font-size: 13px;
+    padding: 10px 12px;
+  }
+}
+
+/* ==============================
+   PAGE-SPECIFIC RESPONSIVE TUNING
+================================ */
+@media (max-width: 768px) {
+  /* Home page */
+  .search-container {
+    margin: -10px auto 14px auto !important;
+  }
+  .search-bar {
+    height: auto !important;
+    border-radius: 14px !important;
+  }
+  .search-btn {
+    min-height: 48px;
+    font-size: 16px !important;
+  }
+  .slogan-overlay {
+    padding-left: 6% !important;
+  }
+  .slogan-glass-box {
+    max-width: 94% !important;
+  }
+  .benefits-section,
+  .travio-workflow,
+  .travio-features,
+  .buddy-explainer-section,
+  .reviews-section {
+    padding-top: 36px !important;
+    padding-bottom: 36px !important;
+  }
+
+  /* Create ride page */
+  .file-upload-wrapper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .file-upload-btn {
+    width: 100%;
+  }
+  .ride-type-option {
+    padding: 0.7rem !important;
+  }
+  .submit-btn {
+    min-height: 48px;
+  }
+
+  /* Profile/ride cards shared */
+  .ride-footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .price {
+    font-size: 14px !important;
+    padding: 7px 14px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Home page */
+  .content {
+    padding: 10px !important;
+  }
+  .section-title {
+    font-size: 20px !important;
+    margin-bottom: 16px !important;
+  }
+  .search-container {
+    margin-top: 8px !important;
+  }
+  .search-bar .input-group {
+    padding: 12px !important;
+  }
+
+  /* Create ride page */
+  .datetime-group {
+    gap: 0.65rem !important;
+  }
+  .form-group {
+    margin-bottom: 0.95rem !important;
+  }
+  .ride-type-heading {
+    font-size: 0.95rem;
+  }
+  .ride-type-option span {
+    font-size: 0.9rem;
+  }
+}
+
+/* Final responsive safety layer */
+html, body {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.content,
+.main-content,
+.details-shell,
+.profile-page-wrapper,
+.rides-section,
+.form-card {
+  max-width: 100%;
+}
+
+@media (max-width: 768px) {
+  .top-nav {
+    width: 100%;
+    justify-content: center;
+    row-gap: 8px;
+  }
+
+  .header-right {
+    gap: 12px !important;
+  }
+
+  .header-avatar {
+    object-fit: cover;
+  }
+}
+
+/* ==============================
+   MOBILE VISUAL POLISH
+================================ */
+@media (max-width: 768px) {
+  .main-content {
+    background: transparent;
+  }
+
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    background: rgba(255, 248, 240, 0.98) !important;
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+  }
+
+  .header-left {
+    justify-content: flex-start !important;
+  }
+
+  .logo-info {
+    display: none;
+  }
+
+  .top-nav {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    overflow-x: auto;
+    width: 100%;
+    padding-bottom: 2px;
+    scrollbar-width: none;
+  }
+  .top-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .top-nav .nav-link {
+    white-space: nowrap;
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.7);
+  }
+
+  .content {
+    padding: 10px !important;
+  }
+
+  .welcome-section {
+    border-radius: 14px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .slogan-glass-box {
+    max-width: 92% !important;
+    padding: 14px !important;
+    border-radius: 12px !important;
+  }
+
+  .slogan-text {
+    font-size: 1.45rem !important;
+    line-height: 1.2;
+  }
+
+  .slogan-subtext {
+    font-size: 0.9rem !important;
+  }
+
+  .search-container {
+    margin: 8px auto 12px auto !important;
+    padding: 0 !important;
+  }
+
+  .search-bar {
+    border-radius: 12px !important;
+    border: 1px solid #f2c7a7 !important;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08) !important;
+  }
+
+  .rides-section,
+  .share-experience-container,
+  .feature-item,
+  .benefit-item,
+  .step-card {
+    border-radius: 14px !important;
+  }
+
+  .section-title {
+    font-size: 20px !important;
+    margin-bottom: 14px !important;
+  }
+
+  .ride-card {
+    border-radius: 12px !important;
+  }
+
+  .ride-info h3 {
+    font-size: 14px !important;
+  }
+
+  .ride-info p,
+  .description,
+  .route {
+    font-size: 13px !important;
+  }
+
+  .avatar {
+    width: 42px !important;
+    height: 42px !important;
+    font-size: 16px !important;
+    margin-right: 10px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 10px 10px !important;
+  }
+
+  .header-right {
+    justify-content: flex-end !important;
+  }
+
+  .header-icon,
+  .header-avatar {
+    width: 26px !important;
+    height: 26px !important;
+  }
+
+  .top-nav .nav-link {
+    font-size: 12px;
+    padding: 7px 9px;
+  }
+
+  .welcome-section {
+    height: 220px !important;
+  }
+
+  .slogan-text {
+    font-size: 1.25rem !important;
+  }
+
+  .slogan-subtext {
+    font-size: 0.82rem !important;
+  }
+
+  .form-card {
+    padding: 12px !important;
+  }
+
+  .rides-section {
+    padding: 12px !important;
+    margin: 10px 4px !important;
+  }
+
+  .ride-card {
+    padding: 12px !important;
+  }
+}
+
+/* ==============================
+   ALL-PAGES RESPONSIVE POLISH
+================================ */
+@media (max-width: 768px) {
+  .main-container,
+  .container,
+  .profile-page-wrapper,
+  .details-shell {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  .title-wrapper {
+    margin: 10px auto 12px auto !important;
+    gap: 10px !important;
+  }
+
+  .title-gif {
+    width: 56px !important;
+    height: 56px !important;
+  }
+
+  .page-title {
+    font-size: 1.45rem !important;
+    line-height: 1.2 !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.9rem !important;
+  }
+
+  .form-card {
+    border-radius: 14px !important;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .ride-type-options {
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+  }
+
+  .datetime-group {
+    grid-template-columns: 1fr !important;
+  }
+
+  .details-layout {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .summary-card,
+  .details-card {
+    border-radius: 14px !important;
+  }
+
+  .profile-sidebar {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 0 12px 0 !important;
+    border-radius: 14px !important;
+  }
+
+  .profile-page-wrapper {
+    margin-top: 0 !important;
+    gap: 12px !important;
+  }
+
+  .sidebar-top-band {
+    padding: 16px 14px !important;
+  }
+
+  .sidebar-info-list {
+    padding: 0 14px 12px 14px !important;
+  }
+
+  .sidebar-edit-btn,
+  .sidebar-save-btn,
+  .submit-btn,
+  .btn,
+  button[type="submit"] {
+    min-height: 44px;
+  }
+
+  .grid-container,
+  .contacts-grid,
+  .time-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .card,
+  .contact-card {
+    border-radius: 14px !important;
+  }
+
+  .search-results-page {
+    padding: 12px 10px !important;
+  }
+
+  .search-results-page .rides-section {
+    border-radius: 14px !important;
+    padding: 12px !important;
+  }
+
+  .back-btn {
+    font-size: 13px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-container,
+  .container,
+  .content,
+  .profile-page-wrapper,
+  .details-shell {
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .page-title {
+    font-size: 1.25rem !important;
+  }
+
+  .page-subtitle {
+    font-size: 0.82rem !important;
+  }
+
+  .title-gif {
+    width: 48px !important;
+    height: 48px !important;
+  }
+
+  .details-header-title {
+    font-size: 20px !important;
+  }
+
+  .driver-block {
+    gap: 10px !important;
+  }
+
+  .summary-price {
+    font-size: 18px !important;
+  }
+
+  .profile-avatar {
+    width: 72px !important;
+    height: 72px !important;
+  }
+
+  .sidebar-name {
+    font-size: 16px !important;
+  }
+
+  .sidebar-id {
+    font-size: 12px !important;
+  }
+
+  .contact-card .phone-display,
+  .card-body,
+  .time-slot {
+    font-size: 13px !important;
+  }
+}
 
