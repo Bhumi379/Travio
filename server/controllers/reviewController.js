@@ -4,7 +4,7 @@ const Review = require('../models/review');
 const getAllReviews = async (_req, res) => {
   try {
     const reviews = await Review.find()
-      .populate('userId', 'name')
+      .populate('userId', 'name profilePicture')
       .sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: reviews.length, data: reviews });
   } catch (error) {

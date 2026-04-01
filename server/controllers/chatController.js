@@ -24,7 +24,7 @@ const getChatById = async (req, res) => {
 // GET /api/chats/user/:userId  -> chats that include user
 const getChatsByUser = async (req, res) => {
   try {
-    const chats = await Chat.find({ participants: req.params.userId }).sort({ updatedAt: -1 });
+    const chats = await Chat.find({ participants: req.params.userId }).sort({ updatedAt: -1 }).populate('participants', 'name profilePicture');
     res.status(200).json({ success: true, count: chats.length, data: chats });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Error fetching user chats', error: error.message });
