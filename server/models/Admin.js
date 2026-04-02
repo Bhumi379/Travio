@@ -35,12 +35,12 @@ lastLogin: {
 
 
 
-adminSchema.pre('save', async function(next) {
-  if (!this.isModified('Password')) return next();
+adminSchema.pre('save', async function() {
+  if (!this.isModified('Password')) return;
 
   this.Password = await bcrypt.hash(this.Password, 12);
-  next();
 });
+
 // Virtual field to return _id as a string(converting a complex ObjectId object into a string representation.)
 adminSchema.virtual('id').get(function() {
   return this._id.toHexString();

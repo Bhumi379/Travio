@@ -1,8 +1,8 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Travio Admin Dashboard</title>
 
   <!-- Tailwind -->
@@ -12,79 +12,113 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
-<body class="bg-gray-100">
+<body class="admin-app min-h-screen">
 
 <div class="flex min-h-screen">
 
   <!-- ================= SIDEBAR ================= -->
-  <aside class="w-64 bg-white shadow-xl p-6 flex flex-col justify-between">
+  <aside class="admin-sidebar w-64 p-6 flex flex-col justify-between shrink-0">
   <div>
-    <h2 class="text-2xl font-bold mb-8 text-orange-600">Travio Admin</h2>
+    <h2 class="text-2xl font-bold mb-8 bg-gradient-to-r from-orange-400 to-amber-300 bg-clip-text text-transparent">Travio Admin</h2>
 
-    <nav class="space-y-2">
-      <button onclick="showDashboard()" class="sidebar-btn">📊 Dashboard</button>
-      <button onclick="loadRides('cab')" class="sidebar-btn">🚕 Cab Rides</button>
-      <button onclick="loadRides('travelBuddy')" class="sidebar-btn">🤝 Travel Buddy</button>
-      <button onclick="loadUsers()" class="sidebar-btn">👥 Users</button>
-      <button onclick="loadAdmins()" class="sidebar-btn">🛡 Admins</button>
-      <button onclick="showSection('createAdmin')" class="sidebar-btn">➕ Create Admin</button>
+    <nav class="space-y-1">
+      <button type="button" onclick="showDashboard()" class="sidebar-btn">📊 Dashboard</button>
+      <button type="button" onclick="loadRides('cab')" class="sidebar-btn">🚕 Cab Rides</button>
+      <button type="button" onclick="loadRides('travelBuddy')" class="sidebar-btn">🤝 Travel Buddy</button>
+      <button type="button" onclick="loadUsers()" class="sidebar-btn">👥 Users</button>
+      <button type="button" onclick="loadAboutEditor()" class="sidebar-btn">📝 Information page</button>
+      <button type="button" onclick="loadAdmins()" class="sidebar-btn">🛡 Admins</button>
+      <button type="button" onclick="showSection('createAdmin')" class="sidebar-btn">➕ Create Admin</button>
     </nav>
   </div>
 
-  <button onclick="logout()" class="text-red-500 font-semibold mt-10 hover:underline">
+  <button type="button" onclick="logout()" class="text-red-400 font-semibold mt-10 hover:text-red-300 transition-colors text-left">
     Logout
   </button>
 </aside>
 
 
   <!-- ================= MAIN ================= -->
-  <main class="flex-1 p-6 space-y-8">
+  <main class="admin-main flex-1 p-6 space-y-8 overflow-x-hidden">
 
     <!-- DASHBOARD -->
-    <section id="dashboard">
-      <h1 class="text-2xl font-semibold mb-4">Dashboard</h1>
+    <section id="dashboard" class="admin-panel-in">
+      <h1 class="text-2xl font-semibold mb-4 text-slate-100">Dashboard</h1>
 
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-  <div class="stat-card bg-blue-100 text-blue-700">
+      <div class="flex flex-col md:flex-row md:items-center gap-3 mb-4">
+        <div class="text-sm text-slate-400 font-medium">Period</div>
+        <input id="monthPicker" type="month" class="rounded-lg p-2 admin-input w-full md:w-56" />
+        <button type="button" onclick="loadStats()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 transition shadow-lg shadow-orange-500/20 w-full md:w-auto">
+          Apply
+        </button>
+        <div class="text-xs text-slate-500 md:ml-auto max-w-xl">
+          Scheduled = today+future in selected month • Ongoing = today • Previous = before today in selected month
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="stat-card stat-card-blue admin-stat-glow">
     Scheduled
     <span id="scheduledCount" class="block text-2xl">0</span>
   </div>
 
-  <div class="stat-card bg-yellow-100 text-yellow-700">
-    Ongoing
+  <div class="stat-card stat-card-amber admin-stat-glow">
+    Ongoing (Today)
     <span id="ongoingCount" class="block text-2xl">0</span>
   </div>
 
-  <div class="stat-card bg-green-100 text-green-700">
-    Completed
+  <div class="stat-card stat-card-emerald admin-stat-glow">
+    Previous
     <span id="completedCount" class="block text-2xl">0</span>
-  </div>
-
-  <div class="stat-card bg-red-100 text-red-700">
-    Cancelled
-    <span id="cancelledCount" class="block text-2xl">0</span>
   </div>
 </div>
 
 
-      <div class="bg-white p-6 rounded shadow">
-        <canvas id="rideChart"></canvas>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="admin-surface p-6 rounded-xl border border-slate-700/80 shadow-xl admin-card-float">
+          <div class="font-semibold mb-2 text-slate-300">Ride status distribution</div>
+          <canvas id="rideChart"></canvas>
+        </div>
+        <div class="admin-surface p-6 rounded-xl border border-slate-700/80 shadow-xl admin-card-float delay-1">
+          <div class="font-semibold mb-2 text-slate-300">Cab vs Travel Buddy (total rides)</div>
+          <canvas id="typeChart"></canvas>
+        </div>
       </div>
     </section>
 
     <!-- RIDES -->
-    <section id="ridesSection" class="hidden">
-      <h2 class="text-xl font-semibold mb-4">Rides</h2>
-      <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-100 text-gray-700 text-sm">
-
+    <section id="ridesSection" class="hidden admin-panel-in">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <h2 class="text-xl font-semibold text-slate-100" id="ridesHeading">Rides</h2>
+        <div class="admin-surface border border-slate-700 rounded-xl p-3 shadow-lg w-full md:w-auto">
+          <div class="flex flex-col md:flex-row md:items-end gap-2">
+            <div class="flex-1">
+              <label class="block text-xs font-semibold text-slate-400 mb-1">From date</label>
+              <input id="rideFromDate" type="date" class="rounded-lg p-2 admin-input w-full md:w-44" />
+            </div>
+            <div class="flex-1">
+              <label class="block text-xs font-semibold text-slate-400 mb-1">To date</label>
+              <input id="rideToDate" type="date" class="rounded-lg p-2 admin-input w-full md:w-44" />
+            </div>
+            <button type="button" onclick="applyRideDateFilter()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 transition w-full md:w-auto">
+              Search
+            </button>
+            <button type="button" onclick="clearRideDateFilter()" class="admin-btn-ghost px-4 py-2 rounded-lg w-full md:w-auto">
+              Clear
+            </button>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">Filters by departure date (leaving date).</div>
+        </div>
+      </div>
+      <div class="admin-surface rounded-xl border border-slate-700 overflow-x-auto shadow-lg">
+        <table class="w-full text-slate-200 text-sm">
+          <thead class="bg-slate-800/90 text-slate-300 text-xs uppercase tracking-wide">
             <tr>
-              <th class="p-3">From → To</th>
-              <th class="p-3">Type</th>
-              <th class="p-3">Status</th>
-              <th class="p-3">Participants</th>
-              <th class="p-3">Action</th>
+              <th class="p-3 text-left">From → To</th>
+              <th class="p-3 text-left">Status</th>
+              <th class="p-3 text-left">Date/Time</th>
+              <th class="p-3 text-left">Participants</th>
+              <th class="p-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody id="ridesTable"></tbody>
@@ -93,17 +127,28 @@
     </section>
 
     <!-- USERS -->
-    <section id="usersSection" class="hidden">
-      <h2 class="text-xl font-semibold mb-4">Users</h2>
-      <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-100 text-gray-700 text-sm">
-
+    <section id="usersSection" class="hidden admin-panel-in">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mb-4">
+        <h2 class="text-xl font-semibold text-slate-100">Users</h2>
+        <div class="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+          <input id="userSearchName" placeholder="Search by name" class="rounded-lg p-2 admin-input w-full md:w-56" />
+          <input id="userSearchCollegeId" placeholder="Search by college ID" class="rounded-lg p-2 admin-input w-full md:w-56" />
+          <button type="button" onclick="applyUserSearch()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 transition w-full md:w-auto">
+            Search
+          </button>
+          <button type="button" onclick="loadUsers()" class="admin-btn-ghost px-4 py-2 rounded-lg w-full md:w-auto">
+            Reset
+          </button>
+        </div>
+      </div>
+      <div class="admin-surface rounded-xl border border-slate-700 overflow-x-auto shadow-lg">
+        <table class="w-full text-slate-200 text-sm">
+          <thead class="bg-slate-800/90 text-slate-300 text-xs uppercase tracking-wide">
             <tr>
-              <th class="p-3">Name</th>
-              <th class="p-3">College ID</th>
-              <th class="p-3">Email</th>
-              <th class="p-3">Action</th>
+              <th class="p-3 text-left">Name</th>
+              <th class="p-3 text-left">College ID</th>
+              <th class="p-3 text-left">Email</th>
+              <th class="p-3 text-left">Action</th>
             </tr>
           </thead>
           <tbody id="usersTable"></tbody>
@@ -111,18 +156,114 @@
       </div>
     </section>
 
-    <!-- ADMINS -->
-    <section id="adminsSection" class="hidden">
-      <h2 class="text-xl font-semibold mb-4">Admins</h2>
-      <div class="bg-white rounded shadow overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-100 text-gray-700 text-sm">
+    <!-- INFORMATION PAGE EDITOR -->
+    <section id="aboutSection" class="hidden admin-panel-in space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <h2 class="text-xl font-semibold text-slate-100">Information page</h2>
+        <p class="text-xs text-slate-500">Edits the public <span class="text-orange-400">about.html</span> (Campus Commute)</p>
+      </div>
 
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div class="admin-surface rounded-xl border border-slate-700 p-4 space-y-3 admin-card-float">
+          <h3 class="text-sm font-semibold text-slate-200">Page heading</h3>
+          <input id="aboutPageTitle" type="text" placeholder="Title" class="w-full rounded-lg p-2.5 admin-input" />
+          <input id="aboutPageSubtitle" type="text" placeholder="Subtitle" class="w-full rounded-lg p-2.5 admin-input" />
+        </div>
+        <div class="admin-surface rounded-xl border border-slate-700 p-4 admin-card-float delay-1">
+          <button type="button" id="schedulesToggle" onclick="toggleSchedulesPanel()" class="w-full flex items-center justify-between text-left text-sm font-semibold text-slate-200 py-2">
+            <span>Bus &amp; Niwai schedules</span>
+            <span id="schedulesChevron" class="text-slate-400 transition-transform">▼</span>
+          </button>
+          <div id="schedulesPanel" class="hidden mt-3 space-y-4 border-t border-slate-600 pt-4">
+            <div>
+              <div class="text-xs font-semibold text-orange-300/90 mb-2">Roadways bus cards</div>
+              <div id="busCardsContainer" class="space-y-2 max-h-64 overflow-y-auto pr-1"></div>
+              <button type="button" onclick="addBusCard()" class="mt-2 text-sm text-orange-400 hover:text-orange-300 transition">+ Add bus route</button>
+            </div>
+            <div>
+              <div class="text-xs font-semibold text-orange-300/90 mb-2">Niwai railway (Meta)</div>
+              <div id="niwaiContainer" class="space-y-2"></div>
+              <button type="button" onclick="addNiwaiSlot()" class="mt-2 text-sm text-orange-400 hover:text-orange-300 transition">+ Add time slot</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+        <div class="admin-surface rounded-xl border border-slate-700 p-4 admin-card-float">
+          <h3 class="text-lg font-semibold text-orange-300 mb-3">Metro Didi contacts</h3>
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-slate-500 mb-2">Current entries — edit or remove</p>
+              <div id="metroDidiList" class="max-h-72 overflow-y-auto space-y-1 rounded-lg border border-slate-600 p-2 bg-slate-900/40"></div>
+            </div>
+            <div class="flex-1 space-y-2 min-w-0">
+              <p class="text-xs text-slate-500 mb-1" id="metroFormHint">Add new contact</p>
+              <input id="metroName" type="text" placeholder="Name" class="w-full rounded-lg p-2 admin-input" />
+              <input id="metroRoute" type="text" placeholder="Route / area" class="w-full rounded-lg p-2 admin-input" />
+              <input id="metroPhone" type="text" placeholder="Phone" class="w-full rounded-lg p-2 admin-input" />
+              <input id="metroLetter" type="text" placeholder="Avatar letter (optional)" maxlength="2" class="w-full rounded-lg p-2 admin-input" />
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button type="button" onclick="applyMetroForm()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition">Save contact</button>
+                <button type="button" onclick="resetMetroForm()" class="admin-btn-ghost px-4 py-2 rounded-lg text-sm">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-surface rounded-xl border border-slate-700 p-4 admin-card-float delay-1">
+          <h3 class="text-lg font-semibold text-orange-300 mb-3">Trusted drivers</h3>
+          <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1 min-w-0">
+              <p class="text-xs text-slate-500 mb-2">Current entries — edit or remove</p>
+              <div id="trustedDriversList" class="max-h-72 overflow-y-auto space-y-1 rounded-lg border border-slate-600 p-2 bg-slate-900/40"></div>
+            </div>
+            <div class="flex-1 space-y-2 min-w-0">
+              <p class="text-xs text-slate-500 mb-1" id="driverFormHint">Add new driver</p>
+              <input id="driverName" type="text" placeholder="Name / label" class="w-full rounded-lg p-2 admin-input" />
+              <input id="driverDesc" type="text" placeholder="Description (e.g. routes)" class="w-full rounded-lg p-2 admin-input" />
+              <input id="driverLetter" type="text" placeholder="Avatar letter (optional)" maxlength="2" class="w-full rounded-lg p-2 admin-input" />
+              <div class="flex flex-wrap gap-2 pt-1">
+                <button type="button" onclick="applyDriverForm()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition">Save driver</button>
+                <button type="button" onclick="resetDriverForm()" class="admin-btn-ghost px-4 py-2 rounded-lg text-sm">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <button type="button" onclick="saveAboutContent()" class="bg-orange-500 text-white px-5 py-2.5 rounded-lg hover:bg-orange-400 transition shadow-lg shadow-orange-500/25">Save all changes</button>
+        <button type="button" onclick="previewAboutContent()" class="admin-btn-ghost px-5 py-2.5 rounded-lg border border-slate-600">Preview public page</button>
+        <span id="aboutSaveMsg" class="text-sm text-slate-400"></span>
+      </div>
+    </section>
+
+    <!-- DETAILS MODAL -->
+    <div id="detailsModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50 admin-modal-backdrop">
+      <div class="admin-surface rounded-xl shadow-2xl w-full max-w-3xl max-h-[85vh] overflow-auto border border-slate-600 admin-modal-pop">
+        <div class="flex items-center justify-between p-4 border-b border-slate-600">
+          <div class="font-semibold text-slate-100" id="detailsTitle">Ride Details</div>
+          <button type="button" onclick="closeDetails()" class="text-slate-400 hover:text-white text-xl leading-none transition">×</button>
+        </div>
+        <div class="p-4 space-y-4 text-slate-200" id="detailsBody"></div>
+      </div>
+    </div>
+
+    <!-- USER HOVER PANEL -->
+    <div id="userHoverPanel" class="hidden fixed admin-surface border border-slate-600 rounded-xl shadow-2xl p-3 text-sm w-80 z-50 text-slate-200"></div>
+
+    <!-- ADMINS -->
+    <section id="adminsSection" class="hidden admin-panel-in">
+      <h2 class="text-xl font-semibold mb-4 text-slate-100">Admins</h2>
+      <div class="admin-surface rounded-xl border border-slate-700 overflow-x-auto shadow-lg">
+        <table class="w-full text-slate-200 text-sm">
+          <thead class="bg-slate-800/90 text-slate-300 text-xs uppercase tracking-wide">
             <tr>
-              <th class="p-3">Name</th>
-              <th class="p-3">Email</th>
-              <th class="p-3">Created At</th>
-              <th class="p-3">Last Login</th>
+              <th class="p-3 text-left">Name</th>
+              <th class="p-3 text-left">Email</th>
+              <th class="p-3 text-left">Created At</th>
+              <th class="p-3 text-left">Last Login</th>
             </tr>
           </thead>
           <tbody id="adminsTable"></tbody>
@@ -131,20 +272,20 @@
     </section>
 
     <!-- CREATE ADMIN -->
-    <section id="createAdmin" class="hidden bg-white p-6 rounded-xl shadow">
-  <h2 class="text-xl font-semibold mb-4">Create Admin</h2>
+    <section id="createAdmin" class="hidden admin-surface p-6 rounded-xl border border-slate-700 shadow-lg admin-panel-in">
+  <h2 class="text-xl font-semibold mb-4 text-slate-100">Create Admin</h2>
 
   <form id="adminForm" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-    <input id="name" placeholder="Name" class="border p-3 rounded-lg" required />
-    <input id="email" type="email" placeholder="Email" class="border p-3 rounded-lg" required />
-    <input id="Password" type="password" placeholder="Password" class="border p-3 rounded-lg" required />
+    <input id="name" placeholder="Name" class="admin-input p-3 rounded-lg" required />
+    <input id="email" type="email" placeholder="Email" class="admin-input p-3 rounded-lg" required />
+    <input id="Password" type="password" placeholder="Password" class="admin-input p-3 rounded-lg" required />
 
-    <button class="md:col-span-3 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-600 transition">
+    <button type="submit" class="md:col-span-3 bg-orange-500 text-white py-2 rounded-lg hover:bg-orange-400 transition shadow-md shadow-orange-500/20">
       Create Admin
     </button>
   </form>
 
-  <p id="adminMsg" class="mt-3 text-green-600"></p>
+  <p id="adminMsg" class="mt-3 text-emerald-400 text-sm"></p>
 </section>
 
 
@@ -152,6 +293,87 @@
 </div>
 
 <style>
+:root {
+  --admin-bg: #0b1120;
+  --admin-surface: rgba(30, 41, 59, 0.85);
+  --admin-border: #334155;
+  --admin-text: #e2e8f0;
+}
+.admin-app {
+  background: radial-gradient(ellipse 120% 80% at 10% -20%, rgba(251, 146, 60, 0.12), transparent 50%),
+    radial-gradient(ellipse 80% 60% at 100% 0%, rgba(56, 189, 248, 0.06), transparent 45%),
+    var(--admin-bg);
+  color: var(--admin-text);
+}
+.admin-sidebar {
+  background: linear-gradient(165deg, #0f172a 0%, #020617 55%, #0f172a 100%);
+  border-right: 1px solid var(--admin-border);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.35);
+  animation: adminSlideIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.admin-main {
+  animation: adminFadeUp 0.45s ease-out 0.08s both;
+}
+@keyframes adminSlideIn {
+  from { opacity: 0; transform: translateX(-12px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes adminFadeUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes adminCardFloat {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.admin-panel-in {
+  animation: adminCardFloat 0.42s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.admin-card-float {
+  animation: adminCardFloat 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.admin-card-float.delay-1 { animation-delay: 0.08s; }
+.admin-stat-glow {
+  transition: transform 0.2s ease, box-shadow 0.25s ease;
+}
+.admin-stat-glow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
+}
+.admin-modal-backdrop {
+  animation: adminFadeUp 0.25s ease-out both;
+}
+.admin-modal-pop {
+  animation: adminCardFloat 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+.admin-surface {
+  background: var(--admin-surface);
+  backdrop-filter: blur(8px);
+}
+.admin-input {
+  background: #0f172a;
+  border: 1px solid #475569;
+  color: #f1f5f9;
+}
+.admin-input::placeholder {
+  color: #64748b;
+}
+.admin-input:focus {
+  outline: none;
+  border-color: #fb923c;
+  box-shadow: 0 0 0 2px rgba(251, 146, 60, 0.25);
+}
+.admin-btn-ghost {
+  background: transparent;
+  border: 1px solid #475569;
+  color: #cbd5e1;
+  transition: background 0.2s, border-color 0.2s, color 0.2s;
+}
+.admin-btn-ghost:hover {
+  background: rgba(148, 163, 184, 0.12);
+  border-color: #94a3b8;
+  color: #f8fafc;
+}
 .sidebar-btn {
   display: block;
   width: 100%;
@@ -159,49 +381,90 @@
   padding: 10px 12px;
   border-radius: 8px;
   font-weight: 500;
+  color: #cbd5e1;
+  transition: background 0.2s, color 0.2s, transform 0.18s ease;
 }
 .sidebar-btn:hover {
-  background: #fef3c7;
+  background: rgba(251, 146, 60, 0.15);
+  color: #fff;
+  transform: translateX(4px);
 }
 .stat-card {
   padding: 20px;
   border-radius: 12px;
   text-align: center;
   font-weight: 600;
+  border: 1px solid rgba(148, 163, 184, 0.2);
 }
-
-@media (max-width: 768px) {
-  body > div.flex {
-    flex-direction: column;
-  }
-
-  aside {
-    width: 100% !important;
-    padding: 14px !important;
-  }
-
-  main {
-    padding: 12px !important;
-  }
-
-  .sidebar-btn {
-    padding: 11px 12px;
-  }
+.stat-card span {
+  margin-top: 6px;
 }
-
-@media (max-width: 480px) {
-  h1, h2 {
-    font-size: 1.1rem !important;
-  }
-
-  .stat-card {
-    padding: 14px;
-  }
+.stat-card-blue {
+  background: linear-gradient(145deg, rgba(37, 99, 235, 0.35), rgba(30, 58, 138, 0.5));
+  color: #bfdbfe;
+}
+.stat-card-amber {
+  background: linear-gradient(145deg, rgba(217, 119, 6, 0.35), rgba(120, 53, 15, 0.45));
+  color: #fde68a;
+}
+.stat-card-emerald {
+  background: linear-gradient(145deg, rgba(5, 150, 105, 0.35), rgba(6, 78, 59, 0.5));
+  color: #a7f3d0;
+}
+#schedulesToggle:hover {
+  color: #fb923c;
+}
+.schedules-chevron--open {
+  transform: rotate(-180deg);
 }
 </style>
 
 
 <script>
+let allRidesCache = [];
+let allUsersCache = [];
+let currentRideType = null; // 'cab' | 'travelBuddy'
+let rideChartInstance = null;
+let typeChartInstance = null;
+
+function toDateOnly(d) {
+  const x = new Date(d);
+  x.setHours(0,0,0,0);
+  return x;
+}
+
+function parseRideTime(r) {
+  return new Date(r.departureTime || r.createdAt);
+}
+
+function getRideComputedStatus(r) {
+  const now = new Date();
+  const rideTime = parseRideTime(r);
+  const today0 = toDateOnly(now);
+  const ride0 = toDateOnly(rideTime);
+  if (ride0.getTime() === today0.getTime()) return 'ongoing';
+  if (rideTime.getTime() > now.getTime()) return 'scheduled';
+  return 'completed';
+}
+
+function monthBounds(yyyyMm) {
+  // yyyy-mm
+  const [y, m] = (yyyyMm || '').split('-').map(Number);
+  const start = new Date(y, (m || 1) - 1, 1, 0, 0, 0, 0);
+  const end = new Date(y, (m || 1), 0, 23, 59, 59, 999);
+  return { start, end };
+}
+
+function toDownloadUrl(rawUrl) {
+  if (!rawUrl) return null;
+  if (/^https?:\/\//i.test(rawUrl)) return rawUrl;
+  const uploadsIndex = String(rawUrl).indexOf('/uploads/');
+  if (uploadsIndex >= 0) {
+    return `${window.location.origin}${String(rawUrl).slice(uploadsIndex)}`;
+  }
+  return rawUrl;
+}
+
 function showSection(id) {
   document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
@@ -220,58 +483,715 @@ async function checkAdmin() {
 async function loadStats() {
   const res = await fetch("/api/admin/rides", { credentials: "include" });
   const rides = await res.json();
+  allRidesCache = Array.isArray(rides) ? rides : [];
+
+  // default month picker to current month once
+  const mp = document.getElementById('monthPicker');
+  if (mp && !mp.value) {
+    const now = new Date();
+    mp.value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  }
+
+  const { start, end } = monthBounds(mp?.value);
+  const inMonth = allRidesCache.filter(r => {
+    const t = parseRideTime(r);
+    return t >= start && t <= end;
+  });
+
+  const now = new Date();
+  const today0 = toDateOnly(now);
 
   const stats = { scheduled: 0, ongoing: 0, completed: 0, cancelled: 0 };
-  rides.forEach(r => stats[r.status]++);
+  const typeStats = { cab: 0, travelBuddy: 0 };
 
-  scheduledCount.innerText = stats.scheduled;
-  ongoingCount.innerText = stats.ongoing;
-  completedCount.innerText = stats.completed;
-  cancelledCount.innerText = stats.cancelled;
+  inMonth.forEach(r => {
+    const computed = getRideComputedStatus(r);
+    stats[computed] = (stats[computed] || 0) + 1;
+    typeStats[r.rideType] = (typeStats[r.rideType] || 0) + 1;
+  });
 
-  new Chart(rideChart, {
+  // Apply your required definitions:
+  // Scheduled = today+future in month (excluding cancelled)
+  const scheduled = inMonth.filter(r => {
+    if (r.status === 'cancelled') return false;
+    const t = parseRideTime(r);
+    return t >= now;
+  }).length;
+  // Ongoing = today rides (excluding cancelled)
+  const ongoing = inMonth.filter(r => {
+    if (r.status === 'cancelled') return false;
+    const t0 = toDateOnly(parseRideTime(r));
+    return t0.getTime() === today0.getTime();
+  }).length;
+  // Previous = before today in month (excluding cancelled)
+  const previous = inMonth.filter(r => {
+    const t0 = toDateOnly(parseRideTime(r));
+    return t0.getTime() < today0.getTime();
+  }).length;
+
+  scheduledCount.innerText = scheduled;
+  ongoingCount.innerText = ongoing;
+  completedCount.innerText = previous;
+
+  const tickColor = "#94a3b8";
+  const gridColor = "rgba(148, 163, 184, 0.15)";
+  if (rideChartInstance) rideChartInstance.destroy();
+  rideChartInstance = new Chart(rideChart, {
     type: "bar",
     data: {
-      labels: Object.keys(stats),
-      datasets: [{ label: "Rides", data: Object.values(stats) }]
-    }
+      labels: ["scheduled", "ongoing", "previous"],
+      datasets: [{ label: "Rides", data: [scheduled, ongoing, previous], backgroundColor: ["#60a5fa","#fbbf24","#34d399"] }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { color: tickColor }, grid: { color: gridColor } },
+        y: { ticks: { color: tickColor }, grid: { color: gridColor } },
+      },
+    },
+  });
+
+  if (typeChartInstance) typeChartInstance.destroy();
+  typeChartInstance = new Chart(typeChart, {
+    type: "doughnut",
+    data: {
+      labels: ["Cab", "Travel Buddy"],
+      datasets: [{ data: [typeStats.cab || 0, typeStats.travelBuddy || 0], backgroundColor: ["#fb923c", "#22c55e"] }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { labels: { color: tickColor } },
+      },
+    },
   });
 }
 
 /* ================= RIDES ================= */
 async function loadRides(type) {
   showSection("ridesSection");
-  const rides = await fetch("/api/admin/rides", { credentials: "include" }).then(r => r.json());
-  const filtered = rides.filter(r => r.rideType === type);
+  currentRideType = type;
+  ridesHeading.innerText = type === 'cab' ? 'Cab Rides' : 'Travel Buddy Rides';
 
-  ridesTable.innerHTML = filtered.map(r => `
-    <tr class="border-t">
+  // Always refresh so participant counts are accurate after new joins.
+  allRidesCache = await fetch("/api/admin/rides", { credentials: "include" }).then(r => r.json());
+
+  const filtered = (allRidesCache || []).filter(r => r.rideType === type);
+  renderRidesTable(filtered);
+}
+
+function applyRideDateFilter() {
+  if (!currentRideType) return;
+  const from = document.getElementById('rideFromDate')?.value;
+  const to = document.getElementById('rideToDate')?.value;
+  const fromD = from ? new Date(from + "T00:00:00") : null;
+  const toD = to ? new Date(to + "T23:59:59") : null;
+
+  const base = (allRidesCache || []).filter(r => r.rideType === currentRideType);
+  const filtered = base.filter(r => {
+    const t = parseRideTime(r);
+    if (fromD && t < fromD) return false;
+    if (toD && t > toD) return false;
+    return true;
+  });
+  renderRidesTable(filtered);
+}
+
+function clearRideDateFilter() {
+  document.getElementById('rideFromDate').value = "";
+  document.getElementById('rideToDate').value = "";
+  const base = (allRidesCache || []).filter(r => r.rideType === currentRideType);
+  renderRidesTable(base);
+}
+
+function renderRidesTable(rides) {
+  ridesTable.innerHTML = (rides || []).map(r => {
+    const status = getRideComputedStatus(r);
+    const dt = parseRideTime(r);
+    const participantCount =
+      typeof r.participantCount === 'number'
+        ? r.participantCount
+        : (Array.isArray(r.acceptedParticipants) ? r.acceptedParticipants.length : (Array.isArray(r.participants) ? r.participants.length : 0));
+    return `
+    <tr class="border-t border-slate-700/80 hover:bg-slate-800/50 transition-colors">
       <td class="p-3">${r.pickup.name} → ${r.destination.name}</td>
-      <td class="p-3">${r.rideType}</td>
-      <td class="p-3">${r.status}</td>
-      <td class="p-3">${r.participants.length}</td>
+      <td class="p-3">${status}</td>
+      <td class="p-3">${dt.toLocaleString()}</td>
+      <td class="p-3">${participantCount}</td>
       <td class="p-3">
-        <button onclick="deleteRide('${r._id}')" class="text-red-500">Delete</button>
+        <button type="button" onclick="openRideDetails('${r._id}')" class="text-sky-400 hover:text-sky-300 mr-3 transition">See details</button>
+        <button type="button" onclick="deleteRide('${r._id}')" class="text-red-400 hover:text-red-300 transition">Delete</button>
       </td>
     </tr>
-  `).join("");
+    `;
+  }).join("");
+
+}
+
+async function openRideDetails(rideId) {
+  const modal = document.getElementById('detailsModal');
+  const body = document.getElementById('detailsBody');
+  const title = document.getElementById('detailsTitle');
+  modal.classList.remove('hidden');
+  body.innerHTML = `<div class="text-slate-500">Loading...</div>`;
+  title.innerText = 'Ride Details';
+
+  const res = await fetch(`/api/admin/rides/${rideId}`, { credentials: "include" });
+  const data = await res.json();
+  const ride = data?.data || data;
+  if (!ride) {
+    body.innerHTML = `<div class="text-red-400">Could not load ride.</div>`;
+    return;
+  }
+
+  const dt = parseRideTime(ride);
+  const participants = Array.isArray(ride.acceptedParticipants)
+    ? ride.acceptedParticipants
+    : (Array.isArray(ride.participants) ? ride.participants : []);
+  const initiator = ride.initiatorId;
+  const isCab = ride.rideType === 'cab';
+
+  title.innerText = `${isCab ? 'Cab Ride' : 'Travel Buddy'} • ${ride.pickup?.name || ''} → ${ride.destination?.name || ''}`;
+
+  const participantHtml = participants.length
+    ? `<div class="space-y-1">${participants.map(p => `
+        <div class="border border-slate-600 rounded-lg p-2 bg-slate-900/40">
+          <div class="font-medium text-slate-100">${p.name || 'User'}</div>
+          <div class="text-xs text-slate-500">ID: ${p._id}</div>
+          <div class="text-xs text-slate-400">${p.email || ''} • ${p.collegeId || ''}</div>
+          <div class="text-xs text-slate-400">${p.contactNumber || ''} • Guardian: ${p.guardianNumber || ''}</div>
+        </div>
+      `).join('')}</div>`
+    : `<div class="text-slate-500">No participants</div>`;
+
+  const aadharUrl = toDownloadUrl(ride.driver?.aadharImage);
+  const licenseUrl = toDownloadUrl(ride.driver?.driverLicenseImage);
+
+  const driverHtml = isCab
+    ? `<div class="border border-slate-600 rounded-xl p-3 bg-slate-900/50">
+        <div class="font-semibold text-slate-100 mb-2">Driver details</div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+          <div><span class="text-slate-500">Name:</span> ${ride.driver?.name || '—'}</div>
+          <div><span class="text-slate-500">Vehicle:</span> ${ride.driver?.vehicleNumber || '—'}</div>
+          <div><span class="text-slate-500">Contact:</span> ${ride.driver?.contactNumber || '—'}</div>
+          ${aadharUrl
+            ? `<div><span class="text-slate-500">Aadhar:</span> <a class="text-sky-400 hover:text-sky-300 underline" href="${aadharUrl}" download target="_blank" rel="noopener noreferrer">Download</a></div>`
+            : `<div><span class="text-slate-500">Aadhar:</span> —</div>`}
+          ${licenseUrl
+            ? `<div><span class="text-slate-500">Driving License:</span> <a class="text-sky-400 hover:text-sky-300 underline" href="${licenseUrl}" download target="_blank" rel="noopener noreferrer">Download</a></div>`
+            : `<div><span class="text-slate-500">Driving License:</span> —</div>`}
+        </div>
+      </div>`
+    : '';
+
+  body.innerHTML = `
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="border border-slate-600 rounded-xl p-3">
+        <div class="font-semibold text-slate-100 mb-2">Route</div>
+        <div class="text-sm">${ride.pickup?.name || 'Pickup'} → ${ride.destination?.name || 'Destination'}</div>
+        <div class="text-xs text-slate-500 mt-1">${ride.pickup?.address || ''}</div>
+        <div class="text-xs text-slate-500">${ride.destination?.address || ''}</div>
+      </div>
+      <div class="border border-slate-600 rounded-xl p-3">
+        <div class="font-semibold text-slate-100 mb-2">Timing & status</div>
+        <div class="text-sm"><span class="text-slate-500">Departure:</span> ${dt.toLocaleString()}</div>
+        <div class="text-sm"><span class="text-slate-500">Computed status:</span> ${getRideComputedStatus(ride)}</div>
+        <div class="text-sm"><span class="text-slate-500">Seats:</span> ${ride.seats ?? '—'}</div>
+        ${isCab ? `<div class="text-sm"><span class="text-slate-500">Fare:</span> ${ride.fare ?? '—'}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="border border-slate-600 rounded-xl p-3">
+      <div class="font-semibold text-slate-100 mb-2">Creator</div>
+      <div class="text-sm">${initiator?.name || '—'} • ${initiator?.email || '—'}</div>
+      <div class="text-xs text-slate-500">ID: ${initiator?._id || '—'}</div>
+    </div>
+
+    ${driverHtml}
+
+    <div class="border border-slate-600 rounded-xl p-3">
+      <div class="font-semibold text-slate-100 mb-2">Participants (${participants.length})</div>
+      ${participantHtml}
+    </div>
+  `;
+}
+
+function closeDetails() {
+  document.getElementById('detailsModal').classList.add('hidden');
 }
 
 /* ================= USERS ================= */
 async function loadUsers() {
   showSection("usersSection");
   const users = await fetch("/api/admin/users", { credentials: "include" }).then(r => r.json());
+  allUsersCache = Array.isArray(users) ? users : [];
 
-  usersTable.innerHTML = users.map(u => `
-    <tr class="border-t">
-      <td class="p-3">${u.name}</td>
-      <td class="p-3">${u.collegeId}</td>
-      <td class="p-3">${u.email}</td>
+  usersTable.innerHTML = (allUsersCache || []).map(u => `
+    <tr class="border-t border-slate-700/80 hover:bg-slate-800/50 user-row transition-colors" data-user='${JSON.stringify(u).replaceAll("'", "&apos;")}'>
+      <td class="p-3 user-name-cell text-slate-100 font-medium cursor-default">${u.name}</td>
+      <td class="p-3 text-slate-300">${u.collegeId}</td>
+      <td class="p-3 text-slate-300">${u.email}</td>
       <td class="p-3">
-        <button onclick="deleteUser('${u._id}')" class="text-red-500">Delete</button>
+        <button type="button" onclick="deleteUser('${u._id}')" class="text-red-400 hover:text-red-300 transition">Delete</button>
       </td>
     </tr>
   `).join("");
+
+  wireUserHover();
+}
+
+/* ================= INFORMATION PAGE (structured) ================= */
+let aboutState = null;
+let editingMetroIndex = null;
+let editingDriverIndex = null;
+
+function aboutDeepCopy(o) {
+  return JSON.parse(JSON.stringify(o));
+}
+
+function escAboutAttr(s) {
+  return String(s ?? '').replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+}
+
+function escAboutHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function toggleSchedulesPanel() {
+  const panel = document.getElementById('schedulesPanel');
+  const chev = document.getElementById('schedulesChevron');
+  if (!panel) return;
+  const nowHidden = panel.classList.toggle('hidden');
+  if (chev) chev.classList.toggle('schedules-chevron--open', !nowHidden);
+}
+
+function syncBusFromDom() {
+  if (!aboutState) return;
+  const container = document.getElementById('busCardsContainer');
+  if (!container) return;
+  const cards = [];
+  container.querySelectorAll('[data-bus-card]').forEach((cardEl) => {
+    const title = cardEl.querySelector('.bus-title')?.value?.trim() || '';
+    const tag = cardEl.querySelector('.bus-tag')?.value?.trim() || '';
+    const times = [];
+    cardEl.querySelectorAll('.bus-time-row').forEach((row) => {
+      const time = row.querySelector('.bus-time')?.value?.trim();
+      const status = row.querySelector('.bus-status')?.value?.trim() || 'Daily';
+      if (time) times.push({ time, status });
+    });
+    if (title) cards.push({ title, tag, times });
+  });
+  aboutState.busSchedules = cards;
+}
+
+function syncNiwaiFromDom() {
+  if (!aboutState) return;
+  const container = document.getElementById('niwaiContainer');
+  if (!container) return;
+  const slots = [];
+  container.querySelectorAll('.niwai-row').forEach((row) => {
+    const label = row.querySelector('.niwai-label')?.value?.trim() || '';
+    const time = row.querySelector('.niwai-time')?.value?.trim() || '';
+    if (label && time) slots.push({ label, time });
+  });
+  aboutState.niwaiSlots = slots;
+}
+
+function renderBusEditor() {
+  const container = document.getElementById('busCardsContainer');
+  if (!container || !aboutState) return;
+  container.innerHTML = (aboutState.busSchedules || [])
+    .map(
+      (card, ci) => `
+    <div class="border border-slate-600 rounded-lg p-3 space-y-2 bg-slate-900/30" data-bus-card>
+      <div class="flex flex-col sm:flex-row gap-2">
+        <input class="bus-title flex-1 rounded p-2 admin-input text-sm" placeholder="Route title" value="${escAboutAttr(card.title)}" />
+        <input class="bus-tag w-full sm:w-36 rounded p-2 admin-input text-sm" placeholder="Tag (e.g. Morning)" value="${escAboutAttr(card.tag)}" />
+        <button type="button" onclick="removeBusCard(${ci})" class="text-red-400 text-sm shrink-0 hover:text-red-300">Remove card</button>
+      </div>
+      ${(card.times || [])
+        .map(
+          (t, ti) => `
+        <div class="flex flex-wrap gap-2 items-center bus-time-row">
+          <input class="bus-time flex-1 min-w-[100px] rounded p-2 admin-input text-sm" placeholder="Time" value="${escAboutAttr(t.time)}" />
+          <input class="bus-status w-28 rounded p-2 admin-input text-sm" placeholder="Daily" value="${escAboutAttr(t.status || 'Daily')}" />
+          <button type="button" onclick="removeBusTime(${ci},${ti})" class="text-slate-500 hover:text-slate-300 px-1">×</button>
+        </div>`
+        )
+        .join('')}
+      <button type="button" onclick="addBusTime(${ci})" class="text-xs text-orange-400 hover:text-orange-300">+ Add time</button>
+    </div>`
+    )
+    .join('');
+}
+
+function renderNiwaiEditor() {
+  const container = document.getElementById('niwaiContainer');
+  if (!container || !aboutState) return;
+  container.innerHTML = (aboutState.niwaiSlots || [])
+    .map(
+      (s, i) => `
+    <div class="flex flex-wrap gap-2 items-center niwai-row">
+      <input class="niwai-label flex-1 min-w-[100px] rounded p-2 admin-input text-sm" placeholder="Label" value="${escAboutAttr(s.label)}" />
+      <input class="niwai-time flex-1 min-w-[100px] rounded p-2 admin-input text-sm" placeholder="Time" value="${escAboutAttr(s.time)}" />
+      <button type="button" onclick="removeNiwaiSlot(${i})" class="text-slate-500 hover:text-red-400 px-1">×</button>
+    </div>`
+    )
+    .join('');
+}
+
+function addBusCard() {
+  if (!aboutState) return;
+  syncBusFromDom();
+  aboutState.busSchedules.push({
+    title: 'New route',
+    tag: '',
+    times: [{ time: '', status: 'Daily' }],
+  });
+  renderBusEditor();
+}
+
+function removeBusCard(ci) {
+  if (!aboutState) return;
+  syncBusFromDom();
+  aboutState.busSchedules.splice(ci, 1);
+  renderBusEditor();
+}
+
+function addBusTime(ci) {
+  if (!aboutState || !aboutState.busSchedules[ci]) return;
+  syncBusFromDom();
+  aboutState.busSchedules[ci].times.push({ time: '', status: 'Daily' });
+  renderBusEditor();
+}
+
+function removeBusTime(ci, ti) {
+  if (!aboutState || !aboutState.busSchedules[ci]) return;
+  syncBusFromDom();
+  aboutState.busSchedules[ci].times.splice(ti, 1);
+  renderBusEditor();
+}
+
+function addNiwaiSlot() {
+  if (!aboutState) return;
+  syncNiwaiFromDom();
+  aboutState.niwaiSlots.push({ label: '', time: '' });
+  renderNiwaiEditor();
+}
+
+function removeNiwaiSlot(i) {
+  if (!aboutState) return;
+  syncNiwaiFromDom();
+  aboutState.niwaiSlots.splice(i, 1);
+  renderNiwaiEditor();
+}
+
+function renderMetroList() {
+  const el = document.getElementById('metroDidiList');
+  if (!el || !aboutState) return;
+  const rows = aboutState.metroDidi || [];
+  el.innerHTML =
+    rows.length === 0
+      ? '<div class="text-slate-500 text-sm py-4 text-center">No contacts yet.</div>'
+      : rows
+          .map(
+            (m, i) => `
+    <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-slate-600/80 bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
+      <div class="text-sm min-w-0">
+        <div class="font-medium text-slate-100 truncate">${escAboutHtml(m.name)}</div>
+        <div class="text-xs text-slate-400 truncate">${escAboutHtml(m.route)} · ${escAboutHtml(m.phone)}</div>
+      </div>
+      <div class="flex gap-1 shrink-0">
+        <button type="button" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-200 hover:bg-slate-600 transition" onclick="editMetro(${i})">Edit</button>
+        <button type="button" class="text-xs px-2 py-1 rounded text-red-400 hover:bg-red-950/50 transition" onclick="removeMetro(${i})">Remove</button>
+      </div>
+    </div>`
+          )
+          .join('');
+}
+
+function renderTrustedDriversList() {
+  const el = document.getElementById('trustedDriversList');
+  if (!el || !aboutState) return;
+  const rows = aboutState.trustedDrivers || [];
+  el.innerHTML =
+    rows.length === 0
+      ? '<div class="text-slate-500 text-sm py-4 text-center">No drivers yet.</div>'
+      : rows
+          .map(
+            (d, i) => `
+    <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-slate-600/80 bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
+      <div class="text-sm min-w-0">
+        <div class="font-medium text-slate-100 truncate">${escAboutHtml(d.name)}</div>
+        <div class="text-xs text-slate-400 truncate">${escAboutHtml(d.description || '')}</div>
+      </div>
+      <div class="flex gap-1 shrink-0">
+        <button type="button" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-200 hover:bg-slate-600 transition" onclick="editTrustedDriver(${i})">Edit</button>
+        <button type="button" class="text-xs px-2 py-1 rounded text-red-400 hover:bg-red-950/50 transition" onclick="removeTrustedDriver(${i})">Remove</button>
+      </div>
+    </div>`
+          )
+          .join('');
+}
+
+function resetMetroForm() {
+  editingMetroIndex = null;
+  document.getElementById('metroName').value = '';
+  document.getElementById('metroRoute').value = '';
+  document.getElementById('metroPhone').value = '';
+  document.getElementById('metroLetter').value = '';
+  const hint = document.getElementById('metroFormHint');
+  if (hint) hint.textContent = 'Add new contact';
+}
+
+function resetDriverForm() {
+  editingDriverIndex = null;
+  document.getElementById('driverName').value = '';
+  document.getElementById('driverDesc').value = '';
+  document.getElementById('driverLetter').value = '';
+  const hint = document.getElementById('driverFormHint');
+  if (hint) hint.textContent = 'Add new driver';
+}
+
+function editMetro(i) {
+  if (!aboutState || !aboutState.metroDidi[i]) return;
+  editingMetroIndex = i;
+  const m = aboutState.metroDidi[i];
+  document.getElementById('metroName').value = m.name || '';
+  document.getElementById('metroRoute').value = m.route || '';
+  document.getElementById('metroPhone').value = m.phone || '';
+  document.getElementById('metroLetter').value = m.letter || '';
+  const hint = document.getElementById('metroFormHint');
+  if (hint) hint.textContent = 'Editing — save to update';
+}
+
+async function removeMetro(i) {
+  if (!aboutState) return;
+  if (!confirm('Remove this Metro Didi contact?')) return;
+  aboutState.metroDidi.splice(i, 1);
+  resetMetroForm();
+  renderMetroList();
+  await saveAboutContent();
+}
+
+async function applyMetroForm() {
+  if (!aboutState) return;
+  const name = document.getElementById('metroName').value.trim();
+  const route = document.getElementById('metroRoute').value.trim();
+  const phone = document.getElementById('metroPhone').value.trim();
+  let letter = document.getElementById('metroLetter').value.trim().slice(0, 2);
+  if (!name || !phone) {
+    alert('Name and phone are required.');
+    return;
+  }
+  if (!letter) letter = name.charAt(0).toUpperCase();
+  const entry = { name, route, phone, letter };
+  if (editingMetroIndex !== null && editingMetroIndex >= 0) {
+    const prev = aboutState.metroDidi[editingMetroIndex] || {};
+    if (prev._id) entry._id = prev._id;
+    aboutState.metroDidi[editingMetroIndex] = { ...prev, ...entry };
+  } else {
+    aboutState.metroDidi.push(entry);
+  }
+  resetMetroForm();
+  renderMetroList();
+  await saveAboutContent();
+}
+
+function editTrustedDriver(i) {
+  if (!aboutState || !aboutState.trustedDrivers[i]) return;
+  editingDriverIndex = i;
+  const d = aboutState.trustedDrivers[i];
+  document.getElementById('driverName').value = d.name || '';
+  document.getElementById('driverDesc').value = d.description || '';
+  document.getElementById('driverLetter').value = d.letter || '';
+  const hint = document.getElementById('driverFormHint');
+  if (hint) hint.textContent = 'Editing — save to update';
+}
+
+async function removeTrustedDriver(i) {
+  if (!aboutState) return;
+  if (!confirm('Remove this trusted driver?')) return;
+  aboutState.trustedDrivers.splice(i, 1);
+  resetDriverForm();
+  renderTrustedDriversList();
+  await saveAboutContent();
+}
+
+async function applyDriverForm() {
+  if (!aboutState) return;
+  const name = document.getElementById('driverName').value.trim();
+  const description = document.getElementById('driverDesc').value.trim();
+  let letter = document.getElementById('driverLetter').value.trim().slice(0, 2);
+  if (!name) {
+    alert('Name is required.');
+    return;
+  }
+  if (!letter) letter = name.charAt(0).toUpperCase();
+  const entry = { name, description, letter };
+  if (editingDriverIndex !== null && editingDriverIndex >= 0) {
+    const prev = aboutState.trustedDrivers[editingDriverIndex] || {};
+    if (prev._id) entry._id = prev._id;
+    aboutState.trustedDrivers[editingDriverIndex] = { ...prev, ...entry };
+  } else {
+    aboutState.trustedDrivers.push(entry);
+  }
+  resetDriverForm();
+  renderTrustedDriversList();
+  await saveAboutContent();
+}
+
+async function loadAboutEditor() {
+  showSection('aboutSection');
+  const msg = document.getElementById('aboutSaveMsg');
+  if (msg) msg.textContent = '';
+
+  const res = await fetch('/api/admin/about', { credentials: 'include' });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    aboutState = null;
+    if (msg)
+      msg.textContent =
+        (data.message || 'Failed to load information content') +
+        (data.error ? ` (${data.error})` : '');
+    return;
+  }
+  const d = data.data || {};
+  aboutState = {
+    pageTitle: d.pageTitle || '',
+    pageSubtitle: d.pageSubtitle || '',
+    busSchedules: Array.isArray(d.busSchedules) ? aboutDeepCopy(d.busSchedules) : [],
+    niwaiSlots: Array.isArray(d.niwaiSlots) ? aboutDeepCopy(d.niwaiSlots) : [],
+    metroDidi: Array.isArray(d.metroDidi) ? aboutDeepCopy(d.metroDidi) : [],
+    trustedDrivers: Array.isArray(d.trustedDrivers) ? aboutDeepCopy(d.trustedDrivers) : [],
+  };
+  document.getElementById('aboutPageTitle').value = aboutState.pageTitle;
+  document.getElementById('aboutPageSubtitle').value = aboutState.pageSubtitle;
+  renderBusEditor();
+  renderNiwaiEditor();
+  renderMetroList();
+  renderTrustedDriversList();
+  resetMetroForm();
+  resetDriverForm();
+}
+
+async function saveAboutContent() {
+  const msg = document.getElementById('aboutSaveMsg');
+  if (!aboutState) {
+    if (msg) msg.textContent = 'Load the editor first.';
+    return;
+  }
+  syncBusFromDom();
+  syncNiwaiFromDom();
+  aboutState.pageTitle = document.getElementById('aboutPageTitle').value.trim();
+  aboutState.pageSubtitle = document.getElementById('aboutPageSubtitle').value.trim();
+
+  if (msg) msg.textContent = 'Saving...';
+
+  const res = await fetch('/api/admin/about', {
+    method: 'PUT',
+    credentials: 'include',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pageTitle: aboutState.pageTitle,
+      pageSubtitle: aboutState.pageSubtitle,
+      busSchedules: aboutState.busSchedules,
+      niwaiSlots: aboutState.niwaiSlots,
+      metroDidi: aboutState.metroDidi,
+      trustedDrivers: aboutState.trustedDrivers,
+    }),
+  });
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    if (msg) msg.textContent = data.message || 'Failed to save';
+    return;
+  }
+  if (data.data) {
+    const d = data.data;
+    aboutState = {
+      pageTitle: d.pageTitle || '',
+      pageSubtitle: d.pageSubtitle || '',
+      busSchedules: Array.isArray(d.busSchedules) ? aboutDeepCopy(d.busSchedules) : [],
+      niwaiSlots: Array.isArray(d.niwaiSlots) ? aboutDeepCopy(d.niwaiSlots) : [],
+      metroDidi: Array.isArray(d.metroDidi) ? aboutDeepCopy(d.metroDidi) : [],
+      trustedDrivers: Array.isArray(d.trustedDrivers) ? aboutDeepCopy(d.trustedDrivers) : [],
+    };
+    document.getElementById('aboutPageTitle').value = aboutState.pageTitle;
+    document.getElementById('aboutPageSubtitle').value = aboutState.pageSubtitle;
+    renderBusEditor();
+    renderNiwaiEditor();
+    renderMetroList();
+    renderTrustedDriversList();
+  }
+  if (msg) msg.textContent = 'Saved.';
+}
+
+function previewAboutContent() {
+  window.open('/about.html', '_blank', 'noopener,noreferrer');
+}
+
+function applyUserSearch() {
+  const nameQ = document.getElementById('userSearchName')?.value?.trim()?.toLowerCase() || "";
+  const collegeQ = document.getElementById('userSearchCollegeId')?.value?.trim()?.toLowerCase() || "";
+
+  const filtered = (allUsersCache || []).filter(u => {
+    const name = (u.name || "").toLowerCase();
+    const collegeId = (u.collegeId || "").toLowerCase();
+    const okName = nameQ ? name.includes(nameQ) : true;
+    const okCollege = collegeQ ? collegeId.includes(collegeQ) : true;
+    return okName && okCollege;
+  });
+
+  usersTable.innerHTML = (filtered || []).map(u => `
+    <tr class="border-t border-slate-700/80 hover:bg-slate-800/50 user-row transition-colors" data-user='${JSON.stringify(u).replaceAll("'", "&apos;")}'>
+      <td class="p-3 user-name-cell text-slate-100 font-medium cursor-default">${u.name}</td>
+      <td class="p-3 text-slate-300">${u.collegeId}</td>
+      <td class="p-3 text-slate-300">${u.email}</td>
+      <td class="p-3">
+        <button type="button" onclick="deleteUser('${u._id}')" class="text-red-400 hover:text-red-300 transition">Delete</button>
+      </td>
+    </tr>
+  `).join("") || `<tr><td class="p-3 text-slate-500" colspan="4">No users found</td></tr>`;
+
+  wireUserHover();
+}
+
+function wireUserHover() {
+  const panel = document.getElementById('userHoverPanel');
+  document.querySelectorAll('.user-row').forEach(row => {
+    const nameCell = row.querySelector('.user-name-cell');
+    if (!nameCell) return;
+
+    nameCell.addEventListener('mouseenter', () => {
+      try {
+        const u = JSON.parse(row.dataset.user || "{}");
+        panel.innerHTML = `
+          <div class="font-semibold text-slate-100">${u.name || 'User'}</div>
+          <div class="text-xs text-slate-500 mb-2">ID: ${u._id || ''}</div>
+          <div class="grid grid-cols-1 gap-1 text-slate-300 text-xs">
+            <div><span class="text-slate-500">Email:</span> ${u.email || '—'}</div>
+            <div><span class="text-slate-500">College ID:</span> ${u.collegeId || '—'}</div>
+            <div><span class="text-slate-500">Contact:</span> ${u.contactNumber || '—'}</div>
+            <div><span class="text-slate-500">Guardian:</span> ${u.guardianNumber || '—'}</div>
+            <div><span class="text-slate-500">Created:</span> ${u.createdAt ? new Date(u.createdAt).toLocaleString() : '—'}</div>
+          </div>
+        `;
+        panel.classList.remove('hidden');
+      } catch {}
+    });
+    nameCell.addEventListener('mousemove', (e) => {
+      const pad = 14;
+      panel.style.left = (e.clientX + pad) + "px";
+      panel.style.top = (e.clientY + pad) + "px";
+    });
+    nameCell.addEventListener('mouseleave', () => {
+      panel.classList.add('hidden');
+    });
+  });
 }
 
 async function deleteUser(id) {
@@ -286,11 +1206,11 @@ async function loadAdmins() {
   const admins = await fetch("/api/admin/admins", { credentials: "include" }).then(r => r.json());
 
   adminsTable.innerHTML = admins.map(a => `
-    <tr class="border-t">
-      <td class="p-3">${a.name}</td>
-      <td class="p-3">${a.email}</td>
-      <td class="p-3">${new Date(a.createdAt).toLocaleString()}</td>
-      <td class="p-3">${a.lastLogin ? new Date(a.lastLogin).toLocaleString() : "Never"}</td>
+    <tr class="border-t border-slate-700/80 hover:bg-slate-800/50 transition-colors">
+      <td class="p-3 text-slate-100">${a.name}</td>
+      <td class="p-3 text-slate-300">${a.email}</td>
+      <td class="p-3 text-slate-300">${new Date(a.createdAt).toLocaleString()}</td>
+      <td class="p-3 text-slate-300">${a.lastLogin ? new Date(a.lastLogin).toLocaleString() : "Never"}</td>
     </tr>
   `).join("");
 }

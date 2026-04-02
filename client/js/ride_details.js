@@ -73,7 +73,7 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
       </div>
 
       <div class="segment-row">
-        <div class="seg-time">${formatTime(departure)}</div>
+        <div class="seg-time"></div>
         <div class="seg-body">
           <div class="seg-city">${destName}</div>
           <div class="seg-address">${destAddr}</div>

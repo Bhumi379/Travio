@@ -7,6 +7,15 @@ import { loadRides } from './rides.js';
    NOTIFICATIONS
 ================================ */
 export async function loadNotifications() {
+  // Info/About page shouldn't show notifications panel.
+  // (The icon can stay, but we avoid fetching/rendering the panel.)
+  try {
+    const p = window.location?.pathname || '';
+    if (p.endsWith('about.html') || p === '/about' || p.endsWith('/about')) return;
+  } catch {
+    // ignore
+  }
+
   try {
     const res = await fetch(`${API_BASE}/notifications`, {
       credentials: "include"

@@ -396,7 +396,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
         </div>
 
         <div class="ride-footer">
-          <div class="seats">👥 ${ride.seats ?? "N/A"} seats</div>
+          <div class="seats">${ride.seats ?? "N/A"} seats</div>
           ${priceHTML}
         </div>
 
@@ -689,7 +689,7 @@ function displayProfileRides(ridesData, containerId) {
         </div>
 
         <div class="ride-footer">
-          <div class="seats">👥 ${ride.seats ?? "N/A"} seats</div>
+          <div class="seats">${ride.seats ?? "N/A"} seats</div>
           ${
             isCab
               ? `<div class="price">${ride.fare != null ? `₹${ride.fare} (Total)` : "₹TBD"}</div>`

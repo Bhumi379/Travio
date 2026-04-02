@@ -3,6 +3,10 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const Ride = require('../models/Ride');
 const User = require('../models/User');
+const RideRequest = require('../models/RideRequest');
+const {
+  ensureAboutDocument,
+} = require('./aboutContentHelper');
 
 
 /* ================= ADMIN LOGIN ================= */
@@ -80,11 +84,75 @@ exports.adminSignup = async (req, res) => {
 
 /* ================= GET ALL RIDES ================= */
 exports.getAllRides = async (req, res) => {
-  const rides = await Ride.find()
-    .populate('initiatorId', 'name email')
-    .sort({ createdAt: -1 });
+  try {
+    const rides = await Ride.find()
+      .populate('initiatorId', 'name email collegeId contactNumber guardianNumber profilePicture')
+      .sort({ createdAt: -1 })
+      .lean();
 
-  res.json(rides);
+    const rideIds = rides.map((r) => r._id);
+
+    const accepted = await RideRequest.find({
+      rideId: { $in: rideIds },
+      status: 'accepted',
+    })
+      .populate('userId', 'name email collegeId contactNumber guardianNumber profilePicture')
+      .select('rideId userId')
+      .lean();
+
+    const byRide = new Map();
+    accepted.forEach((rr) => {
+      const key = String(rr.rideId);
+      const arr = byRide.get(key) || [];
+      arr.push(rr.userId);
+      byRide.set(key, arr);
+    });
+
+    const out = rides.map((r) => {
+      const pax = byRide.get(String(r._id)) || [];
+      return {
+        ...r,
+        acceptedParticipants: pax,
+        participantCount: pax.length,
+      };
+    });
+
+    res.json(out);
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching rides', error: error.message });
+  }
+};
+
+/* ================= GET SINGLE RIDE (DETAILS) ================= */
+exports.getRideById = async (req, res) => {
+  try {
+    const ride = await Ride.findById(req.params.id)
+      .populate('initiatorId', 'name email collegeId contactNumber guardianNumber profilePicture')
+      .lean();
+
+    if (!ride) return res.status(404).json({ message: 'Ride not found' });
+
+    const accepted = await RideRequest.find({
+      rideId: ride._id,
+      status: 'accepted',
+    })
+      .populate('userId', 'name email collegeId contactNumber guardianNumber profilePicture')
+      .select('userId')
+      .lean();
+
+    const participants = accepted.map((r) => r.userId);
+
+    res.json({
+      success: true,
+      data: {
+        ...ride,
+        acceptedParticipants: participants,
+        participantCount: participants.length,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching ride details', error: error.message });
+  }
 };
 
 /* ================= DELETE RIDE ================= */
@@ -98,6 +166,17 @@ exports.deleteRide = async (req, res) => {
 exports.getAllUsers = async (req, res) => {
   const users = await User.find().sort({ createdAt: -1 });
   res.json(users);
+};
+
+/* ================= GET USER BY ID ================= */
+exports.getUserById = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
+    res.json({ success: true, data: user });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Error fetching user', error: error.message });
+  }
 };
 
 /* ================= DELETE USER ================= */
@@ -122,4 +201,57 @@ exports.getAllAdmins = async (req, res) => {
     .sort({ createdAt: -1 });
 
   res.json(admins);
+};
+
+/* ================= ABOUT PAGE (ADMIN) — structured ================= */
+exports.getAboutContent = async (req, res) => {
+  try {
+    const doc = await ensureAboutDocument();
+    const plain = doc.toObject ? doc.toObject() : doc;
+    res.json({ success: true, data: plain });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error fetching about content',
+      error: error.message,
+    });
+  }
+};
+
+exports.updateAboutContent = async (req, res) => {
+  try {
+    const {
+      pageTitle,
+      pageSubtitle,
+      busSchedules,
+      niwaiSlots,
+      metroDidi,
+      trustedDrivers,
+    } = req.body;
+
+    const doc = await ensureAboutDocument();
+    if (typeof pageTitle === 'string') doc.pageTitle = pageTitle;
+    if (typeof pageSubtitle === 'string') doc.pageSubtitle = pageSubtitle;
+    if (Array.isArray(busSchedules)) doc.busSchedules = busSchedules;
+    if (Array.isArray(niwaiSlots)) doc.niwaiSlots = niwaiSlots;
+    if (Array.isArray(metroDidi)) doc.metroDidi = metroDidi;
+    if (Array.isArray(trustedDrivers)) doc.trustedDrivers = trustedDrivers;
+
+    doc.updatedByAdminId = req.admin?.id || null;
+    if (doc.html == null) doc.html = '';
+    await doc.save();
+
+    const plain = doc.toObject();
+    res.json({
+      success: true,
+      message: 'Information page updated',
+      data: plain,
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Error updating about content',
+      error: error.message,
+    });
+  }
 };

@@ -19,6 +19,7 @@ const chatRoutes = require("./routes/chatRoutes");
 const reviewRoutes = require("./routes/reviewRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authRoute = require("./routes/authroutes");
+const contentRoutes = require("./routes/contentRoutes");
 
 
 const app = express();
@@ -64,6 +65,7 @@ const startServer = async () => {
     app.use("/api/reviews", reviewRoutes);
     app.use("/api/notifications", notificationRoutes);
     app.use('/api/admin', adminRoutes);
+    app.use('/api/content', contentRoutes);
     app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
     // Serve frontend static files AFTER API routes
