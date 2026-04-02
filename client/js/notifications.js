@@ -325,3 +325,104 @@ document.addEventListener('click', (e) => {
     }
   }
 });
+
+/* ==============================
+   CHAT PANEL FUNCTIONS
+================================ */
+export function toggleChatPanel(e) {
+  e.stopPropagation();
+  const panel = document.getElementById('chatPanel');
+  if (!panel) return;
+
+  const isVisible = panel.style.display === 'block';
+  panel.style.display = isVisible ? 'none' : 'block';
+
+  if (!isVisible) {
+    console.log("💬 Chat panel opened");
+    loadChatsForPanel();
+  }
+}
+
+export async function loadChatsForPanel() {
+  try {
+    const res = await fetch(`${API_BASE}/chats`, {
+      credentials: "include"
+    });
+
+    if (!res.ok) {
+      console.error("❌ Chat API error:", res.status, res.statusText);
+      return;
+    }
+
+    const data = await res.json();
+
+    if (!data.success) {
+      console.error("Error loading chats:", data.message);
+      return;
+    }
+
+    console.log("✅ Chats loaded:", data.data.length, "chats");
+    displayChatPanel(data.data);
+  } catch (err) {
+    console.error("Error fetching chats:", err);
+  }
+}
+
+export function displayChatPanel(chats) {
+  const panel = document.getElementById('chatPanel');
+  if (!panel) return;
+
+  const chatList = panel.querySelector('.chat-list') || panel;
+  chatList.innerHTML = '';
+
+  if (chats.length === 0) {
+    chatList.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">No chats yet</p>';
+    return;
+  }
+
+  chats.forEach(chat => {
+    const chatItem = document.createElement('div');
+    chatItem.className = 'chat-item';
+    chatItem.onclick = () => openChat(chat._id);
+
+    const participantNames = chat.participants
+      .filter(p => p._id !== currentUser?._id)
+      .map(p => p.name)
+      .join(', ');
+
+    chatItem.innerHTML = `
+      <div style="display:flex; align-items:center; gap:10px;">
+        <img src="${chat.participants.find(p => p._id !== currentUser?._id)?.profilePicture || '/images/default-avatar.png'}" 
+             alt="Profile" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
+        <div>
+          <div style="font-weight:600; color:#333;">${participantNames}</div>
+          <div style="font-size:12px; color:#666;">${chat.lastMessage || 'No messages yet'}</div>
+        </div>
+      </div>
+    `;
+
+    chatList.appendChild(chatItem);
+  });
+}
+
+export function openChat(chatId) {
+  // This could navigate to a full chat page or open a detailed chat modal
+  window.location.href = `/chat.html?chatId=${chatId}`;
+}
+
+export function closeChatPanel() {
+  const panel = document.getElementById('chatPanel');
+  if (panel) panel.style.display = 'none';
+}
+
+// Close chat panel when clicking outside
+document.addEventListener('click', (e) => {
+  const panel = document.getElementById('chatPanel');
+  const chatIcon = document.querySelector('.chat img[src*="chat"]');
+  if (panel && panel.style.display === 'block') {
+    const chatParent = chatIcon?.closest('.chat');
+    if (!panel.contains(e.target) && !chatParent?.contains(e.target)) {
+      closeChatPanel();
+    }
+  }
+});

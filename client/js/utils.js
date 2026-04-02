@@ -4,7 +4,7 @@ export function getCurrentPage() {
   const path = window.location.pathname;
   if (path.includes('create_a_ride.html')) return 'create_ride';
   if (path.includes('profile.html')) return 'profile';
-  if (path.includes('previous.html')) return 'previous';
+  if (path.includes('previous_ride.html') || path.includes('previous.html')) return 'previous';
   if (path.includes('search-results.html')) return 'search_results';
   if (path.includes('index.html') || path === '/') return 'home';
   return 'unknown';

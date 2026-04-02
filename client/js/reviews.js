@@ -42,11 +42,12 @@ function renderReviews(reviews = [], filter = 'all') {
       const name = escapeHtml(review.userId?.name || "Travio Student");
       const comment = escapeHtml(review.comment || "No comment provided.");
       const stars = buildStars(review.rating);
+      const profilePic = review.userId?.profilePicture || "images/profile.gif";
 
       return `
         <div class="review-card">
           <div class="reviewer-info">
-            <img src="images/profile.gif" alt="Student" class="reviewer-img">
+            <img src="${profilePic}" alt="Student" class="reviewer-img" onerror="this.src='images/profile.gif'">
             <div>
               <h4>${name}</h4>
               <span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified Student</span>

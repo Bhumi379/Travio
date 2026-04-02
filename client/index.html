@@ -37,7 +37,6 @@
         <a href="#" class="nav-link" onclick="showPage('home')">Home</a>
 
         <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride')">Create a Ride</a>
-        <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides')">Previous Rides</a>
         <a href="about.html" class="nav-link" onclick="showPage('about')">Information</a>
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
     </nav>
@@ -345,7 +344,24 @@
 <section class="reviews-section">
     <h2 class="section-title">Student Experiences</h2>
     
-    <div class="reviews-grid" id="reviewsGrid"></div>
+    <div class="reviews-container">
+        <div class="reviews-scroll-area">
+            <div class="reviews-grid" id="reviewsGrid"></div>
+        </div>
+        
+        <div class="reviews-filter">
+            <label for="reviewFilter">Filter Reviews:</label>
+            <select id="reviewFilter">
+                <option value="all">All Reviews</option>
+                <option value="my-reviews">My Reviews</option>
+                <option value="5">5 Stars</option>
+                <option value="4">4 Stars</option>
+                <option value="3">3 Stars</option>
+                <option value="2">2 Stars</option>
+                <option value="1">1 Star</option>
+            </select>
+        </div>
+    </div>
 
     <div class="share-experience-container">
         <h3>Share Your Journey</h3>

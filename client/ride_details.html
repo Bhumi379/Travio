@@ -7,22 +7,28 @@
   <link rel="stylesheet" href="styles.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* ═══════════════════════════════════════
+       RIDE DETAILS — BASE STYLES
+    ═══════════════════════════════════════ */
     .details-shell {
       max-width: 1200px;
       margin: 30px auto 60px auto;
       padding: 0 24px;
     }
+
     .details-header-title {
       font-size: 28px;
       font-weight: 800;
       color: #111827;
       margin-bottom: 18px;
     }
+
     .details-layout {
       display: grid;
       grid-template-columns: minmax(0, 2fr) 320px;
       gap: 24px;
     }
+
     .details-card, .summary-card {
       background: #ffffff;
       border-radius: 18px;
@@ -30,6 +36,7 @@
       border: 1px solid #e5e7eb;
       padding: 18px 22px;
     }
+
     .route-strip {
       display: flex;
       justify-content: space-between;
@@ -38,10 +45,12 @@
       font-weight: 700;
       color: #111827;
     }
+
     .route-strip small {
       font-weight: 600;
       color: #6b7280;
     }
+
     .segment-row {
       display: flex;
       align-items: center;
@@ -49,32 +58,35 @@
       padding: 14px 0;
       border-bottom: 1px solid #e5e7eb;
     }
-    .segment-row:last-child {
-      border-bottom: none;
-    }
+
+    .segment-row:last-child { border-bottom: none; }
+
     .seg-time {
       font-weight: 800;
       color: #111827;
       min-width: 70px;
     }
-    .seg-body {
-      flex: 1;
-    }
+
+    .seg-body { flex: 1; }
+
     .seg-city {
       font-weight: 800;
       color: #111827;
       margin-bottom: 4px;
     }
+
     .seg-address {
       font-size: 13px;
       color: #6b7280;
     }
+
     .driver-block {
       display: flex;
       align-items: center;
       gap: 14px;
       margin: 18px 0;
     }
+
     .driver-avatar-big {
       width: 54px;
       height: 54px;
@@ -86,24 +98,29 @@
       color: #fff;
       font-size: 20px;
       font-weight: 900;
+      flex-shrink: 0;
     }
+
     .driver-info h3 {
       margin: 0;
       font-size: 16px;
       font-weight: 800;
       color: #111827;
     }
+
     .driver-info p {
       margin: 2px 0 0 0;
       font-size: 13px;
       color: #6b7280;
     }
+
     .badge-row {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
       margin: 8px 0 12px 0;
     }
+
     .pill-badge {
       border-radius: 999px;
       background: #f3f4f6;
@@ -114,11 +131,13 @@
       align-items: center;
       gap: 6px;
     }
+
     .rules-list {
       list-style: none;
       margin: 12px 0 0 0;
       padding: 0;
     }
+
     .rules-list li {
       display: flex;
       align-items: center;
@@ -127,15 +146,16 @@
       font-size: 14px;
       color: #4b5563;
     }
-    .rules-list li i {
-      color: #9ca3af;
-    }
+
+    .rules-list li i { color: #9ca3af; }
+
     .summary-card h4 {
       font-size: 14px;
       font-weight: 700;
       margin-bottom: 10px;
       color: #111827;
     }
+
     .summary-line {
       display: flex;
       justify-content: space-between;
@@ -143,18 +163,21 @@
       font-size: 14px;
       color: #374151;
     }
+
     .summary-price {
       font-weight: 900;
       font-size: 20px;
       color: #111827;
       margin-top: 8px;
     }
+
     .summary-actions {
       margin-top: 16px;
       display: flex;
       flex-direction: column;
       gap: 8px;
     }
+
     .summary-btn {
       border-radius: 999px;
       border: 1px solid #111827;
@@ -164,12 +187,14 @@
       cursor: pointer;
       background: #ffffff;
     }
+
     .summary-btn.primary {
       background: linear-gradient(135deg, #f97316, #ea580c);
       border-color: transparent;
       color: #ffffff;
       box-shadow: 0 10px 25px rgba(249, 115, 22, 0.35);
     }
+
     .report-link {
       margin-top: 18px;
       font-size: 13px;
@@ -177,54 +202,309 @@
       cursor: pointer;
       text-decoration: underline;
     }
+
+    /* ═══════════════════════════════════════
+       HAMBURGER MENU (mobile only)
+    ═══════════════════════════════════════ */
+    .hamburger {
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+      z-index: 1100;
+      flex-shrink: 0;
+    }
+
+    .hamburger span {
+      display: block;
+      width: 22px;
+      height: 2.5px;
+      background: #111827;
+      border-radius: 4px;
+      transition: all 0.3s ease;
+    }
+
+    .hamburger.open span:nth-child(1) {
+      transform: translateY(7.5px) rotate(45deg);
+    }
+    .hamburger.open span:nth-child(2) {
+      opacity: 0;
+    }
+    .hamburger.open span:nth-child(3) {
+      transform: translateY(-7.5px) rotate(-45deg);
+    }
+
+    /* Mobile nav drawer */
+    .mobile-nav-drawer {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1050;
+    }
+
+    .mobile-nav-drawer.open {
+      display: block;
+    }
+
+    .drawer-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      backdrop-filter: blur(2px);
+    }
+
+    .drawer-panel {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 240px;
+      height: 100%;
+      background: #fff8f0;
+      box-shadow: -4px 0 24px rgba(0,0,0,0.12);
+      padding: 72px 20px 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .mobile-nav-drawer.open .drawer-panel {
+      transform: translateX(0);
+    }
+
+    .drawer-panel .nav-link {
+      display: block;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      color: #111827;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .drawer-panel .nav-link:hover {
+      background: rgba(249,115,22,0.1);
+      color: #f97316;
+    }
+
+    .drawer-panel .nav-link.logout {
+      margin-top: 12px;
+      color: #ef4444;
+    }
+
+    /* ═══════════════════════════════════════
+       TABLET (≤900px)
+    ═══════════════════════════════════════ */
     @media (max-width: 900px) {
       .details-layout {
         grid-template-columns: 1fr;
       }
+
+      /* Move summary card to top on tablet/mobile for better UX */
+      .summary-card {
+        order: -1;
+      }
     }
+
+    /* ═══════════════════════════════════════
+       MOBILE (≤768px) — HEADER FIX
+    ═══════════════════════════════════════ */
     @media (max-width: 768px) {
+      /* Fix the header layout */
+      .header {
+        padding: 12px 16px !important;
+        flex-wrap: nowrap !important;
+        justify-content: space-between !important;
+        align-items: center !important;
+        gap: 0 !important;
+      }
+
+      /* Hide desktop nav */
+      .top-nav {
+        display: none !important;
+      }
+
+      /* Show hamburger */
+      .hamburger {
+        display: flex !important;
+      }
+
+      /* Header left: keep logo visible */
+      .header-left {
+        width: auto !important;
+        justify-content: flex-start !important;
+        flex-shrink: 0;
+      }
+
+      .logo-info {
+        display: block !important;
+      }
+
+      .logo-info h2 {
+        font-size: 16px !important;
+      }
+
+      .logo-info p {
+        font-size: 11px !important;
+      }
+
+      /* Header right icons */
+      .header-right {
+        gap: 10px !important;
+        flex-shrink: 0;
+      }
+
+      /* Details page shell */
       .details-shell {
-        margin: 18px auto 34px auto;
+        margin: 14px auto 30px auto;
         padding: 0 12px;
       }
+
       .details-header-title {
-        font-size: 22px;
+        font-size: 20px;
         margin-bottom: 12px;
       }
+
       .details-card, .summary-card {
         padding: 14px;
         border-radius: 14px;
       }
+
       .segment-row {
         gap: 12px;
       }
+
       .seg-time {
-        min-width: 58px;
+        min-width: 54px;
         font-size: 13px;
       }
+
+      /* Summary card horizontal on mobile */
       .summary-actions {
         gap: 10px;
       }
+
       .summary-btn {
         min-height: 44px;
+        font-size: 14px;
       }
-    }
-    @media (max-width: 480px) {
+
+      /* Route strip wraps gracefully */
       .route-strip {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-wrap: wrap;
+        gap: 4px;
+      }
+
+      /* Badge row wraps */
+      .badge-row {
         gap: 6px;
       }
+
+      .pill-badge {
+        font-size: 11px;
+        padding: 5px 8px;
+      }
+
+      /* Summary lines */
+      .summary-price {
+        font-size: 18px;
+      }
+
+      /* Driver block */
       .driver-block {
         gap: 10px;
       }
+
       .driver-avatar-big {
         width: 46px;
         height: 46px;
+        font-size: 17px;
+      }
+
+      .driver-info h3 {
+        font-size: 15px;
+      }
+    }
+
+    /* ═══════════════════════════════════════
+       SMALL MOBILE (≤480px)
+    ═══════════════════════════════════════ */
+    @media (max-width: 480px) {
+      .details-shell {
+        padding: 0 8px;
+        margin: 10px auto 24px auto;
+      }
+
+      .details-header-title {
         font-size: 18px;
       }
-      .rules-list li {
+
+      .details-card, .summary-card {
+        padding: 12px;
+        border-radius: 12px;
+      }
+
+      .route-strip {
+        flex-direction: column;
         align-items: flex-start;
+        gap: 4px;
+      }
+
+      .segment-row {
+        gap: 10px;
+        padding: 10px 0;
+      }
+
+      .seg-time {
+        min-width: 48px;
+        font-size: 12px;
+      }
+
+      .seg-city {
+        font-size: 14px;
+      }
+
+      .seg-address {
+        font-size: 12px;
+      }
+
+      .driver-info h3 {
+        font-size: 14px;
+      }
+
+      .driver-info p {
+        font-size: 12px;
+      }
+
+      .rules-list li {
+        font-size: 13px;
+        align-items: flex-start;
+      }
+
+      .summary-price {
+        font-size: 17px;
+      }
+
+      .summary-line {
+        font-size: 13px;
+      }
+
+      .summary-btn {
+        font-size: 13px;
+        padding: 11px 12px;
+      }
+
+      .report-link {
+        font-size: 12px;
       }
     }
   </style>
@@ -238,6 +518,18 @@
     <li style="left: 70%; width: 120px; height: 120px;"></li>
   </ul>
 
+  <!-- Mobile Nav Drawer -->
+  <div class="mobile-nav-drawer" id="mobileNavDrawer">
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+    <div class="drawer-panel">
+      <a href="index.html" class="nav-link">🏠 Home</a>
+      <a href="create_a_ride.html" class="nav-link">🚗 Create a Ride</a>
+      <a href="previous_ride.html" class="nav-link">📋 Previous Rides</a>
+      <a href="about.html" class="nav-link">ℹ️ Information</a>
+      <a href="login.html" class="nav-link logout" onclick="logout()">🚪 Logout</a>
+    </div>
+  </div>
+
   <div class="main-content">
     <header class="header">
       <div class="header-left">
@@ -248,10 +540,10 @@
         </div>
       </div>
 
+      <!-- Desktop nav -->
       <nav class="top-nav">
         <a href="index.html" class="nav-link">Home</a>
         <a href="create_a_ride.html" class="nav-link">Create a Ride</a>
-        <a href="previous_ride.html" class="nav-link">Previous Rides</a>
         <a href="about.html" class="nav-link">Information</a>
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
       </nav>
@@ -270,12 +562,17 @@
             <img src="images/profile.gif" alt="User" class="header-avatar">
           </a>
         </div>
+        <!-- Hamburger (visible on mobile only) -->
+        <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
       </div>
     </header>
 
     <div class="details-shell">
       <h1 class="details-header-title">Ride details</h1>
-
       <div class="details-layout" id="rideDetailsRoot">
         <!-- Populated by JS -->
       </div>
@@ -284,6 +581,23 @@
 
   <script type="module" src="./js/index.js"></script>
   <script type="module" src="./js/ride_details.js"></script>
+  <script>
+    // Hamburger menu logic
+    const hamburgerBtn = document.getElementById('hamburgerBtn');
+    const mobileNavDrawer = document.getElementById('mobileNavDrawer');
+    const drawerOverlay = document.getElementById('drawerOverlay');
+
+    hamburgerBtn.addEventListener('click', () => {
+      hamburgerBtn.classList.toggle('open');
+      mobileNavDrawer.classList.toggle('open');
+      document.body.style.overflow = mobileNavDrawer.classList.contains('open') ? 'hidden' : '';
+    });
+
+    drawerOverlay.addEventListener('click', () => {
+      hamburgerBtn.classList.remove('open');
+      mobileNavDrawer.classList.remove('open');
+      document.body.style.overflow = '';
+    });
+  </script>
 </body>
 </html>
-

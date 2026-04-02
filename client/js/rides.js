@@ -7,6 +7,132 @@ import { geocodePlace } from './geocode.js';
 const SEARCH_RADIUS_METERS = 15000;
 const PREFILL_STORAGE_KEY = 'travio_create_ride_prefill';
 
+/** Raw API results on search-results page (client-side filters apply on top). */
+let lastSearchResultsRaw = [];
+let lastSearchContext = {
+  pickup: '',
+  destination: '',
+  date: null,
+  pickupGeo: null,
+  destGeo: null,
+};
+
+function isSearchResultsPath() {
+  return window.location.pathname.includes('search-results.html');
+}
+
+function normalizeRideTypeValue(ride) {
+  const t = (ride?.rideType || '').toLowerCase().replace(/_/g, '');
+  if (t === 'travelbuddy') return 'travelBuddy';
+  if (t === 'cab') return 'cab';
+  return ride?.rideType || '';
+}
+
+function filterRidesByTypeFilter(rides, rideTypeFilter) {
+  if (!rideTypeFilter || rideTypeFilter === 'all') return rides;
+  return rides.filter((ride) => {
+    const n = normalizeRideTypeValue(ride);
+    if (rideTypeFilter === 'cab') return n === 'cab';
+    if (rideTypeFilter === 'travelBuddy') return n === 'travelBuddy';
+    return true;
+  });
+}
+
+function sortSearchRidesList(rides, sortKey) {
+  const arr = [...rides];
+  if (sortKey === 'fare') {
+    return arr.sort((a, b) => {
+      const cabA = normalizeRideTypeValue(a) === 'cab';
+      const cabB = normalizeRideTypeValue(b) === 'cab';
+      const fa = cabA && a.fare != null ? Number(a.fare) : Infinity;
+      const fb = cabB && b.fare != null ? Number(b.fare) : Infinity;
+      return fa - fb;
+    });
+  }
+  return arr.sort((a, b) => {
+    const ta = new Date(a.departureTime || a.createdAt).getTime();
+    const tb = new Date(b.departureTime || b.createdAt).getTime();
+    return ta - tb;
+  });
+}
+
+function getSearchFilterState() {
+  const rideType = document.getElementById('filterRideType')?.value || 'all';
+  const sort = document.getElementById('filterSort')?.value || 'departure';
+  return { rideType, sort };
+}
+
+function syncSearchFiltersToUrl() {
+  if (!isSearchResultsPath()) return;
+  const url = new URL(window.location.href);
+  const { rideType, sort } = getSearchFilterState();
+  if (rideType && rideType !== 'all') url.searchParams.set('rideType', rideType);
+  else url.searchParams.delete('rideType');
+  if (sort && sort !== 'departure') url.searchParams.set('sort', sort);
+  else url.searchParams.delete('sort');
+  history.replaceState({}, '', url.pathname + url.search);
+}
+
+function readSearchFiltersFromUrl(urlParams) {
+  const rideType = urlParams.get('rideType') || 'all';
+  const sort = urlParams.get('sort') || 'departure';
+  const rtEl = document.getElementById('filterRideType');
+  const stEl = document.getElementById('filterSort');
+  if (rtEl && ['all', 'cab', 'travelBuddy'].includes(rideType)) rtEl.value = rideType;
+  if (stEl && ['departure', 'fare'].includes(sort)) stEl.value = sort;
+}
+
+function applyClientSearchFilters(rides) {
+  const { rideType, sort } = getSearchFilterState();
+  let out = filterRidesByTypeFilter(rides, rideType);
+  out = sortSearchRidesList(out, sort);
+  return out;
+}
+
+async function renderSearchResultsGridFromCache() {
+  const container = document.getElementById('searchResultsGrid');
+  if (!container || !isSearchResultsPath()) return;
+
+  syncSearchFiltersToUrl();
+
+  const countEl = document.getElementById('searchResultsCount');
+  if (!lastSearchResultsRaw.length) {
+    if (countEl) countEl.textContent = '0';
+    return;
+  }
+
+  const filtered = applyClientSearchFilters(lastSearchResultsRaw);
+  if (countEl) countEl.textContent = String(filtered.length);
+
+  if (!filtered.length) {
+    container.innerHTML = `
+      <div class="search-filter-empty">
+        <p class="search-filter-empty-title">No rides match your filters</p>
+        <p class="search-filter-empty-hint">Try a different ride type or sort, or reset filters.</p>
+        <button type="button" class="btn btn-primary" id="searchFilterResetInline">Reset filters</button>
+      </div>`;
+    document.getElementById('searchFilterResetInline')?.addEventListener('click', () => {
+      clearSearchResultFilters();
+    });
+    return;
+  }
+
+  await displayRides(filtered, 'searchResultsGrid');
+}
+
+/** Called from filter UI (onchange) — exposed on window from index.js */
+export function applySearchResultFilters() {
+  renderSearchResultsGridFromCache();
+}
+
+export function clearSearchResultFilters() {
+  const rt = document.getElementById('filterRideType');
+  const st = document.getElementById('filterSort');
+  if (rt) rt.value = 'all';
+  if (st) st.value = 'departure';
+  renderSearchResultsGridFromCache();
+}
+
 async function buildRideSearchQuery(pickupText, destinationText, dateStr) {
   const query = new URLSearchParams();
   if (pickupText) query.set('pickup', pickupText);
@@ -287,21 +413,33 @@ if (ride.rideType?.toLowerCase() === "cab") {
    SEARCH RIDES (Home Page)
 ================================ */
 export async function searchRides() {
-  const pickup = document.getElementById("pickupSearch")?.value.trim();
-  const destination = document.getElementById("destinationSearch")?.value.trim();
-  const date = document.getElementById("dateSearch")?.value;
+  const pickup = document.getElementById("pickupSearch")?.value.trim() ?? "";
+  const destination = document.getElementById("destinationSearch")?.value.trim() ?? "";
+  const date = document.getElementById("dateSearch")?.value ?? "";
 
   const params = new URLSearchParams();
   if (pickup) params.append("pickup", pickup);
   if (destination) params.append("destination", destination);
   if (date) params.append("date", date);
 
-  if (date) {
+  const path = window.location.pathname;
+  const isHome = path.endsWith("index.html") || path === "/" || path.endsWith("/");
+
+  if (path.includes("search-results.html")) {
     window.location.href = `search-results.html?${params.toString()}`;
     return;
   }
 
-  await loadRidesWithParams(pickup, destination, date);
+  if (isHome) {
+    if (date) {
+      window.location.href = `search-results.html?${params.toString()}`;
+      return;
+    }
+    await loadRidesWithParams(pickup, destination, date);
+    return;
+  }
+
+  window.location.href = `search-results.html?${params.toString()}`;
 }
 
 /* ==============================
@@ -309,6 +447,11 @@ export async function searchRides() {
 ================================ */
 export async function loadSearchResults() {
   try {
+    const summaryElPre = document.getElementById('searchSummary');
+    if (summaryElPre) summaryElPre.textContent = 'Loading rides…';
+    const countPre = document.getElementById('searchResultsCount');
+    if (countPre) countPre.textContent = '—';
+
     const urlParams = new URLSearchParams(window.location.search);
     const pickup = urlParams.get('pickup');
     const destination = urlParams.get('destination');
@@ -321,12 +464,14 @@ export async function loadSearchResults() {
     if (destinationInput && destination !== null) destinationInput.value = destination || '';
     if (dateInput && date !== null) dateInput.value = date || '';
 
+    readSearchFiltersFromUrl(urlParams);
+
     const summaryEl = document.getElementById('searchSummary');
     if (summaryEl) {
-      let txt = 'Showing rides (within ~15 km of each place when we can geocode your search)';
-      if (date) txt += ` for ${new Date(date).toLocaleDateString()}`;
-      if (pickup) txt += ` from ${pickup}`;
-      if (destination) txt += ` to ${destination}`;
+      let txt = 'Rides matching your search (within about 15 km when places geocode)';
+      if (date) txt += ` · ${new Date(date).toLocaleDateString()}`;
+      if (pickup) txt += ` · From ${pickup}`;
+      if (destination) txt += ` · To ${destination}`;
       summaryEl.textContent = txt;
     }
 
@@ -335,21 +480,35 @@ export async function loadSearchResults() {
       destination || '',
       date || ''
     );
+    lastSearchContext = {
+      pickup: pickup || '',
+      destination: destination || '',
+      date: date || null,
+      pickupGeo,
+      destGeo,
+    };
+
     const apiUrl = `${API_BASE}/rides${query.toString() ? '?' + query.toString() : ''}`;
     const res = await fetch(apiUrl, { credentials: 'include' });
     const data = await res.json();
 
     if (!data.success) throw new Error(data.message || 'Failed to load search results');
 
-    const results = Array.isArray(data.data) ? data.data : [];
+    let results = Array.isArray(data.data) ? data.data : [];
+    results = results.filter(isCurrentOrFutureRide);
+    lastSearchResultsRaw = results;
+
     const container = document.getElementById('searchResultsGrid');
+    const countEl = document.getElementById('searchResultsCount');
+    if (countEl) countEl.textContent = String(results.length);
 
     if (!results.length && container) {
+      lastSearchResultsRaw = [];
       container.innerHTML = `
-        <div class="search-empty-state" style="text-align:center;padding:40px 20px;">
-          <p style="color:#6b7280;margin-bottom:12px;font-size:1.05rem;">No rides found for this search.</p>
-          <p style="color:#9ca3af;font-size:0.95rem;margin-bottom:24px;max-width:480px;margin-left:auto;margin-right:auto;">
-            Post this trip so others can join. We’ll fill pickup, destination${date ? ', and date' : ''} from your search.
+        <div class="search-empty-state">
+          <p class="search-empty-title">No rides found for this search</p>
+          <p class="search-empty-hint">
+            Post this trip so others can join. We'll pre-fill pickup, destination${date ? ', and date' : ''} from your search.
           </p>
           <button type="button" class="btn btn-primary" id="createRideFromSearchBtn">Create a ride with these details</button>
         </div>`;
@@ -363,21 +522,13 @@ export async function loadSearchResults() {
         });
       });
     } else {
-      await displayRides(results, 'searchResultsGrid');
-    }
-
-    const searchForm = document.getElementById('searchResultsForm');
-    if (searchForm && !searchForm.dataset.bound) {
-      searchForm.dataset.bound = 'true';
-      searchForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        searchRides();
-      });
+      await renderSearchResultsGridFromCache();
     }
   } catch (err) {
     showError(err.message);
     const summaryEl = document.getElementById('searchSummary');
     if (summaryEl) summaryEl.textContent = 'Error loading search results';
+    lastSearchResultsRaw = [];
   }
 }
 

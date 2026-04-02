@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Search Results - Travio</title>
+  <title>Find a Ride - Travio</title>
   <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="search_results_styles.css" />
 </head>
 <body>
+
   <ul class="bg-bubbles">
     <li style="left: 10%; width: 80px; height: 80px;"></li>
     <li style="left: 20%; width: 30px; height: 30px; animation-delay: 2s; animation-duration: 17s;"></li>
@@ -15,10 +17,13 @@
     <li style="left: 70%; width: 120px; height: 120px;"></li>
   </ul>
 
+  <!-- ═══ HEADER ═══ -->
   <div class="main-content">
     <header class="header">
       <div class="header-left">
-        <img src="images/logo.png" alt="Travio Logo" class="header-logo-img" />
+        <a href="index.html" class="header-logo-link" aria-label="Home">
+          <img src="images/logo.png" alt="Travio Logo" class="header-logo-img" />
+        </a>
         <div class="logo-info">
           <h2>Travio</h2>
           <p>Travel Buddy</p>
@@ -27,31 +32,119 @@
       <nav class="top-nav">
         <a href="index.html" class="nav-link">Home</a>
         <a href="create_a_ride.html" class="nav-link">Create a Ride</a>
-        <a href="profile.html" class="nav-link">Profile</a>
+        <a href="about.html" class="nav-link">Information</a>
+        <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
       </nav>
       <div class="header-right">
-        <div class="notification"><a href="chat.html"><img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif" /></a></div>
-        <div class="notification"><a href="profile.html"><img src="images/profile.gif" alt="User" class="header-avatar" /></a></div>
+        <div class="notification">
+          <img src="images/notification.gif" alt="Notifications" class="header-icon" />
+        </div>
+        <div class="notification">
+          <a href="chat.html"><img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif" /></a>
+        </div>
+        <div class="notification">
+          <a href="profile.html"><img src="images/profile.gif" alt="User" class="header-avatar" /></a>
+        </div>
       </div>
     </header>
   </div>
 
-  <div class="content">
-    <section class="reviews-section search-results-page" style="padding: 24px 20px; max-width: 1200px; margin: 0 auto;">
-      <h2 class="section-title">Search Results</h2>
-      <p id="searchSummary" style="color:#f97316; font-weight:700; margin-bottom: 12px;">Loading search results...</p>
-      <a class="back-btn" href="index.html" style="display:inline-block; margin-bottom:16px;">← Back to home</a>
+  <!-- ═══ PAGE BODY ═══ -->
+  <div class="sr-body">
 
-      <div class="rides-section" style="background: #fff; border-radius: 20px; padding: 20px; box-shadow: 0 5px 20px rgba(0,0,0,.08);">
-        <div class="rides-grid" id="searchResultsGrid"></div>
+    <!-- Page heading -->
+    <div class="sr-head">
+      <h1 class="sr-title">Find a ride</h1>
+      <p class="sr-lead">Search by route and date, then narrow results with filters.</p>
+    </div>
+
+    <!-- Search bar -->
+    <div class="sr-searchbox">
+      <form id="searchResultsForm" onsubmit="event.preventDefault(); searchRides();">
+        <div class="sr-search-inner">
+
+          <div class="sr-sf">
+            <span class="sr-dot"></span>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="pickupSearch" placeholder="Leaving from" autocomplete="off" />
+              <ul id="pickupList" class="autocomplete-dropdown"></ul>
+            </div>
+          </div>
+
+          <div class="sr-sdiv"></div>
+
+          <div class="sr-sf">
+            <span class="sr-dot filled"></span>
+            <div class="autocomplete-wrapper">
+              <input type="text" id="destinationSearch" placeholder="Going to" autocomplete="off" />
+              <ul id="destList" class="autocomplete-dropdown"></ul>
+            </div>
+          </div>
+
+          <div class="sr-sdiv"></div>
+
+          <div class="sr-sf sr-sf--date">
+            <svg class="sr-cal-icon" viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <input type="date" id="dateSearch" />
+          </div>
+
+          <button type="submit" class="sr-sbtn">Search</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Layout: filters + results -->
+    <div class="sr-layout">
+
+      <!-- Filters -->
+      <aside class="sr-filter" id="searchFiltersPanel" aria-label="Filter results">
+        <div class="sr-filter-top">
+          <span class="sr-filter-title">Filters</span>
+          <button type="button" class="sr-filter-clear" id="filterClearBtn" onclick="clearSearchResultFilters()">Reset</button>
+        </div>
+
+        <div class="sr-fg">
+          <label class="sr-flabel" for="filterRideType">Ride type</label>
+          <select id="filterRideType" class="sr-fsel" onchange="applySearchResultFilters()">
+            <option value="all">All rides</option>
+            <option value="travelBuddy">Travel Buddy</option>
+            <option value="cab">Cab sharing</option>
+          </select>
+        </div>
+
+        <div class="sr-fg">
+          <label class="sr-flabel" for="filterSort">Sort by</label>
+          <select id="filterSort" class="sr-fsel" onchange="applySearchResultFilters()">
+            <option value="departure">Departure time</option>
+            <option value="fare">Fare (low to high)</option>
+          </select>
+        </div>
+
+        <p class="sr-fhint">Fare sort applies to cab rides; buddy rides sort last by fare.</p>
+      </aside>
+
+      <!-- Results -->
+      <div class="sr-main">
+
+        <div class="sr-meta">
+          <p id="searchSummary" class="sr-meta-text"></p>
+          <span class="sr-meta-count">
+            <span id="searchResultsCount">0</span> rides found
+          </span>
+        </div>
+
+        <!-- Cards are injected here by JS -->
+        <div class="sr-list" id="searchResultsGrid"></div>
+
       </div>
-    </section>
+    </div>
   </div>
 
   <script type="module" src="js/index.js"></script>
-  <script type="module">
-    import { loadSearchResults } from './js/rides.js';
-    document.addEventListener('DOMContentLoaded', loadSearchResults);
-  </script>
 </body>
 </html>

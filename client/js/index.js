@@ -6,11 +6,21 @@ import { setNotificationCheckInterval } from './config.js';
 import { getCurrentPage } from './utils.js';
 import { fetchCurrentUser, logout } from './auth.js';
 import { setupSearchAutocomplete } from './autocomplete.js';
-import { openChat, requestRide, searchRides, openRideDetails } from './rides.js';
+import {
+  openChat,
+  requestRide,
+  searchRides,
+  openRideDetails,
+  applySearchResultFilters,
+  clearSearchResultFilters,
+} from './rides.js';
 import { 
   loadNotifications, 
   loadChatUnreadCount,
   closeNotificationPanel,
+  closeChatPanel,
+  toggleNotificationPanel,
+  toggleChatPanel,
   acceptRequest,
   rejectRequest 
 } from './notifications.js';
@@ -22,8 +32,13 @@ window.logout = logout;
 window.openChat = openChat;
 window.requestRide = requestRide;
 window.searchRides = searchRides;
+window.applySearchResultFilters = applySearchResultFilters;
+window.clearSearchResultFilters = clearSearchResultFilters;
 window.openRideDetails = openRideDetails;
 window.closeNotificationPanel = closeNotificationPanel;
+window.closeChatPanel = closeChatPanel;
+window.toggleNotificationPanel = toggleNotificationPanel;
+window.toggleChatPanel = toggleChatPanel;
 window.acceptRequest = acceptRequest;
 window.rejectRequest = rejectRequest;
 window.submitReview = submitReview;
