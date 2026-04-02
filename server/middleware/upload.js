@@ -1,5 +1,5 @@
 const multer = require('multer');
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const CloudinaryStorage = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');
@@ -24,15 +24,12 @@ if (!fs.existsSync(localUploadDir)) {
 
 const cloudinaryStorage = new CloudinaryStorage({
   cloudinary,
-  params: async (req, file) => {
-    // Separate folders for license vs aadhar
-    const folder = file.fieldname === 'license' ? 'travio/licenses' : 'travio/aadhars';
-    return {
-      folder,
-      resource_type: 'auto',
-      public_id: `${Date.now()}_${file.fieldname}`,
-    };
-  },
+  params: {
+    folder: (req, file) => file.fieldname === 'license' ? 'travio/licenses' : 'travio/aadhars',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+    resource_type: 'auto',
+    filename: (req, file) => `${Date.now()}_${file.fieldname}${path.extname(file.originalname || '')}`
+  }
 });
 
 const localDiskStorage = multer.diskStorage({
