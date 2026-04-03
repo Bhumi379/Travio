@@ -1,5 +1,7 @@
 const multer = require('multer');
-const CloudinaryStorage = require('multer-storage-cloudinary');
+// `multer-storage-cloudinary` exports CloudinaryStorage as a named export.
+// Importing the module directly breaks because CloudinaryStorage is not the module itself.
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const cloudinary = require('../config/cloudinary');
 const fs = require('fs');
 const path = require('path');

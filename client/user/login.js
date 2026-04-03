@@ -5,6 +5,12 @@ document.getElementById("loginForm").addEventListener("submit", async (e) => { /
   const email = document.getElementById("email").value;
   const password = document.getElementById("password").value;
 
+  // Enforce campus-only accounts
+  if (email && !String(email).toLowerCase().endsWith("@banasthali.in")) {
+    alert("Please use your @banasthali.in email to login.");
+    return;
+  }
+
   console.log("🔄 Attempting login...");
 
   try {

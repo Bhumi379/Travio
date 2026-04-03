@@ -528,13 +528,19 @@
         opacity: 0.14;
       }
     }
+    .logo-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* keeps logo properly inside */
+  border-radius: 50%; /* optional if you want circular logo */
+}
   </style>
 </head>
 <body>
   <!-- Header -->
   <div class="header">
     <div class="logo">
-      <div class="logo-icon">🚗</div>
+      <div class="logo-icon"><img src="../images/logo.png" alt="Travio Logo" ></div>
       <div class="logo-text">
         <h1>Travio</h1>
         <p>Banasthali Vidyapith</p>

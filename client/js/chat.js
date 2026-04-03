@@ -6,6 +6,7 @@ let chatId = null;
 let partnerId = null;
 let partnerName = 'Chat';
 let socket = null;
+let lastMessageDateLabel = null;
 
 // DOM elements
 const backBtn = document.getElementById('backBtn');
@@ -60,6 +61,15 @@ function appendMessage(msg) {
   const isMine = String(msg.senderId) === String(userId);
   const noMsg = messagesArea.querySelector('.no-messages');
   if (noMsg) noMsg.remove();
+
+  const dateLabel = formatDate(msg.timestamp);
+  if (lastMessageDateLabel !== dateLabel) {
+    const sep = document.createElement('div');
+    sep.className = 'date-separator';
+    sep.textContent = dateLabel;
+    messagesArea.appendChild(sep);
+    lastMessageDateLabel = dateLabel;
+  }
 
   const div = document.createElement('div');
   div.className = `message ${isMine ? 'sent' : 'received'}`;
@@ -237,13 +247,24 @@ async function loadMessages() {
   const userId = getUserId();
 
   if (!messages.length) {
+    lastMessageDateLabel = null;
     messagesArea.innerHTML = '<div class="no-messages">No messages yet. Say hello! 👋</div>';
     return;
   }
 
-  messagesArea.innerHTML = messages.map(msg => {
+  lastMessageDateLabel = null;
+  let lastRenderedLabel = null;
+
+  messagesArea.innerHTML = messages.map((msg) => {
     const isMine = String(msg.senderId) === String(userId);
+    const dateLabel = formatDate(msg.timestamp);
+    const shouldInsertSeparator = dateLabel !== lastRenderedLabel;
+
+    lastRenderedLabel = dateLabel;
+    lastMessageDateLabel = dateLabel;
+
     return `
+      ${shouldInsertSeparator ? `<div class="date-separator">${dateLabel}</div>` : ''}
       <div class="message ${isMine ? 'sent' : 'received'}">
         <div>${msg.encryptedMessage}</div>
         <div class="msg-time">${formatTime(msg.timestamp)}</div>

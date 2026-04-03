@@ -131,6 +131,31 @@ const getRideById = async (req, res) => {
       });
     }
 
+    // SECURITY: Only ride participants should receive driver Aadhar/license download URLs.
+    // We keep the ride visible but remove doc URLs for non-participants.
+    const currentUserId = req.user?.id || req.user?._id;
+    let canViewDriverDocs = false;
+
+    const rideOwnerId = ride.initiatorId?._id || ride.initiatorId;
+    if (currentUserId && rideOwnerId && String(rideOwnerId) === String(currentUserId)) {
+      canViewDriverDocs = true;
+    }
+
+    if (!canViewDriverDocs && currentUserId && ride.rideType === "cab") {
+      const acceptedReq = await RideRequest.findOne({
+        rideId: ride._id,
+        userId: currentUserId,
+        status: "accepted",
+      }).select("_id").lean();
+
+      canViewDriverDocs = Boolean(acceptedReq);
+    }
+
+    if (!canViewDriverDocs && ride.rideType === "cab" && ride.driver) {
+      ride.driver.driverLicenseImage = undefined;
+      ride.driver.aadharImage = undefined;
+    }
+
     res.status(200).json({
       success: true,
       data: {
