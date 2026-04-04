@@ -239,63 +239,25 @@ const createRide = async (req, res) => {
 /* =====================================================
    UPDATE RIDE
 ===================================================== */
-function buildRideUpdateQuery(rawBody) {
-  const updateData = { ...(rawBody || {}) };
-  delete updateData.initiatorId;
-  delete updateData._id;
-
-  if (updateData.pickup != null) {
-    updateData.pickup = parseIfString(updateData.pickup);
-  }
-  if (updateData.destination != null) {
-    updateData.destination = parseIfString(updateData.destination);
-  }
-  if (updateData.driver != null && updateData.driver !== "") {
-    updateData.driver = parseIfString(updateData.driver);
-  }
-  if (updateData.seats != null && updateData.seats !== "") {
-    updateData.seats = parseInt(updateData.seats, 10);
-  }
-  if (updateData.fare != null && updateData.fare !== "") {
-    updateData.fare = parseFloat(updateData.fare);
-  }
-
-  let updateQuery = updateData;
-  if (updateData.rideType === "travelBuddy") {
-    delete updateData.seats;
-    delete updateData.fare;
-    updateQuery = {
-      ...updateData,
-      driver: null,
-      $unset: { seats: 1, fare: 1 },
-    };
-  }
-  return updateQuery;
-}
-
 const updateRide = async (req, res) => {
   try {
-    const existing = await Ride.findById(req.params.id).select("initiatorId").lean();
-    if (!existing) {
-      return res.status(404).json({
-        success: false,
-        message: "Ride not found",
-      });
+    const updateData = { ...req.body };
+    let updateQuery = updateData;
+    if (updateData.rideType === "travelBuddy") {
+      delete updateData.seats;
+      delete updateData.fare;
+      updateQuery = {
+        ...updateData,
+        driver: null,
+        $unset: { seats: 1, fare: 1 },
+      };
     }
 
-    const uid = req.user?.id || req.user?._id;
-    if (!uid || String(existing.initiatorId) !== String(uid)) {
-      return res.status(403).json({
-        success: false,
-        message: "Only the ride creator can update this ride",
-      });
-    }
-
-    const updateQuery = buildRideUpdateQuery(req.body);
-    const updatedRide = await Ride.findByIdAndUpdate(req.params.id, updateQuery, {
-      new: true,
-      runValidators: true,
-    }).lean();
+    const updatedRide = await Ride.findByIdAndUpdate(
+      req.params.id,
+      updateQuery,
+      { new: true, runValidators: true }
+    ).lean();
 
     if (!updatedRide) {
       return res.status(404).json({
@@ -310,52 +272,6 @@ const updateRide = async (req, res) => {
       data: updatedRide,
     });
   } catch (error) {
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((e) => e.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation Error",
-        errors,
-      });
-    }
-    res.status(500).json({
-      success: false,
-      message: "Error updating ride",
-      error: error.message,
-    });
-  }
-};
-
-/** Same as updateRide but without owner check — use only behind adminAuth. */
-const adminUpdateRide = async (req, res) => {
-  try {
-    const updateQuery = buildRideUpdateQuery(req.body);
-    const updatedRide = await Ride.findByIdAndUpdate(req.params.id, updateQuery, {
-      new: true,
-      runValidators: true,
-    }).lean();
-
-    if (!updatedRide) {
-      return res.status(404).json({
-        success: false,
-        message: "Ride not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      message: "Ride updated successfully",
-      data: updatedRide,
-    });
-  } catch (error) {
-    if (error.name === "ValidationError") {
-      const errors = Object.values(error.errors).map((e) => e.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation Error",
-        errors,
-      });
-    }
     res.status(500).json({
       success: false,
       message: "Error updating ride",
@@ -619,7 +535,6 @@ module.exports = {
   getRideById,
   createRide,
   updateRide,
-  adminUpdateRide,
   deleteRide,
   cancelRideByOwner,
   removeParticipantFromRide,
