@@ -54,16 +54,19 @@ module.exports = {
       name: 'Verified Driver',
       description: 'Campus shuttle routes',
       letter: 'V',
+      phone: '',
     },
     {
       name: 'Verified Driver',
       description: 'Airport / long-route support',
       letter: 'R',
+      phone: '',
     },
     {
       name: 'Verified Driver',
       description: 'Evening pickups',
       letter: 'M',
+      phone: '',
     },
   ],
 };

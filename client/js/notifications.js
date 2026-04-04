@@ -1,5 +1,5 @@
 // Notification Functions
-import { API_BASE } from './config.js';
+import { API_BASE, currentUser } from './config.js';
 import { showError, showSuccess } from './utils.js';
 import { loadRides } from './rides.js';
 
@@ -389,6 +389,8 @@ export function displayChatPanel(chats) {
     return;
   }
 
+  const userId = currentUser?._id || currentUser?.id;
+
   chats.forEach(chat => {
     const chatItem = document.createElement('div');
     chatItem.className = 'chat-item';
@@ -399,13 +401,30 @@ export function displayChatPanel(chats) {
       .map(p => p.name)
       .join(', ');
 
+    let unreadCount = 0;
+    if (userId && Array.isArray(chat.messages)) {
+      unreadCount = chat.messages.filter((msg) => {
+        const isMine = String(msg.senderId) === String(userId);
+        const readBy = Array.isArray(msg.readBy) ? msg.readBy.map(String) : [];
+        return !isMine && !readBy.includes(String(userId));
+      }).length;
+    }
+
+    const badge =
+      unreadCount > 0
+        ? `<span class="chat-panel-unread-pill">${unreadCount > 99 ? '99+' : unreadCount}</span>`
+        : '';
+
     chatItem.innerHTML = `
-      <div style="display:flex; align-items:center; gap:10px;">
+      <div style="display:flex; align-items:center; gap:10px; width:100%;">
         <img src="${chat.participants.find(p => p._id !== currentUser?._id)?.profilePicture || '/images/default-avatar.png'}" 
-             alt="Profile" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
-        <div>
+             alt="Profile" style="width:40px; height:40px; border-radius:50%; object-fit:cover; flex-shrink:0;">
+        <div style="flex:1; min-width:0;">
           <div style="font-weight:600; color:#333;">${participantNames}</div>
-          <div style="font-size:12px; color:#666;">${chat.lastMessage || 'No messages yet'}</div>
+          <div style="font-size:12px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${chat.lastMessage || 'No messages yet'}</div>
+        </div>
+        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; flex-shrink:0;">
+          ${badge}
         </div>
       </div>
     `;

@@ -1,6 +1,9 @@
 import { API_BASE } from "./config.js";
 import { showError, showSuccess } from "./utils.js";
 
+/** Latest ride from GET /rides/:id — used for edit prefill and PUT payload merge. */
+let rideEditSnapshot = null;
+
 function getRideId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("rideId");
@@ -28,6 +31,25 @@ function toDownloadUrl(rawUrl) {
     return `${window.location.origin}${rawUrl.slice(uploadsIndex)}`;
   }
   return rawUrl;
+}
+
+function toDatetimeLocalValue(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function normalizeIndianMobile10(raw) {
+  if (raw == null || !String(raw).trim()) return "";
+  const digits = String(raw).replace(/\D/g, "");
+  if (digits.length === 10 && /^[6-9]/.test(digits)) return digits;
+  if (digits.length === 12 && digits.startsWith("91")) {
+    const rest = digits.slice(2);
+    if (/^[6-9]\d{9}$/.test(rest)) return rest;
+  }
+  return null;
 }
 
 function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriverDetails = false) {
@@ -182,7 +204,8 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         <button class="summary-btn" onclick="openChat('${ride._id}')">Chat</button>
         ${
           isOwner
-            ? `<button class="summary-btn primary" style="background:#ef4444;box-shadow:none;" onclick="cancelRide('${ride._id}')">Cancel Ride</button>`
+            ? `<button type="button" class="summary-btn" onclick="openUserRideEditModal()">Edit ride</button>
+        <button class="summary-btn primary" style="background:#ef4444;box-shadow:none;" onclick="cancelRide('${ride._id}')">Cancel Ride</button>`
             : `<button class="summary-btn primary" onclick="requestRide('${ride._id}')">Request</button>`
         }
       </div>
@@ -197,6 +220,187 @@ async function getCurrentUserId() {
     return data?.user?._id || data?.user?.id || null;
   } catch {
     return null;
+  }
+}
+
+function setUserRideEditError(msg) {
+  const el = document.getElementById("userRideEditErr");
+  if (!el) return;
+  el.textContent = msg || "";
+  el.classList.toggle("is-visible", Boolean(msg));
+}
+
+function populateUserRideEditForm(ride) {
+  rideEditSnapshot = ride;
+  document.getElementById("userEditPickupName").value = ride.pickup?.name || "";
+  document.getElementById("userEditPickupAddr").value = ride.pickup?.address || "";
+  document.getElementById("userEditDestName").value = ride.destination?.name || "";
+  document.getElementById("userEditDestAddr").value = ride.destination?.address || "";
+  document.getElementById("userEditDeparture").value = toDatetimeLocalValue(
+    ride.departureTime || ride.createdAt
+  );
+  document.getElementById("userEditNotes").value = ride.notes || "";
+
+  const cabBlock = document.getElementById("userEditCabFields");
+  const isCab = ride.rideType === "cab";
+  cabBlock.classList.toggle("hidden", !isCab);
+  if (isCab) {
+    document.getElementById("userEditSeats").value =
+      ride.seats != null ? String(ride.seats) : "1";
+    document.getElementById("userEditFare").value =
+      ride.fare != null && ride.fare !== "" ? String(ride.fare) : "";
+    document.getElementById("userEditDriverName").value = ride.driver?.name || "";
+    document.getElementById("userEditVehicle").value = ride.driver?.vehicleNumber || "";
+    document.getElementById("userEditDriverPhone").value = ride.driver?.contactNumber || "";
+  }
+}
+
+function openUserRideEditModal() {
+  const ride = rideEditSnapshot;
+  if (!ride || !ride._id) {
+    showError("Ride data is not loaded yet.");
+    return;
+  }
+  const rideOwnerId =
+    typeof ride.initiatorId === "object" ? ride.initiatorId?._id : ride.initiatorId;
+  getCurrentUserId().then((uid) => {
+    if (!uid || String(rideOwnerId) !== String(uid)) {
+      showError("Only the ride creator can edit this ride.");
+      return;
+    }
+    setUserRideEditError("");
+    populateUserRideEditForm(ride);
+    const backdrop = document.getElementById("rideEditBackdrop");
+    if (backdrop) {
+      backdrop.classList.add("is-open");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+  });
+}
+
+function closeUserRideEditModal() {
+  const backdrop = document.getElementById("rideEditBackdrop");
+  if (backdrop) {
+    backdrop.classList.remove("is-open");
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+  setUserRideEditError("");
+}
+
+async function submitUserRideEdit(e) {
+  e.preventDefault();
+  setUserRideEditError("");
+
+  const ride = rideEditSnapshot;
+  if (!ride || !ride._id) {
+    setUserRideEditError("No ride loaded.");
+    return;
+  }
+
+  const pickupName = document.getElementById("userEditPickupName").value.trim();
+  const pickupAddr = document.getElementById("userEditPickupAddr").value.trim();
+  const destName = document.getElementById("userEditDestName").value.trim();
+  const destAddr = document.getElementById("userEditDestAddr").value.trim();
+  const depVal = document.getElementById("userEditDeparture").value;
+  const notesRaw = document.getElementById("userEditNotes").value.trim();
+
+  if (!pickupName || !destName) {
+    setUserRideEditError("Pickup and destination names are required.");
+    return;
+  }
+  if (!depVal) {
+    setUserRideEditError("Please set departure date and time.");
+    return;
+  }
+  if (notesRaw.length > 0 && notesRaw.length < 3) {
+    setUserRideEditError("Notes must be at least 3 characters, or leave empty.");
+    return;
+  }
+
+  const departureTime = new Date(depVal).toISOString();
+  const pickup = {
+    ...(ride.pickup || {}),
+    name: pickupName,
+    address: pickupAddr,
+  };
+  const destination = {
+    ...(ride.destination || {}),
+    name: destName,
+    address: destAddr,
+  };
+
+  const payload = {
+    rideType: ride.rideType,
+    pickup,
+    destination,
+    departureTime,
+  };
+  if (notesRaw.length >= 3) payload.notes = notesRaw;
+
+  if (ride.rideType === "cab") {
+    const seats = parseInt(document.getElementById("userEditSeats").value, 10);
+    const fareRaw = document.getElementById("userEditFare").value;
+    if (!Number.isFinite(seats) || seats < 1 || seats > 8) {
+      setUserRideEditError("Seats must be between 1 and 8.");
+      return;
+    }
+    payload.seats = seats;
+    if (fareRaw !== "" && fareRaw != null) {
+      const fare = parseFloat(fareRaw);
+      if (Number.isNaN(fare) || fare < 0) {
+        setUserRideEditError("Fare must be a non-negative number.");
+        return;
+      }
+      payload.fare = fare;
+    }
+
+    const driverName = document.getElementById("userEditDriverName").value.trim();
+    const vehicle = document.getElementById("userEditVehicle").value.trim().toUpperCase();
+    const phoneRaw = document.getElementById("userEditDriverPhone").value.trim();
+    if (vehicle && !/^[A-Z0-9\- ]{5,15}$/i.test(vehicle)) {
+      setUserRideEditError("Vehicle number format is invalid (5–15 characters).");
+      return;
+    }
+
+    const driver = { ...(ride.driver || {}) };
+    if (driverName) driver.name = driverName;
+    if (vehicle) driver.vehicleNumber = vehicle;
+    if (phoneRaw) {
+      const p10 = normalizeIndianMobile10(phoneRaw);
+      if (!p10) {
+        setUserRideEditError(
+          "Driver phone must be 10 digits (Indian mobile starting 6–9), optionally with +91."
+        );
+        return;
+      }
+      driver.contactNumber = p10;
+    }
+
+    payload.driver = driver;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/rides/${encodeURIComponent(ride._id)}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.success === false) {
+      const msg =
+        (Array.isArray(data.errors) && data.errors.join("; ")) ||
+        data.message ||
+        data.error ||
+        "Failed to update ride";
+      setUserRideEditError(msg);
+      return;
+    }
+    showSuccess("Ride updated");
+    closeUserRideEditModal();
+    await loadRideDetails();
+  } catch (err) {
+    setUserRideEditError(err.message || "Network error");
   }
 }
 
@@ -260,6 +464,8 @@ async function loadRideDetails() {
       throw new Error(data.message || "Failed to load ride");
     }
 
+    rideEditSnapshot = data.data || null;
+
     const currentUserId = await getCurrentUserId();
     const rideOwnerId =
       typeof data.data?.initiatorId === "object" ? data.data?.initiatorId?._id : data.data?.initiatorId;
@@ -283,7 +489,6 @@ async function loadRideDetails() {
       myRequestStatus = null;
     }
 
-    // Try to fetch join requests (owner gets pending+accepted)
     try {
       if (isOwner) {
         const reqRes = await fetch(
@@ -324,6 +529,15 @@ async function loadRideDetails() {
 
 window.cancelRide = cancelRide;
 window.removeParticipant = removeParticipant;
+window.openUserRideEditModal = openUserRideEditModal;
 
-document.addEventListener("DOMContentLoaded", loadRideDetails);
+document.addEventListener("DOMContentLoaded", () => {
+  loadRideDetails();
 
+  document.getElementById("userRideEditForm")?.addEventListener("submit", submitUserRideEdit);
+  document.getElementById("rideEditCloseBtn")?.addEventListener("click", closeUserRideEditModal);
+  document.getElementById("userRideEditCancel")?.addEventListener("click", closeUserRideEditModal);
+  document.getElementById("rideEditBackdrop")?.addEventListener("click", (ev) => {
+    if (ev.target === ev.currentTarget) closeUserRideEditModal();
+  });
+});

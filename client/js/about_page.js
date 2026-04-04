@@ -5,6 +5,10 @@
 
 import { API_BASE } from './config.js';
 
+function normalizeString(s) {
+  return typeof s === 'string' ? s.trim() : '';
+}
+
 function esc(s) {
   if (s == null) return '';
   return String(s)
@@ -137,6 +141,14 @@ function renderTrustedDrivers(items, subtitle) {
           .map((d) => {
             const L = (d.letter || d.name || '?').charAt(0).toUpperCase();
             const bg = avatarGradient(L);
+            const phone = normalizeString(d.phone);
+            const trustedRow = phone
+              ? `<a class="phone-display" href="tel:${esc(String(phone).replace(/\s/g, ''))}">
+              <i class="fa-solid fa-phone"></i> ${esc(phone)}
+            </a>`
+              : `<div class="phone-display" style="background: rgba(39, 174, 96, 0.08); color: #27ae60; cursor: default;">
+              <i class="fa-solid fa-shield-halved"></i> Trusted
+            </div>`;
             return `
           <div class="contact-card">
             <div class="avatar" style="background-color: ${bg};">${esc(L)}</div>
@@ -144,9 +156,7 @@ function renderTrustedDrivers(items, subtitle) {
               <h4>${esc(d.name)}</h4>
               <p>${esc(d.description || '')}</p>
             </div>
-            <div class="phone-display" style="background: rgba(39, 174, 96, 0.08); color: #27ae60; cursor: default;">
-              <i class="fa-solid fa-shield-halved"></i> Trusted
-            </div>
+            ${trustedRow}
           </div>`;
           })
           .join('')}

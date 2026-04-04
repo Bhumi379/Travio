@@ -1,8 +1,8 @@
 const multer = require('multer');
-// `multer-storage-cloudinary` exports CloudinaryStorage as a named export.
-// Importing the module directly breaks because CloudinaryStorage is not the module itself.
-const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
+// v1.x exports a factory: (opts) => new CloudinaryStorage(opts), not a named class export.
+require('../config/cloudinary');
+const cloudinaryPkg = require('cloudinary');
+const createCloudinaryStorage = require('multer-storage-cloudinary');
 const fs = require('fs');
 const path = require('path');
 
@@ -24,14 +24,21 @@ if (!fs.existsSync(localUploadDir)) {
   fs.mkdirSync(localUploadDir, { recursive: true });
 }
 
-const cloudinaryStorage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: (req, file) => file.fieldname === 'license' ? 'travio/licenses' : 'travio/aadhars',
-    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
-    resource_type: 'auto',
-    filename: (req, file) => `${Date.now()}_${file.fieldname}${path.extname(file.originalname || '')}`
-  }
+const cloudinaryStorage = createCloudinaryStorage({
+  cloudinary: cloudinaryPkg,
+  folder: (req, file, cb) => {
+    cb(
+      null,
+      file.fieldname === 'license' ? 'travio/licenses' : 'travio/aadhars'
+    );
+  },
+  allowedFormats: ['jpg', 'jpeg', 'png', 'pdf'],
+  filename: (req, file, cb) => {
+    cb(
+      null,
+      `${Date.now()}_${file.fieldname}${path.extname(file.originalname || '')}`
+    );
+  },
 });
 
 const localDiskStorage = multer.diskStorage({
