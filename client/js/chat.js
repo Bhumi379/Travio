@@ -96,8 +96,6 @@ function connectSocket() {
     if (data.chatId === chatId) {
       appendMessage(data.message);
       markChatRead(chatId);
-    } else if (chatListView && chatListView.style.display !== 'none') {
-      showChatList();
     }
   });
 
@@ -187,11 +185,6 @@ async function showChatList() {
       return !isMine && !readBy.includes(String(userId));
     }).length;
 
-    const badge =
-      unreadCount > 0
-        ? `<span class="chat-unread-pill" aria-label="${unreadCount} unread">${unreadCount > 99 ? '99+' : unreadCount}</span>`
-        : '';
-
     return `
       <div class="chat-list-item" data-chat-id="${chat._id}" data-partner-id="${pid}">
         <div class="avatar">${name.charAt(0).toUpperCase()}</div>
@@ -199,10 +192,8 @@ async function showChatList() {
           <div class="chat-name">${name}</div>
           <div class="chat-preview">${preview}</div>
         </div>
-        <div class="chat-list-item-right">
-          <div class="chat-time">${time}</div>
-          ${badge}
-        </div>
+        <div class="chat-time">${time}</div>
+        ${unreadCount > 0 ? `<span class="notification-badge" style="position:static;width:auto;min-width:20px;padding:0 6px;border-radius:999px;">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}
       </div>`;
   }).join('');
 

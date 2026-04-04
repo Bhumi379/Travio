@@ -200,46 +200,6 @@ export function consumeCreateRidePrefill() {
   }
 }
 
-function getTodayKey() {
-  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
-}
-
-function getTapsToday() {
-  try {
-    const raw = localStorage.getItem('popularRouteTaps');
-    if (!raw) return 0;
-    const parsed = JSON.parse(raw);
-    if (parsed?.date !== getTodayKey()) return 0;
-    return Number(parsed.count || 0);
-  } catch {
-    return 0;
-  }
-}
-
-function addTapToday() {
-  try {
-    const key = 'popularRouteTaps';
-    const current = getTapsToday();
-    const data = {
-      date: getTodayKey(),
-      count: current + 1,
-    };
-    localStorage.setItem(key, JSON.stringify(data));
-    return data.count;
-  } catch {
-    return getTapsToday();
-  }
-}
-
-function setPopularRouteStats(activeRoutes, todayRoutes) {
-  const activeEl = document.getElementById('activeRoutesCount');
-  const dailyEl = document.getElementById('dailyFrequencyCount');
-  const tapsEl = document.getElementById('prBookCt');
-  if (activeEl) activeEl.textContent = String(activeRoutes ?? 0);
-  if (dailyEl) dailyEl.textContent = String(todayRoutes ?? 0);
-  if (tapsEl) tapsEl.textContent = String(getTapsToday());
-}
-
 function isCurrentOrFutureRide(ride) {
   const rideDate = new Date(ride.departureTime || ride.createdAt);
   if (Number.isNaN(rideDate.getTime())) return true;
@@ -269,10 +229,8 @@ export async function loadRides(search = "") {
 
     if (!data.success) throw new Error(data.message);
 
-    const allRides = Array.isArray(data.data) ? data.data : [];
-    const visibleRides = allRides.filter(isTodayRide);
+    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isTodayRide);
     setRides(visibleRides);
-    setPopularRouteStats(allRides.length, visibleRides.length);
     await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
     showError(err.message);
@@ -310,21 +268,20 @@ export async function loadProfileRides() {
 
     if (!data.success) throw new Error(data.message);
 
-    const allRides = Array.isArray(data.data) ? data.data : [];
-    const now = new Date();
-
-    const currentRides = allRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime >= now;
-    });
-
-    const previousRides = allRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime < now;
-    });
+    const currentRides = Array.isArray(data.currentRides) ? data.currentRides : [];
+    const previousRides = Array.isArray(data.pastRides) ? data.pastRides : [];
 
     displayProfileRides(currentRides, "profileCurrentRidesGrid");
     displayProfileRides(previousRides, "profilePreviousRidesGrid");
+
+    const activeCountEl = document.getElementById('sidebarCurrentCount');
+    const prevCountEl = document.getElementById('sidebarPrevCount');
+    if (activeCountEl) {
+      activeCountEl.textContent = String(data.activeCount || currentRides.length);
+    }
+    if (prevCountEl) {
+      prevCountEl.textContent = String(data.pastCount || previousRides.length);
+    }
   } catch (err) {
     showError(err.message);
   }
@@ -438,7 +395,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
         </div>
 
         <div class="ride-footer">
-          ${ride.rideType === "cab" ? `<div class="seats">${ride.seats ?? "N/A"} seats</div>` : ""}
+          <div class="seats">${ride.seats ?? "N/A"} seats</div>
           ${priceHTML}
         </div>
 
@@ -731,13 +688,15 @@ function displayProfileRides(ridesData, containerId) {
         </div>
 
         <div class="ride-footer">
-          ${isCab ? `<div class="seats">${ride.seats ?? "N/A"} seats</div>` : ""}
-          ${
-            isCab
-              ? `<div class="price">${ride.fare != null ? `₹${ride.fare} (Total)` : "₹TBD"}</div>`
-              : ""
-          }
-        </div>
+  ${
+    isCab
+      ? `
+        <div class="seats">${ride.seats ?? "N/A"} seats</div>
+        <div class="price">${ride.fare != null ? `₹${ride.fare} (Total)` : "₹TBD"}</div>
+      `
+      : ""
+  }
+</div>
 
         <div class="ride-actions">
           <button class="btn btn-secondary" onclick="event.stopPropagation(); openChat('${ride._id}')">Chat</button>

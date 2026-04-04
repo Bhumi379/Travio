@@ -3,7 +3,11 @@ const router = express.Router();
 
 const { adminLogin, adminSignup } = require('../controllers/AdminController');
 const { getAllRides, getRideById, deleteRide } = require('../controllers/AdminController');
-const { adminUpdateRide } = require('../controllers/rideController');
+<<<<<<< HEAD
+const { updateRide } = require('../controllers/rideController');
+const adminUpdateRide = updateRide;
+=======
+>>>>>>> 7ee0f4f62edcc7304360ae62f490a9e1976209a5
 const adminAuth = require('../middleware/adminAuth');
 const { getAllUsers, getUserById, deleteUser } = require('../controllers/AdminController');
 const { getAllAdmins } = require('../controllers/AdminController');
@@ -22,7 +26,6 @@ router.get('/dashboard', adminAuth, (req, res) => {
 /* ================= RIDES ================= */
 router.get('/rides', adminAuth, getAllRides);
 router.get('/rides/:id', adminAuth, getRideById);
-router.put('/rides/:id', adminAuth, adminUpdateRide);
 router.delete('/rides/:id', adminAuth, deleteRide);
 
 // ================= USERS =================
