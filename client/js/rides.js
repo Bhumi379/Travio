@@ -200,6 +200,46 @@ export function consumeCreateRidePrefill() {
   }
 }
 
+function getTodayKey() {
+  return new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+}
+
+function getTapsToday() {
+  try {
+    const raw = localStorage.getItem('popularRouteTaps');
+    if (!raw) return 0;
+    const parsed = JSON.parse(raw);
+    if (parsed?.date !== getTodayKey()) return 0;
+    return Number(parsed.count || 0);
+  } catch {
+    return 0;
+  }
+}
+
+function addTapToday() {
+  try {
+    const key = 'popularRouteTaps';
+    const current = getTapsToday();
+    const data = {
+      date: getTodayKey(),
+      count: current + 1,
+    };
+    localStorage.setItem(key, JSON.stringify(data));
+    return data.count;
+  } catch {
+    return getTapsToday();
+  }
+}
+
+function setPopularRouteStats(activeRoutes, todayRoutes) {
+  const activeEl = document.getElementById('activeRoutesCount');
+  const dailyEl = document.getElementById('dailyFrequencyCount');
+  const tapsEl = document.getElementById('prBookCt');
+  if (activeEl) activeEl.textContent = String(activeRoutes ?? 0);
+  if (dailyEl) dailyEl.textContent = String(todayRoutes ?? 0);
+  if (tapsEl) tapsEl.textContent = String(getTapsToday());
+}
+
 function isCurrentOrFutureRide(ride) {
   const rideDate = new Date(ride.departureTime || ride.createdAt);
   if (Number.isNaN(rideDate.getTime())) return true;
@@ -229,8 +269,10 @@ export async function loadRides(search = "") {
 
     if (!data.success) throw new Error(data.message);
 
-    const visibleRides = (Array.isArray(data.data) ? data.data : []).filter(isTodayRide);
+    const allRides = Array.isArray(data.data) ? data.data : [];
+    const visibleRides = allRides.filter(isTodayRide);
     setRides(visibleRides);
+    setPopularRouteStats(allRides.length, visibleRides.length);
     await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
     showError(err.message);
@@ -396,7 +438,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
         </div>
 
         <div class="ride-footer">
-          <div class="seats">${ride.seats ?? "N/A"} seats</div>
+          ${ride.rideType === "cab" ? `<div class="seats">${ride.seats ?? "N/A"} seats</div>` : ""}
           ${priceHTML}
         </div>
 
@@ -689,7 +731,7 @@ function displayProfileRides(ridesData, containerId) {
         </div>
 
         <div class="ride-footer">
-          <div class="seats">${ride.seats ?? "N/A"} seats</div>
+          ${isCab ? `<div class="seats">${ride.seats ?? "N/A"} seats</div>` : ""}
           ${
             isCab
               ? `<div class="price">${ride.fare != null ? `₹${ride.fare} (Total)` : "₹TBD"}</div>`

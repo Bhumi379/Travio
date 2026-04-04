@@ -168,7 +168,7 @@
 
 
 
-  <section class="travio-workflow">
+  <section class="travio-workflow" id="travio-workflow">
     <div class="header-center">
         <h2>How Travio Works</h2>
         <p>One seamless journey for all your travel needs.</p>
@@ -252,40 +252,6 @@
            
 
 
-    <section class="travio-features">
-    <div class="features-container">
-        
-        <h2 class="section-title">We’re with you every mile</h2>
-
-        <div class="features-grid">
-            
-            <div class="feature-item">
-                <div class="icon-box">
-                    <i class="fa-regular fa-comments"></i>
-                </div>
-                <h3>Campus Support 24/7</h3>
-                <p>Our team is always available. Whether it's a booking issue or a route query, chat with us directly through the app.</p>
-            </div>
-
-            <div class="feature-item">
-                <div class="icon-box">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
-                <h3>Travio Guardian Safety</h3>
-                <p>Ride with confidence. We share your live location and cab details via SMS to your guardians automatically when your ride starts.</p>
-            </div>
-
-            <div class="feature-item">
-                <div class="icon-box">
-                    <i class="fa-solid fa-user-check"></i>
-                </div>
-                <h3>100% Verified Students</h3>
-                <p>Travio is an exclusive community. Every profile is verified with a valid Banasthali University ID card to ensure a secure environment.</p>
-            </div>
-
-        </div>
-    </div>
-</section>
 
 
 
@@ -332,7 +298,7 @@
                 </li>
             </ul>
 
-            <a href="#browse-buddies" class="travio-cta-btn reveal-element reveal-up delay-4">
+            <a href="create_a_ride.html" class="travio-cta-btn reveal-element reveal-up delay-4">
                 Find Your Buddy <i class="fa-solid fa-arrow-right-long"></i>
             </a>
         </div>
@@ -343,6 +309,11 @@
 
 
 <section class="reviews-section">
+    <div class="bg-float-1"></div>
+    <div class="bg-float-2"></div>
+    <div class="bg-float-3"></div>
+    <div class="bg-float-4"></div>
+    <div class="bg-float-5"></div>
     <h2 class="section-title">Student Experiences</h2>
     
     <div class="reviews-container">
@@ -392,30 +363,29 @@
             <div class="footer-col">
                 <h3>Travel with Travio</h3>
                 <ul>
-                    <li><a href="#">Find a Ride</a></li>
-                    <li><a href="#">Offer a Ride</a></li>
-                    <li><a href="#">Campus Shuttle Schedule</a></li>
-                    <li><a href="#">Safety Guidelines</a></li>
+                    <li><a href="index.html">Find a Ride</a></li>
+                    <li><a href="create_a_ride.html">Offer a Ride</a></li>
+                    <li><a href="about.html#shuttle">Campus Shuttle Schedule</a></li>
+                    <li><a href="about.html#safety">Safety Guidelines</a></li>
                 </ul>
             </div>
 
             <div class="footer-col">
                 <h3>Popular Routes</h3>
                 <ul class="routes-list">
-                    <li><a href="#">Banasthali <span>&rarr;</span> Jaipur</a></li>
-                    <li><a href="#">Banasthali <span>&rarr;</span> Newai Station</a></li>
-                    <li><a href="#">Banasthali <span>&rarr;</span> Delhi</a></li>
-                    <li><a href="#">Hostel <span>&rarr;</span> Main Gate</a></li>
-                    <li><a href="#">Jaipur <span>&rarr;</span> Banasthali</a></li>
+                    <li><a href="#" onclick="populateSearch('Banasthali', 'Jaipur'); return false;">Banasthali <span>&rarr;</span> Jaipur</a></li>
+                    <li><a href="#" onclick="populateSearch('Banasthali', 'Newai Station'); return false;">Banasthali <span>&rarr;</span> Newai Station</a></li>
+                    <li><a href="#" onclick="populateSearch('Banasthali', 'Delhi'); return false;">Banasthali <span>&rarr;</span> Delhi</a></li>
+                    <li><a href="#" onclick="populateSearch('Jaipur', 'Banasthali'); return false;">Jaipur <span>&rarr;</span> Banasthali</a></li>
                 </ul>
             </div>
 
             <div class="footer-col">
                 <h3>About</h3>
                 <ul>
-                    <li><a href="#">How Travio Works</a></li>
-                    <li><a href="#">For Banasthali Students</a></li>
-                    <li><a href="#">Contact Support</a></li>
+                    <li><a href="index.html#travio-workflow">How Travio Works</a></li>
+                    <li><a href="about.html#students">For Banasthali Students</a></li>
+                    <li><a href="about.html#contact">Contact Support</a></li>
                 </ul>
 
                 <div class="lang-selector">
@@ -432,8 +402,8 @@
 
         <div class="footer-bottom">
             <div class="bottom-links">
-                <a href="#">Terms and Conditions</a>
-                <a href="#">Privacy Policy</a>
+                <a href="about.html#terms">Terms and Conditions</a>
+                <a href="about.html#privacy">Privacy Policy</a>
             </div>
             <div class="copyright">
                 <span>Travio, 2026 &copy;</span>
@@ -444,4 +414,64 @@
 
 
 </body>
+<script>
+  var prTaps = 0;
+  
+  /**
+   * Populate search bar when footer route or popular route is clicked
+   */
+  function populateSearch(fromLocation, toLocation) {
+    const pickupInput = document.getElementById('pickupSearch');
+    const destinationInput = document.getElementById('destinationSearch');
+    const dateInput = document.getElementById('dateSearch');
+
+    if (pickupInput) pickupInput.value = fromLocation;
+    if (destinationInput) destinationInput.value = toLocation;
+
+    // Scroll to search section
+    const searchSection = document.querySelector('.search-container');
+    if (searchSection) {
+      searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Focus the date input so user can quickly choose date next
+    if (dateInput) {
+      setTimeout(() => dateInput.focus(), 500);
+    }
+  }
+  
+  function prPop(el) {
+    el.classList.add('pop');
+    prTaps++;
+    document.getElementById('prBookCt').textContent = prTaps;
+
+    // Auto-fill the search bar from the selected popular route
+    const fromText = el.querySelector('.pr-from')?.textContent.trim();
+    const toText = el.querySelector('.pr-to')?.textContent.trim();
+
+    // Use the shared populate function
+    if (fromText && toText) {
+      populateSearch(fromText, toText);
+    }
+
+    // Taps today persistence
+    const today = new Date().toISOString().slice(0, 10);
+    const key = 'popularRouteTaps';
+    const storedRaw = localStorage.getItem(key);
+    let stored = { date: today, count: 0 };
+    if (storedRaw) {
+      try {
+        const parsed = JSON.parse(storedRaw);
+        if (parsed?.date === today) {
+          stored = parsed;
+        }
+      } catch {}
+    }
+    stored.count = (stored.count || 0) + 1;
+    localStorage.setItem(key, JSON.stringify(stored));
+    document.getElementById('prBookCt').textContent = String(stored.count);
+
+    setTimeout(function () { el.classList.remove('pop'); }, 300);
+  }
+</script>
 </html>
