@@ -656,15 +656,15 @@
         let n = 0;
         const poll = setInterval(() => { syncSidebar(); if (++n >= 20) clearInterval(poll); }, 200);
 
-        /* Watch ride grids for count */
-        const watchGrid = (gridId, countId) => {
-            const g = document.getElementById(gridId);
-            const c = document.getElementById(countId);
-            if (!g || !c) return;
-            new MutationObserver(() => { c.textContent = g.children.length; }).observe(g, { childList: true });
-        };
-        watchGrid('profileCurrentRidesGrid',  'sidebarCurrentCount');
-        watchGrid('profilePreviousRidesGrid', 'sidebarPrevCount');
+        /* Watch ride grids for count - now handled by loadProfileRides backend data */
+        // const watchGrid = (gridId, countId) => {
+        //     const g = document.getElementById(gridId);
+        //     const c = document.getElementById(countId);
+        //     if (!g || !c) return;
+        //     new MutationObserver(() => { c.textContent = g.children.length; }).observe(g, { childList: true });
+        // };
+        // watchGrid('profileCurrentRidesGrid',  'sidebarCurrentCount');
+        // watchGrid('profilePreviousRidesGrid', 'sidebarPrevCount');
     </script>
 
     <script type="module" src="js/index.js"></script>

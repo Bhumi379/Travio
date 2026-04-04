@@ -88,7 +88,7 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         }>${avatar}</div>
         <div class="driver-info">
           <h3>${initiatorName}</h3>
-          <p>${isCab ? "Cab driver" : "Ride creator"}</p>
+          <p>Ride creator</p>
         </div>
       </div>
 

@@ -268,21 +268,20 @@ export async function loadProfileRides() {
 
     if (!data.success) throw new Error(data.message);
 
-    const allRides = Array.isArray(data.data) ? data.data : [];
-    const now = new Date();
-
-    const currentRides = allRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime >= now;
-    });
-
-    const previousRides = allRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime < now;
-    });
+    const currentRides = Array.isArray(data.currentRides) ? data.currentRides : [];
+    const previousRides = Array.isArray(data.pastRides) ? data.pastRides : [];
 
     displayProfileRides(currentRides, "profileCurrentRidesGrid");
     displayProfileRides(previousRides, "profilePreviousRidesGrid");
+
+    const activeCountEl = document.getElementById('sidebarCurrentCount');
+    const prevCountEl = document.getElementById('sidebarPrevCount');
+    if (activeCountEl) {
+      activeCountEl.textContent = String(data.activeCount || currentRides.length);
+    }
+    if (prevCountEl) {
+      prevCountEl.textContent = String(data.pastCount || previousRides.length);
+    }
   } catch (err) {
     showError(err.message);
   }

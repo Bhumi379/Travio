@@ -40,22 +40,6 @@ const trustedDriverSchema = new mongoose.Schema(
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '', trim: true },
     letter: { type: String, default: '', trim: true, maxlength: 2 },
-    phone: {
-      type: String,
-      default: '',
-      trim: true,
-      validate: {
-        validator(v) {
-          if (v == null || !String(v).trim()) return true;
-          const compact = String(v).replace(/[\s-]/g, '');
-          if (/^[6-9]\d{9}$/.test(compact)) return true;
-          if (/^\+91[6-9]\d{9}$/.test(compact)) return true;
-          return false;
-        },
-        message:
-          'Phone must be 10 digits (starting 6–9), or +91 followed by 10 digits.',
-      },
-    },
   },
   { _id: true }
 );
