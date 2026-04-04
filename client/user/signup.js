@@ -3,12 +3,19 @@ document.getElementById("signupForm").addEventListener("submit", async (e) => {
 
   const profilePic = document.getElementById("profilePicture").value.trim();
   const guardianNum = document.getElementById("guardianNumber").value.trim();
+  const email = document.getElementById("email").value;
+
+  // Enforce campus-only accounts
+  if (email && !String(email).toLowerCase().endsWith("@banasthali.in")) {
+    alert("Please use your @banasthali.in email to sign up.");
+    return;
+  }
 
   const data = {
     collegeId: document.getElementById("collegeId").value,
     name: document.getElementById("name").value,
     contactNumber: document.getElementById("contactNumber").value,
-    email: document.getElementById("email").value,
+    email,
     course: document.getElementById("course").value,
     password: document.getElementById("password").value,
   };

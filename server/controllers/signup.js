@@ -23,6 +23,11 @@ const createUser = async (req, res) => {
       });
     }
 
+    // Restrict signup to campus emails only
+    if (!String(email).toLowerCase().endsWith("@banasthali.in")) {
+      return res.status(400).json({ message: "Email must end with @banasthali.in" });
+    }
+
     // ------------------ CHECK IF USER EXISTS ------------------
     const oldUser = await User.findOne({ email });
 
