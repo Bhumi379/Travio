@@ -3,7 +3,8 @@ const router = express.Router();
 
 const { adminLogin, adminSignup } = require('../controllers/AdminController');
 const { getAllRides, getRideById, deleteRide } = require('../controllers/AdminController');
-const { adminUpdateRide } = require('../controllers/rideController');
+const { updateRide } = require('../controllers/rideController');
+const adminUpdateRide = updateRide;
 const adminAuth = require('../middleware/adminAuth');
 const { getAllUsers, getUserById, deleteUser } = require('../controllers/AdminController');
 const { getAllAdmins } = require('../controllers/AdminController');
