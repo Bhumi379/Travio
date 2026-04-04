@@ -222,6 +222,7 @@
               <p class="text-xs text-slate-500 mb-1" id="driverFormHint">Add new driver</p>
               <input id="driverName" type="text" placeholder="Name / label" class="w-full rounded-lg p-2 admin-input" />
               <input id="driverDesc" type="text" placeholder="Description (e.g. routes)" class="w-full rounded-lg p-2 admin-input" />
+              <input id="driverPhone" type="text" placeholder="Phone (10 digits or +91…, optional)" class="w-full rounded-lg p-2 admin-input" />
               <input id="driverLetter" type="text" placeholder="Avatar letter (optional)" maxlength="2" class="w-full rounded-lg p-2 admin-input" />
               <div class="flex flex-wrap gap-2 pt-1">
                 <button type="button" onclick="applyDriverForm()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition">Save driver</button>
@@ -247,6 +248,71 @@
           <button type="button" onclick="closeDetails()" class="text-slate-400 hover:text-white text-xl leading-none transition">×</button>
         </div>
         <div class="p-4 space-y-4 text-slate-200" id="detailsBody"></div>
+      </div>
+    </div>
+
+    <div id="rideEditModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-[60] admin-modal-backdrop">
+      <div class="admin-surface rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-auto border border-slate-600 admin-modal-pop">
+        <div class="flex items-center justify-between p-4 border-b border-slate-600">
+          <div class="font-semibold text-slate-100">Edit ride</div>
+          <button type="button" onclick="closeRideEditModal()" class="text-slate-400 hover:text-white text-xl leading-none transition">×</button>
+        </div>
+        <form id="adminRideEditForm" class="p-4 space-y-3 text-slate-200">
+          <input type="hidden" id="adminEditRideId" />
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Pickup name</label>
+            <input type="text" id="adminEditPickupName" required class="w-full rounded-lg p-2 admin-input" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Pickup address</label>
+            <input type="text" id="adminEditPickupAddr" class="w-full rounded-lg p-2 admin-input" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Destination name</label>
+            <input type="text" id="adminEditDestName" required class="w-full rounded-lg p-2 admin-input" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Destination address</label>
+            <input type="text" id="adminEditDestAddr" class="w-full rounded-lg p-2 admin-input" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Departure</label>
+            <input type="datetime-local" id="adminEditDeparture" required class="w-full rounded-lg p-2 admin-input" />
+          </div>
+          <div>
+            <label class="text-xs text-slate-500 block mb-1">Notes (optional, 3–400 chars if set)</label>
+            <textarea id="adminEditNotes" rows="2" maxlength="400" class="w-full rounded-lg p-2 admin-input resize-y min-h-[4rem]"></textarea>
+          </div>
+          <div id="adminEditCabFields" class="hidden space-y-3 border-t border-slate-600 pt-3">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="text-xs text-slate-500 block mb-1">Seats</label>
+                <input type="number" id="adminEditSeats" min="1" max="8" class="w-full rounded-lg p-2 admin-input" />
+              </div>
+              <div>
+                <label class="text-xs text-slate-500 block mb-1">Fare (₹)</label>
+                <input type="number" id="adminEditFare" min="0" step="0.01" class="w-full rounded-lg p-2 admin-input" />
+              </div>
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Driver name</label>
+              <input type="text" id="adminEditDriverName" class="w-full rounded-lg p-2 admin-input" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Vehicle number</label>
+              <input type="text" id="adminEditVehicle" class="w-full rounded-lg p-2 admin-input" />
+            </div>
+            <div>
+              <label class="text-xs text-slate-500 block mb-1">Driver phone (10 digits)</label>
+              <input type="text" id="adminEditDriverPhone" class="w-full rounded-lg p-2 admin-input" placeholder="Optional" />
+            </div>
+          </div>
+          <p id="adminRideEditErr" class="text-sm text-red-400 hidden"></p>
+          <div class="flex flex-wrap gap-2 pt-2">
+            <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition">Save changes</button>
+            <button type="button" onclick="closeRideEditModal()" class="admin-btn-ghost px-4 py-2 rounded-lg text-sm">Cancel</button>
+          </div>
+        </form>
       </div>
     </div>
 
@@ -424,6 +490,7 @@
 let allRidesCache = [];
 let allUsersCache = [];
 let currentRideType = null; // 'cab' | 'travelBuddy'
+let adminEditRideSnapshot = null;
 let rideChartInstance = null;
 let typeChartInstance = null;
 
@@ -463,6 +530,32 @@ function toDownloadUrl(rawUrl) {
     return `${window.location.origin}${String(rawUrl).slice(uploadsIndex)}`;
   }
   return rawUrl;
+}
+
+function toDatetimeLocalValue(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/** 10-digit Indian mobile starting 6–9; accepts +91 prefix. Empty = no value. */
+function normalizeIndianMobile10(raw) {
+  if (raw == null || !String(raw).trim()) return '';
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10 && /^[6-9]/.test(digits)) return digits;
+  if (digits.length === 12 && digits.startsWith('91')) {
+    const rest = digits.slice(2);
+    if (/^[6-9]\d{9}$/.test(rest)) return rest;
+  }
+  return null;
+}
+
+function isValidTrustedDriverPhone(v) {
+  if (v == null || !String(v).trim()) return true;
+  const compact = String(v).replace(/[\s-]/g, '');
+  return /^[6-9]\d{9}$/.test(compact) || /^\+91[6-9]\d{9}$/.test(compact);
 }
 
 function showSection(id) {
@@ -621,6 +714,7 @@ function renderRidesTable(rides) {
       <td class="p-3">${participantCount}</td>
       <td class="p-3">
         <button type="button" onclick="openRideDetails('${r._id}')" class="text-sky-400 hover:text-sky-300 mr-3 transition">See details</button>
+        <button type="button" onclick="openAdminRideEditById('${r._id}')" class="text-emerald-400 hover:text-emerald-300 mr-3 transition">Edit</button>
         <button type="button" onclick="deleteRide('${r._id}')" class="text-red-400 hover:text-red-300 transition">Delete</button>
       </td>
     </tr>
@@ -674,7 +768,6 @@ async function openRideDetails(rideId) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
           <div><span class="text-slate-500">Name:</span> ${ride.driver?.name || '—'}</div>
           <div><span class="text-slate-500">Vehicle:</span> ${ride.driver?.vehicleNumber || '—'}</div>
-          <div><span class="text-slate-500">Contact:</span> ${ride.driver?.contactNumber || '—'}</div>
           ${aadharUrl
             ? `<div><span class="text-slate-500">Aadhar:</span> <a class="text-sky-400 hover:text-sky-300 underline" href="${aadharUrl}" download target="_blank" rel="noopener noreferrer">Download</a></div>`
             : `<div><span class="text-slate-500">Aadhar:</span> —</div>`}
@@ -714,11 +807,217 @@ async function openRideDetails(rideId) {
       <div class="font-semibold text-slate-100 mb-2">Participants (${participants.length})</div>
       ${participantHtml}
     </div>
+
+    <div class="flex flex-wrap gap-2 pt-2 border-t border-slate-600">
+      <button type="button" onclick="openAdminRideEditById('${ride._id}')" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition shadow-lg shadow-orange-500/20">Edit ride</button>
+    </div>
   `;
 }
 
 function closeDetails() {
   document.getElementById('detailsModal').classList.add('hidden');
+}
+
+function closeRideEditModal() {
+  document.getElementById('rideEditModal').classList.add('hidden');
+  adminEditRideSnapshot = null;
+  const err = document.getElementById('adminRideEditErr');
+  if (err) {
+    err.textContent = '';
+    err.classList.add('hidden');
+  }
+}
+
+function populateAdminRideEditForm(ride) {
+  adminEditRideSnapshot = ride;
+  document.getElementById('adminEditRideId').value = ride._id || '';
+  document.getElementById('adminEditPickupName').value = ride.pickup?.name || '';
+  document.getElementById('adminEditPickupAddr').value = ride.pickup?.address || '';
+  document.getElementById('adminEditDestName').value = ride.destination?.name || '';
+  document.getElementById('adminEditDestAddr').value = ride.destination?.address || '';
+  document.getElementById('adminEditDeparture').value = toDatetimeLocalValue(ride.departureTime || ride.createdAt);
+  document.getElementById('adminEditNotes').value = ride.notes || '';
+
+  const cabBlock = document.getElementById('adminEditCabFields');
+  const isCab = ride.rideType === 'cab';
+  if (cabBlock) {
+    cabBlock.classList.toggle('hidden', !isCab);
+    if (isCab) {
+      document.getElementById('adminEditSeats').value = ride.seats != null ? String(ride.seats) : '1';
+      document.getElementById('adminEditFare').value = ride.fare != null && ride.fare !== '' ? String(ride.fare) : '';
+      document.getElementById('adminEditDriverName').value = ride.driver?.name || '';
+      document.getElementById('adminEditVehicle').value = ride.driver?.vehicleNumber || '';
+      document.getElementById('adminEditDriverPhone').value = ride.driver?.contactNumber || '';
+    }
+  }
+}
+
+async function openAdminRideEditById(rideId) {
+  const err = document.getElementById('adminRideEditErr');
+  if (err) {
+    err.textContent = '';
+    err.classList.add('hidden');
+  }
+  const res = await fetch(`/api/admin/rides/${rideId}`, { credentials: 'include' });
+  const data = await res.json();
+  const ride = data?.data || data;
+  if (!ride || !ride._id) {
+    alert('Could not load ride for editing.');
+    return;
+  }
+  populateAdminRideEditForm(ride);
+  document.getElementById('rideEditModal').classList.remove('hidden');
+}
+
+async function submitAdminRideEdit(e) {
+  e.preventDefault();
+  const errEl = document.getElementById('adminRideEditErr');
+  if (errEl) {
+    errEl.textContent = '';
+    errEl.classList.add('hidden');
+  }
+
+  const ride = adminEditRideSnapshot;
+  if (!ride || !ride._id) {
+    if (errEl) {
+      errEl.textContent = 'No ride loaded.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const pickupName = document.getElementById('adminEditPickupName').value.trim();
+  const pickupAddr = document.getElementById('adminEditPickupAddr').value.trim();
+  const destName = document.getElementById('adminEditDestName').value.trim();
+  const destAddr = document.getElementById('adminEditDestAddr').value.trim();
+  const depVal = document.getElementById('adminEditDeparture').value;
+  const notesRaw = document.getElementById('adminEditNotes').value.trim();
+
+  if (!pickupName || !destName) {
+    if (errEl) {
+      errEl.textContent = 'Pickup and destination names are required.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+  if (!depVal) {
+    if (errEl) {
+      errEl.textContent = 'Departure date and time are required.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+  if (notesRaw.length > 0 && notesRaw.length < 3) {
+    if (errEl) {
+      errEl.textContent = 'Notes must be at least 3 characters or left empty.';
+      errEl.classList.remove('hidden');
+    }
+    return;
+  }
+
+  const departureTime = new Date(depVal).toISOString();
+  const pickup = {
+    ...(ride.pickup || {}),
+    name: pickupName,
+    address: pickupAddr,
+  };
+  const destination = {
+    ...(ride.destination || {}),
+    name: destName,
+    address: destAddr,
+  };
+
+  const payload = {
+    rideType: ride.rideType,
+    pickup,
+    destination,
+    departureTime,
+  };
+  if (notesRaw.length >= 3) payload.notes = notesRaw;
+
+  if (ride.rideType === 'cab') {
+    const seats = parseInt(document.getElementById('adminEditSeats').value, 10);
+    const fareRaw = document.getElementById('adminEditFare').value;
+    if (!Number.isFinite(seats) || seats < 1 || seats > 8) {
+      if (errEl) {
+        errEl.textContent = 'Seats must be between 1 and 8.';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+    payload.seats = seats;
+    if (fareRaw !== '' && fareRaw != null) {
+      const fare = parseFloat(fareRaw);
+      if (Number.isNaN(fare) || fare < 0) {
+        if (errEl) {
+          errEl.textContent = 'Fare must be a non-negative number.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      payload.fare = fare;
+    }
+
+    const driverName = document.getElementById('adminEditDriverName').value.trim();
+    const vehicle = document.getElementById('adminEditVehicle').value.trim().toUpperCase();
+    const phoneRaw = document.getElementById('adminEditDriverPhone').value.trim();
+    const plateOk = !vehicle || /^[A-Z0-9\- ]{5,15}$/i.test(vehicle);
+    if (!plateOk) {
+      if (errEl) {
+        errEl.textContent = 'Vehicle number format is invalid (5–15 letters, numbers, spaces or hyphens).';
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+
+    const driver = { ...(ride.driver || {}) };
+    if (driverName) driver.name = driverName;
+    if (vehicle) driver.vehicleNumber = vehicle;
+    if (phoneRaw) {
+      const p10 = normalizeIndianMobile10(phoneRaw);
+      if (!p10) {
+        if (errEl) {
+          errEl.textContent = 'Driver phone must be 10 digits (Indian mobile starting 6–9), optionally with +91.';
+          errEl.classList.remove('hidden');
+        }
+        return;
+      }
+      driver.contactNumber = p10;
+    }
+
+    payload.driver = driver;
+  }
+
+  try {
+    const res = await fetch(`/api/admin/rides/${ride._id}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.success === false) {
+      const msg =
+        (Array.isArray(data.errors) && data.errors.join('; ')) ||
+        data.message ||
+        data.error ||
+        'Update failed';
+      if (errEl) {
+        errEl.textContent = msg;
+        errEl.classList.remove('hidden');
+      }
+      return;
+    }
+    closeRideEditModal();
+    closeDetails();
+    await loadStats();
+    if (currentRideType) await loadRides(currentRideType);
+  } catch (ex) {
+    if (errEl) {
+      errEl.textContent = ex.message || 'Network error';
+      errEl.classList.remove('hidden');
+    }
+  }
 }
 
 /* ================= USERS ================= */
@@ -927,7 +1226,7 @@ function renderTrustedDriversList() {
     <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-slate-600/80 bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
       <div class="text-sm min-w-0">
         <div class="font-medium text-slate-100 truncate">${escAboutHtml(d.name)}</div>
-        <div class="text-xs text-slate-400 truncate">${escAboutHtml(d.description || '')}</div>
+        <div class="text-xs text-slate-400 truncate">${escAboutHtml(d.description || '')}${d.phone ? ` · ${escAboutHtml(d.phone)}` : ''}</div>
       </div>
       <div class="flex gap-1 shrink-0">
         <button type="button" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-200 hover:bg-slate-600 transition" onclick="editTrustedDriver(${i})">Edit</button>
@@ -952,6 +1251,7 @@ function resetDriverForm() {
   editingDriverIndex = null;
   document.getElementById('driverName').value = '';
   document.getElementById('driverDesc').value = '';
+  document.getElementById('driverPhone').value = '';
   document.getElementById('driverLetter').value = '';
   const hint = document.getElementById('driverFormHint');
   if (hint) hint.textContent = 'Add new driver';
@@ -1008,6 +1308,7 @@ function editTrustedDriver(i) {
   const d = aboutState.trustedDrivers[i];
   document.getElementById('driverName').value = d.name || '';
   document.getElementById('driverDesc').value = d.description || '';
+  document.getElementById('driverPhone').value = d.phone || '';
   document.getElementById('driverLetter').value = d.letter || '';
   const hint = document.getElementById('driverFormHint');
   if (hint) hint.textContent = 'Editing — save to update';
@@ -1026,13 +1327,19 @@ async function applyDriverForm() {
   if (!aboutState) return;
   const name = document.getElementById('driverName').value.trim();
   const description = document.getElementById('driverDesc').value.trim();
+  const phoneRaw = document.getElementById('driverPhone').value.trim();
   let letter = document.getElementById('driverLetter').value.trim().slice(0, 2);
   if (!name) {
     alert('Name is required.');
     return;
   }
+  if (!isValidTrustedDriverPhone(phoneRaw)) {
+    alert('Phone must be 10 digits (starting 6–9), or +91 followed by 10 digits. Leave empty if none.');
+    return;
+  }
   if (!letter) letter = name.charAt(0).toUpperCase();
-  const entry = { name, description, letter };
+  const phone = phoneRaw ? String(phoneRaw).replace(/[\s-]/g, '') : '';
+  const entry = { name, description, letter, phone };
   if (editingDriverIndex !== null && editingDriverIndex >= 0) {
     const prev = aboutState.trustedDrivers[editingDriverIndex] || {};
     if (prev._id) entry._id = prev._id;
@@ -1249,6 +1556,8 @@ function logout() {
 }
 
 /* ================= INIT ================= */
+document.getElementById('adminRideEditForm')?.addEventListener('submit', submitAdminRideEdit);
+
 checkAdmin();
 loadStats();
 </script>

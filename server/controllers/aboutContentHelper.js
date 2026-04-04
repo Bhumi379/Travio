@@ -71,14 +71,22 @@ function sanitizeMetroDidi(arr) {
 function sanitizeTrustedDrivers(arr) {
   if (!Array.isArray(arr)) return aboutDefaults.trustedDrivers;
 
+  const phoneOk = (p) => {
+    const s = normalizeString(p);
+    if (!s) return true;
+    const compact = s.replace(/[\s-]/g, '');
+    return /^(\+91)?[6-9]\d{9}$/.test(compact) || /^\d{10}$/.test(compact);
+  };
+
   const out = arr
     .map((d) => {
       const name = normalizeString(d?.name);
       const description = normalizeString(d?.description) || '';
       const letter = normalizeString(d?.letter).slice(0, 2);
-      return { name, description, letter };
+      let phone = normalizeString(d?.phone);
+      if (phone && !phoneOk(phone)) phone = '';
+      return { name, description, letter, phone };
     })
-    // `name` is required by schema; drop invalid entries
     .filter((d) => d.name)
     .map((d) => ({
       ...d,
