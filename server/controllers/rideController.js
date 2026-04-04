@@ -502,9 +502,23 @@ const getMyRides = async (req, res) => {
         new Date(a.departureTime || a.createdAt)
     );
 
+    const now = new Date();
+    const currentRides = myRides.filter((ride) => {
+      const rideTime = new Date(ride.departureTime || ride.createdAt);
+      return rideTime >= now;
+    });
+    const pastRides = myRides.filter((ride) => {
+      const rideTime = new Date(ride.departureTime || ride.createdAt);
+      return rideTime < now;
+    });
+
     return res.status(200).json({
       success: true,
       count: myRides.length,
+      activeCount: currentRides.length,
+      pastCount: pastRides.length,
+      currentRides,
+      pastRides,
       data: myRides,
     });
   } catch (error) {
