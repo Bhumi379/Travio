@@ -222,6 +222,7 @@
               <p class="text-xs text-slate-500 mb-1" id="driverFormHint">Add new driver</p>
               <input id="driverName" type="text" placeholder="Name / label" class="w-full rounded-lg p-2 admin-input" />
               <input id="driverDesc" type="text" placeholder="Description (e.g. routes)" class="w-full rounded-lg p-2 admin-input" />
+              <input id="driverPhone" type="text" placeholder="Phone (10 digits or +91…, optional)" class="w-full rounded-lg p-2 admin-input" />
               <input id="driverLetter" type="text" placeholder="Avatar letter (optional)" maxlength="2" class="w-full rounded-lg p-2 admin-input" />
               <div class="flex flex-wrap gap-2 pt-1">
                 <button type="button" onclick="applyDriverForm()" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-400 text-sm transition">Save driver</button>
@@ -465,6 +466,12 @@ function toDownloadUrl(rawUrl) {
   return rawUrl;
 }
 
+function isValidTrustedDriverPhone(v) {
+  if (v == null || !String(v).trim()) return true;
+  const compact = String(v).replace(/[\s-]/g, '');
+  return /^[6-9]\d{9}$/.test(compact) || /^\+91[6-9]\d{9}$/.test(compact);
+}
+
 function showSection(id) {
   document.querySelectorAll("main section").forEach(s => s.classList.add("hidden"));
   document.getElementById(id).classList.remove("hidden");
@@ -674,7 +681,6 @@ async function openRideDetails(rideId) {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
           <div><span class="text-slate-500">Name:</span> ${ride.driver?.name || '—'}</div>
           <div><span class="text-slate-500">Vehicle:</span> ${ride.driver?.vehicleNumber || '—'}</div>
-          <div><span class="text-slate-500">Contact:</span> ${ride.driver?.contactNumber || '—'}</div>
           ${aadharUrl
             ? `<div><span class="text-slate-500">Aadhar:</span> <a class="text-sky-400 hover:text-sky-300 underline" href="${aadharUrl}" download target="_blank" rel="noopener noreferrer">Download</a></div>`
             : `<div><span class="text-slate-500">Aadhar:</span> —</div>`}
@@ -927,7 +933,7 @@ function renderTrustedDriversList() {
     <div class="flex items-center justify-between gap-2 p-2 rounded-lg border border-slate-600/80 bg-slate-800/40 hover:bg-slate-800/70 transition-colors">
       <div class="text-sm min-w-0">
         <div class="font-medium text-slate-100 truncate">${escAboutHtml(d.name)}</div>
-        <div class="text-xs text-slate-400 truncate">${escAboutHtml(d.description || '')}</div>
+        <div class="text-xs text-slate-400 truncate">${escAboutHtml(d.description || '')}${d.phone ? ` · ${escAboutHtml(d.phone)}` : ''}</div>
       </div>
       <div class="flex gap-1 shrink-0">
         <button type="button" class="text-xs px-2 py-1 rounded bg-slate-700 text-slate-200 hover:bg-slate-600 transition" onclick="editTrustedDriver(${i})">Edit</button>
@@ -952,6 +958,7 @@ function resetDriverForm() {
   editingDriverIndex = null;
   document.getElementById('driverName').value = '';
   document.getElementById('driverDesc').value = '';
+  document.getElementById('driverPhone').value = '';
   document.getElementById('driverLetter').value = '';
   const hint = document.getElementById('driverFormHint');
   if (hint) hint.textContent = 'Add new driver';
@@ -1008,6 +1015,7 @@ function editTrustedDriver(i) {
   const d = aboutState.trustedDrivers[i];
   document.getElementById('driverName').value = d.name || '';
   document.getElementById('driverDesc').value = d.description || '';
+  document.getElementById('driverPhone').value = d.phone || '';
   document.getElementById('driverLetter').value = d.letter || '';
   const hint = document.getElementById('driverFormHint');
   if (hint) hint.textContent = 'Editing — save to update';
@@ -1026,13 +1034,19 @@ async function applyDriverForm() {
   if (!aboutState) return;
   const name = document.getElementById('driverName').value.trim();
   const description = document.getElementById('driverDesc').value.trim();
+  const phoneRaw = document.getElementById('driverPhone').value.trim();
   let letter = document.getElementById('driverLetter').value.trim().slice(0, 2);
   if (!name) {
     alert('Name is required.');
     return;
   }
+  if (!isValidTrustedDriverPhone(phoneRaw)) {
+    alert('Phone must be 10 digits (starting 6–9), or +91 followed by 10 digits. Leave empty if none.');
+    return;
+  }
   if (!letter) letter = name.charAt(0).toUpperCase();
-  const entry = { name, description, letter };
+  const phone = phoneRaw ? String(phoneRaw).replace(/[\s-]/g, '') : '';
+  const entry = { name, description, letter, phone };
   if (editingDriverIndex !== null && editingDriverIndex >= 0) {
     const prev = aboutState.trustedDrivers[editingDriverIndex] || {};
     if (prev._id) entry._id = prev._id;

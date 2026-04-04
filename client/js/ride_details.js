@@ -1,6 +1,11 @@
 import { API_BASE } from "./config.js";
 import { showError, showSuccess } from "./utils.js";
 
+/** Latest ride from GET /rides/:id — used for edit prefill and PUT payload merge. */
+let rideEditSnapshot = null;
+/** Accepted passenger count (owner requests) — for “left seats” in summary and edit preview. */
+let rideEditAcceptedCount = 0;
+
 function getRideId() {
   const params = new URLSearchParams(window.location.search);
   return params.get("rideId");
@@ -30,6 +35,14 @@ function toDownloadUrl(rawUrl) {
   return rawUrl;
 }
 
+function toDatetimeLocalValue(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriverDetails = false) {
   const departure = ride.departureTime || ride.createdAt;
   const pickupName = ride.pickup?.name || "Pickup";
@@ -46,6 +59,13 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
 
   const accepted = requests.filter((r) => r.status === "accepted");
   const pending = requests.filter((r) => r.status === "pending");
+  const totalSeats = typeof ride.seats === "number" ? ride.seats : null;
+  const leftSeats =
+    isCab && totalSeats != null
+      ? Math.max(0, totalSeats - accepted.length)
+      : null;
+  const leftSeatsSummary =
+    leftSeats != null ? String(leftSeats) : "—";
   const rideOwnerId =
     typeof ride.initiatorId === "object" ? ride.initiatorId?._id : ride.initiatorId;
   const isOwner = currentUserId && String(rideOwnerId) === String(currentUserId);
@@ -88,7 +108,7 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         }>${avatar}</div>
         <div class="driver-info">
           <h3>${initiatorName}</h3>
-          <p>Ride creator</p>
+          <p>${isCab ? "Cab driver" : "Ride creator"}</p>
         </div>
       </div>
 
@@ -96,7 +116,11 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         <span class="pill-badge"><i class="fa-solid fa-id-card"></i> Verified profile</span>
         <span class="pill-badge"><i class="fa-solid fa-clock"></i> Instant booking</span>
         <span class="pill-badge"><i class="fa-solid fa-user-group"></i> ${
-          typeof ride.seats === "number" ? `${ride.seats} seats` : "Seats info"
+          isCab && leftSeats != null
+            ? `${leftSeats} left seats`
+            : isCab
+              ? "Seats info"
+              : "Travel buddy"
         }</span>
       </div>
 
@@ -159,7 +183,6 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
           : ""
       }
 
-      <div class="report-link">Report ride</div>
     </section>
 
     <aside class="summary-card">
@@ -173,8 +196,8 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         <span>${destName}</span>
       </div>
       <div class="summary-line">
-        <span>Passengers</span>
-        <span>${typeof ride.seats === "number" ? ride.seats : "1"} passenger</span>
+        <span>Left seats</span>
+        <span>${leftSeatsSummary}</span>
       </div>
       <div class="summary-price">${price}</div>
 
@@ -182,7 +205,8 @@ function buildDetailsHTML(ride, requests = [], currentUserId = null, canViewDriv
         <button class="summary-btn" onclick="openChat('${ride._id}')">Chat</button>
         ${
           isOwner
-            ? `<button class="summary-btn primary" style="background:#ef4444;box-shadow:none;" onclick="cancelRide('${ride._id}')">Cancel Ride</button>`
+            ? `<button type="button" class="summary-btn" onclick="openUserRideEditModal()">Edit ride</button>
+        <button class="summary-btn primary" style="background:#ef4444;box-shadow:none;" onclick="cancelRide('${ride._id}')">Cancel Ride</button>`
             : `<button class="summary-btn primary" onclick="requestRide('${ride._id}')">Request</button>`
         }
       </div>
@@ -197,6 +221,230 @@ async function getCurrentUserId() {
     return data?.user?._id || data?.user?.id || null;
   } catch {
     return null;
+  }
+}
+
+function setUserRideEditError(msg) {
+  const el = document.getElementById("userRideEditErr");
+  if (!el) return;
+  el.textContent = msg || "";
+  el.classList.toggle("is-visible", Boolean(msg));
+}
+
+function syncEditModalDepartureLabels() {
+  const depVal = document.getElementById("userEditDeparture")?.value;
+  const dateLine = document.getElementById("editModalDateLine");
+  const timeLine = document.getElementById("editModalTimeLine");
+  const segPickupTime = document.getElementById("editModalSegTimePickup");
+  if (!depVal || !dateLine || !timeLine) return;
+  const d = new Date(depVal);
+  if (Number.isNaN(d.getTime())) return;
+  dateLine.textContent = formatDate(d.toISOString());
+  const t = formatTime(d.toISOString());
+  timeLine.textContent = t;
+  if (segPickupTime) segPickupTime.textContent = t;
+}
+
+function syncEditRideSummaryPanel() {
+  const pickup =
+    document.getElementById("userEditPickupName")?.value.trim() || "—";
+  const dest =
+    document.getElementById("userEditDestName")?.value.trim() || "—";
+  const fromEl = document.getElementById("editSumFrom");
+  const toEl = document.getElementById("editSumTo");
+  const leftEl = document.getElementById("editSumLeftSeats");
+  const fareEl = document.getElementById("editSumFare");
+  if (fromEl) fromEl.textContent = pickup;
+  if (toEl) toEl.textContent = dest;
+
+  const ride = rideEditSnapshot;
+  const isCab = ride?.rideType === "cab";
+  if (leftEl) {
+    if (!isCab) {
+      leftEl.textContent = "—";
+    } else {
+      const seats = parseInt(document.getElementById("userEditSeats")?.value, 10);
+      const total = Number.isFinite(seats) ? seats : 0;
+      leftEl.textContent = String(
+        Math.max(0, total - (rideEditAcceptedCount || 0))
+      );
+    }
+  }
+  if (fareEl) {
+    if (!isCab) {
+      fareEl.textContent = "—";
+    } else {
+      const fareRaw = document.getElementById("userEditFare")?.value;
+      const fare =
+        fareRaw !== "" && fareRaw != null ? parseFloat(fareRaw) : NaN;
+      fareEl.textContent =
+        Number.isFinite(fare) && fare >= 0
+          ? `₹${fare.toFixed(0)} (Total)`
+          : "—";
+    }
+  }
+}
+
+function populateUserRideEditForm(ride) {
+  rideEditSnapshot = ride;
+  document.getElementById("userEditPickupName").value = ride.pickup?.name || "";
+  document.getElementById("userEditPickupAddr").value = ride.pickup?.address || "";
+  document.getElementById("userEditDestName").value = ride.destination?.name || "";
+  document.getElementById("userEditDestAddr").value = ride.destination?.address || "";
+  document.getElementById("userEditDeparture").value = toDatetimeLocalValue(
+    ride.departureTime || ride.createdAt
+  );
+  document.getElementById("userEditNotes").value = ride.notes || "";
+
+  const typeLabel = document.getElementById("editModalTypeLabel");
+  if (typeLabel) {
+    typeLabel.textContent =
+      ride.rideType === "cab" ? "🚖 Cab ride" : "🤝 Travel buddy ride";
+  }
+
+  const cabBlock = document.getElementById("userEditCabFields");
+  const isCab = ride.rideType === "cab";
+  if (cabBlock) cabBlock.classList.toggle("hidden", !isCab);
+  if (isCab) {
+    document.getElementById("userEditSeats").value =
+      ride.seats != null ? String(ride.seats) : "1";
+    document.getElementById("userEditFare").value =
+      ride.fare != null && ride.fare !== "" ? String(ride.fare) : "";
+    document.getElementById("userEditDriverName").value = ride.driver?.name || "";
+    document.getElementById("userEditVehicle").value = ride.driver?.vehicleNumber || "";
+  }
+
+  syncEditModalDepartureLabels();
+  syncEditRideSummaryPanel();
+}
+
+function openUserRideEditModal() {
+  const ride = rideEditSnapshot;
+  if (!ride || !ride._id) {
+    showError("Ride data is not loaded yet.");
+    return;
+  }
+  const rideOwnerId =
+    typeof ride.initiatorId === "object" ? ride.initiatorId?._id : ride.initiatorId;
+  getCurrentUserId().then((uid) => {
+    if (!uid || String(rideOwnerId) !== String(uid)) {
+      showError("Only the ride creator can edit this ride.");
+      return;
+    }
+    setUserRideEditError("");
+    populateUserRideEditForm(ride);
+    const backdrop = document.getElementById("rideEditBackdrop");
+    if (backdrop) {
+      backdrop.classList.add("is-open");
+      backdrop.setAttribute("aria-hidden", "false");
+    }
+  });
+}
+
+function closeUserRideEditModal() {
+  const backdrop = document.getElementById("rideEditBackdrop");
+  if (backdrop) {
+    backdrop.classList.remove("is-open");
+    backdrop.setAttribute("aria-hidden", "true");
+  }
+  setUserRideEditError("");
+}
+
+async function submitUserRideEdit(e) {
+  e.preventDefault();
+  setUserRideEditError("");
+
+  const ride = rideEditSnapshot;
+  if (!ride || !ride._id) {
+    setUserRideEditError("No ride loaded.");
+    return;
+  }
+
+  const pickupName = document.getElementById("userEditPickupName").value.trim();
+  const pickupAddr = document.getElementById("userEditPickupAddr").value.trim();
+  const destName = document.getElementById("userEditDestName").value.trim();
+  const destAddr = document.getElementById("userEditDestAddr").value.trim();
+  const depVal = document.getElementById("userEditDeparture").value;
+  const notesRaw = document.getElementById("userEditNotes").value.trim();
+
+  if (!pickupName || !destName) {
+    setUserRideEditError("Pickup and destination names are required.");
+    return;
+  }
+  if (!depVal) {
+    setUserRideEditError("Please set departure date and time.");
+    return;
+  }
+  if (notesRaw.length > 0 && notesRaw.length < 3) {
+    setUserRideEditError("Notes must be at least 3 characters, or leave empty.");
+    return;
+  }
+
+  const departureTime = new Date(depVal).toISOString();
+  const pickup = {
+    ...(ride.pickup || {}),
+    name: pickupName,
+    address: pickupAddr,
+  };
+  const destination = {
+    ...(ride.destination || {}),
+    name: destName,
+    address: destAddr,
+  };
+
+  const payload = {
+    rideType: ride.rideType,
+    pickup,
+    destination,
+    departureTime,
+  };
+  if (notesRaw.length >= 3) payload.notes = notesRaw;
+
+  if (ride.rideType === "cab") {
+    const seats = parseInt(document.getElementById("userEditSeats").value, 10);
+    const fareRaw = document.getElementById("userEditFare").value;
+    if (!Number.isFinite(seats) || seats < 1 || seats > 8) {
+      setUserRideEditError("Seats must be between 1 and 8.");
+      return;
+    }
+    payload.seats = seats;   const fare = fareRaw !== "" && fareRaw != null ? parseFloat(fareRaw) : null;   if (fare !== null && (Number.isNaN(fare) || fare < 0)) {      setUserRideEditError("Fare must be a non-negative number.");      return;  }    payload.fare = fare;
+
+    const driverName = document.getElementById("userEditDriverName").value.trim();
+    const vehicle = document.getElementById("userEditVehicle").value.trim().toUpperCase();
+    if (vehicle && !/^[A-Z0-9\- ]{5,15}$/i.test(vehicle)) {
+      setUserRideEditError("Vehicle number format is invalid (5–15 characters).");
+      return;
+    }
+
+    const driver = { ...(ride.driver || {}) };
+    if (driverName) driver.name = driverName;
+    if (vehicle) driver.vehicleNumber = vehicle;
+
+    payload.driver = driver;
+  }
+
+  try {
+    const res = await fetch(`${API_BASE}/rides/${encodeURIComponent(ride._id)}`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok || data.success === false) {
+      const msg =
+        (Array.isArray(data.errors) && data.errors.join("; ")) ||
+        data.message ||
+        data.error ||
+        "Failed to update ride";
+      setUserRideEditError(msg);
+      return;
+    }
+    showSuccess("Ride updated");
+    closeUserRideEditModal();
+    await loadRideDetails();
+  } catch (err) {
+    setUserRideEditError(err.message || "Network error");
   }
 }
 
@@ -260,6 +508,8 @@ async function loadRideDetails() {
       throw new Error(data.message || "Failed to load ride");
     }
 
+    rideEditSnapshot = data.data || null;
+
     const currentUserId = await getCurrentUserId();
     const rideOwnerId =
       typeof data.data?.initiatorId === "object" ? data.data?.initiatorId?._id : data.data?.initiatorId;
@@ -283,7 +533,6 @@ async function loadRideDetails() {
       myRequestStatus = null;
     }
 
-    // Try to fetch join requests (owner gets pending+accepted)
     try {
       if (isOwner) {
         const reqRes = await fetch(
@@ -312,6 +561,8 @@ async function loadRideDetails() {
       // Silently ignore; section just won't show
     }
 
+    rideEditAcceptedCount = requests.filter((r) => r.status === "accepted").length;
+
     const root = document.getElementById("rideDetailsRoot");
     if (!root) return;
 
@@ -324,6 +575,25 @@ async function loadRideDetails() {
 
 window.cancelRide = cancelRide;
 window.removeParticipant = removeParticipant;
+window.openUserRideEditModal = openUserRideEditModal;
 
-document.addEventListener("DOMContentLoaded", loadRideDetails);
+document.addEventListener("DOMContentLoaded", () => {
+  loadRideDetails();
 
+  const editForm = document.getElementById("userRideEditForm");
+  editForm?.addEventListener("submit", submitUserRideEdit);
+  editForm?.addEventListener("input", () => {
+    syncEditModalDepartureLabels();
+    syncEditRideSummaryPanel();
+  });
+  editForm?.addEventListener("change", () => {
+    syncEditModalDepartureLabels();
+    syncEditRideSummaryPanel();
+  });
+
+  document.getElementById("rideEditCloseBtn")?.addEventListener("click", closeUserRideEditModal);
+  document.getElementById("userRideEditCancel")?.addEventListener("click", closeUserRideEditModal);
+  document.getElementById("rideEditBackdrop")?.addEventListener("click", (ev) => {
+    if (ev.target === ev.currentTarget) closeUserRideEditModal();
+  });
+});
