@@ -65,8 +65,10 @@ export async function markAllNotificationsAsRead() {
 
     if (!res.ok) throw new Error("Failed to mark notifications as read");
 
-    // ✅ Remove the badge from UI
-    const badge = document.querySelector('.notification-badge');
+    // Only clear the notification unread badge, not the chat unread badge
+    const badge = document.querySelector(
+      '.notification-badge.notif-unread-badge'
+    );
     if (badge) badge.remove();
 
     console.log("✅ All notifications marked as read");
@@ -105,11 +107,8 @@ export function displayNotifications(notifications, unreadCount) {
       if (badge) badge.remove();
     }
 
-    // Set up click handler only once (check if already has handler)
-    if (!parent.dataset.notificationHandlerSet) {
-      parent.addEventListener('click', toggleNotificationPanel);
-      parent.dataset.notificationHandlerSet = 'true';
-    }
+    // Header uses onclick="toggleNotificationPanel(event)" — do not add a second listener
+    // or each click runs toggle twice and the panel opens then immediately closes.
   } else {
     console.warn("⚠️ Notification icon not found");
   }
@@ -205,17 +204,37 @@ export function updateNotificationBadge(change) {
 }
 
 
-export function toggleNotificationPanel(e) {
-  e.stopPropagation();
-  const panel = document.getElementById('notificationPanel');
-  if (!panel) return;
+function ensureNotificationPanelShell() {
+  let panel = document.getElementById('notificationPanel');
+  if (panel) return panel;
+  panel = document.createElement('div');
+  panel.id = 'notificationPanel';
+  panel.className = 'notification-panel';
+  panel.style.display = 'none';
+  panel.innerHTML = `
+    <div class="notification-header">
+      <h3>Notifications</h3>
+      <button type="button" onclick="closeNotificationPanel()" style="background: none; border: none; font-size: 20px; cursor: pointer;">×</button>
+    </div>
+    <div class="notification-list">
+      <p style="text-align: center; color: #999; padding: 20px;">Loading…</p>
+    </div>`;
+  document.body.appendChild(panel);
+  loadNotifications();
+  return panel;
+}
 
-  const isVisible = panel.style.display === 'flex' || panel.style.display === 'block';
+export function toggleNotificationPanel(e) {
+  e?.stopPropagation?.();
+  const panel = ensureNotificationPanelShell();
+
+  const isVisible =
+    panel.style.display === 'flex' || panel.style.display === 'block';
   panel.style.display = isVisible ? 'none' : 'flex';
 
   if (!isVisible) {
     console.log("🔔 Notification panel opened — marking all as read");
-    markAllNotificationsAsRead(); // 👈 this function below
+    markAllNotificationsAsRead();
   }
 }
 
@@ -346,7 +365,10 @@ export async function rejectRequest(rideId, notificationId, userId) {
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('notificationPanel');
   const notificationIcon = document.querySelector('.notification img[src*="notification"]');
-  if (panel && panel.style.display === 'block') {
+  const open =
+    panel &&
+    (panel.style.display === 'flex' || panel.style.display === 'block');
+  if (open) {
     const notificationParent = notificationIcon?.closest('.notification');
     if (!panel.contains(e.target) && !notificationParent?.contains(e.target)) {
       closeNotificationPanel();
