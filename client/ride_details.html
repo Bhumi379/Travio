@@ -507,6 +507,193 @@
         font-size: 12px;
       }
     }
+
+    /* Edit ride modal — same two-card layout as ride details */
+    .ride-edit-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      overflow-y: auto;
+    }
+    .ride-edit-backdrop.is-open {
+      display: flex;
+    }
+    .ride-edit-modal-frame {
+      width: 100%;
+      max-width: 1200px;
+      max-height: min(92vh, 900px);
+      overflow: auto;
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.2);
+      border: 1px solid #e5e7eb;
+    }
+    .ride-edit-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 22px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 800;
+      font-size: 18px;
+      color: #111827;
+    }
+    .ride-edit-close {
+      background: none;
+      border: none;
+      font-size: 22px;
+      line-height: 1;
+      cursor: pointer;
+      color: #6b7280;
+      padding: 4px 8px;
+    }
+    .ride-edit-form-body {
+      padding: 18px 22px 22px;
+    }
+    .ride-edit-details-grid.details-layout {
+      margin: 0;
+    }
+    .ride-edit-field {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 15px;
+      font-weight: 800;
+      color: #111827;
+      font-family: inherit;
+      margin-bottom: 6px;
+      box-sizing: border-box;
+    }
+    .ride-edit-field:focus {
+      outline: none;
+      border-color: #f97316;
+      box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+    }
+    .ride-edit-field-sub {
+      font-weight: 500;
+      font-size: 13px;
+      color: #4b5563;
+    }
+    .ride-edit-datetime-wrap {
+      margin-top: 8px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .ride-edit-datetime-wrap label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      display: block;
+      margin-bottom: 6px;
+    }
+    .ride-edit-datetime-wrap input[type="datetime-local"] {
+      width: 100%;
+      max-width: 280px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+    .ride-edit-notes label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      display: block;
+      margin: 14px 0 6px;
+    }
+    .ride-edit-notes textarea {
+      width: 100%;
+      min-height: 72px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      resize: vertical;
+      box-sizing: border-box;
+    }
+    .ride-edit-cab-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+      padding-top: 14px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .ride-edit-cab-grid label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #374151;
+      display: block;
+      margin-bottom: 4px;
+    }
+    .ride-edit-cab-grid input {
+      width: 100%;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+      font-family: inherit;
+      box-sizing: border-box;
+    }
+    .ride-edit-cab-full {
+      grid-column: 1 / -1;
+    }
+    #userEditCabFields.hidden {
+      display: none;
+    }
+    .ride-edit-actions {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ride-edit-actions button {
+      border-radius: 999px;
+      padding: 10px 14px;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid #111827;
+      background: #fff;
+    }
+    .ride-edit-actions button.primary {
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 10px 25px rgba(249, 115, 22, 0.35);
+    }
+    .ride-edit-err {
+      font-size: 13px;
+      color: #b91c1c;
+      display: none;
+      margin-top: 10px;
+    }
+    .ride-edit-err.is-visible {
+      display: block;
+    }
+    .ride-edit-left-seats-hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin: -4px 0 8px;
+      line-height: 1.35;
+    }
+    @media (max-width: 900px) {
+      .ride-edit-details-grid.details-layout {
+        grid-template-columns: 1fr;
+      }
+      .ride-edit-cab-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 </head>
 <body>
@@ -576,6 +763,98 @@
       <div class="details-layout" id="rideDetailsRoot">
         <!-- Populated by JS -->
       </div>
+    </div>
+  </div>
+
+  <div class="ride-edit-backdrop" id="rideEditBackdrop" aria-hidden="true">
+    <div class="ride-edit-modal-frame" role="dialog" aria-labelledby="rideEditTitle">
+      <div class="ride-edit-modal-header">
+        <span id="rideEditTitle">Edit ride</span>
+        <button type="button" class="ride-edit-close" id="rideEditCloseBtn" aria-label="Close">&times;</button>
+      </div>
+      <form id="userRideEditForm" class="ride-edit-form-body">
+        <div class="details-layout ride-edit-details-grid">
+          <section class="details-card">
+            <div class="route-strip">
+              <div>
+                <div id="editModalDateLine">—</div>
+                <small id="editModalTimeLine">—</small>
+              </div>
+              <div>
+                <small id="editModalTypeLabel">—</small>
+              </div>
+            </div>
+
+            <div class="segment-row">
+              <div class="seg-time" id="editModalSegTimePickup">—</div>
+              <div class="seg-body">
+                <input class="ride-edit-field" type="text" id="userEditPickupName" required placeholder="Pickup name" autocomplete="off" />
+                <input class="ride-edit-field ride-edit-field-sub" type="text" id="userEditPickupAddr" placeholder="Pickup address" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="segment-row">
+              <div class="seg-time"></div>
+              <div class="seg-body">
+                <input class="ride-edit-field" type="text" id="userEditDestName" required placeholder="Destination" autocomplete="off" />
+                <input class="ride-edit-field ride-edit-field-sub" type="text" id="userEditDestAddr" placeholder="Destination address" autocomplete="off" />
+              </div>
+            </div>
+
+            <div class="ride-edit-datetime-wrap">
+              <label for="userEditDeparture">Departure date &amp; time</label>
+              <input type="datetime-local" id="userEditDeparture" required />
+            </div>
+
+            <div class="ride-edit-notes">
+              <label for="userEditNotes">Notes (optional, 3–400 characters if filled)</label>
+              <textarea id="userEditNotes" maxlength="400" placeholder="Any preferences or details"></textarea>
+            </div>
+
+            <div id="userEditCabFields" class="hidden ride-edit-cab-grid">
+              <div>
+                <label for="userEditSeats">Seats offered</label>
+                <input type="number" id="userEditSeats" min="1" max="8" />
+              </div>
+              <div>
+                <label for="userEditFare">Fare (₹)</label>
+                <input type="number" id="userEditFare" min="0" step="0.01" />
+              </div>
+              <div class="ride-edit-cab-full">
+                <label for="userEditDriverName">Driver name</label>
+                <input type="text" id="userEditDriverName" autocomplete="off" />
+              </div>
+              <div class="ride-edit-cab-full">
+                <label for="userEditVehicle">Vehicle number</label>
+                <input type="text" id="userEditVehicle" autocomplete="off" />
+              </div>
+            </div>
+          </section>
+
+          <aside class="summary-card">
+            <h4>Ride summary</h4>
+            <div class="summary-line">
+              <span>From</span>
+              <span id="editSumFrom">—</span>
+            </div>
+            <div class="summary-line">
+              <span>To</span>
+              <span id="editSumTo">—</span>
+            </div>
+            <div class="summary-line">
+              <span>Left seats</span>
+              <span id="editSumLeftSeats">—</span>
+            </div>
+            <p class="ride-edit-left-seats-hint">Seats still free after people who already joined.</p>
+            <div class="summary-price" id="editSumFare">—</div>
+            <p class="ride-edit-err" id="userRideEditErr"></p>
+            <div class="ride-edit-actions">
+              <button type="submit" class="primary">Save changes</button>
+              <button type="button" id="userRideEditCancel">Cancel</button>
+            </div>
+          </aside>
+        </div>
+      </form>
     </div>
   </div>
 

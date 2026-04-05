@@ -239,32 +239,91 @@ const createRide = async (req, res) => {
 /* =====================================================
    UPDATE RIDE
 ===================================================== */
+function buildRideUpdateQuery(rawBody) {
+  const updateData = { ...(rawBody || {}) };
+  delete updateData.initiatorId;
+  delete updateData._id;
+
+  if (updateData.pickup != null) {
+    updateData.pickup = parseIfString(updateData.pickup);
+  }
+  if (updateData.destination != null) {
+    updateData.destination = parseIfString(updateData.destination);
+  }
+  if (updateData.driver != null && updateData.driver !== "") {
+    updateData.driver = parseIfString(updateData.driver);
+  }
+  if (updateData.seats != null && updateData.seats !== "") {
+    updateData.seats = parseInt(updateData.seats, 10);
+  }
+  if (updateData.fare != null && updateData.fare !== "") {
+    updateData.fare = parseFloat(updateData.fare);
+  }
+
+  let updateQuery = updateData;
+  if (updateData.rideType === "travelBuddy") {
+    delete updateData.seats;
+    delete updateData.fare;
+    updateQuery = {
+      ...updateData,
+      driver: null,
+      $unset: { seats: 1, fare: 1 },
+    };
+  }
+  return updateQuery;
+}
+
+/**
+ * Apply a patch from buildRideUpdateQuery onto a Mongoose document and save.
+ * Uses doc.save() so validators that read this.rideType (e.g. fare, seats) work;
+ * findByIdAndUpdate + runValidators often leaves this.rideType undefined for those paths.
+ */
+function applyRideUpdateQueryToDoc(doc, updateQuery) {
+  const patch = { ...(updateQuery || {}) };
+  const unset = patch.$unset;
+  delete patch.$unset;
+
+  for (const key of Object.keys(patch)) {
+    doc.set(key, patch[key]);
+  }
+  if (unset && typeof unset === "object") {
+    for (const key of Object.keys(unset)) {
+      doc.set(key, undefined);
+    }
+  }
+}
+
 const updateRide = async (req, res) => {
   try {
-    const updateData = { ...req.body };
-    let updateQuery = updateData;
-    if (updateData.rideType === "travelBuddy") {
-      delete updateData.seats;
-      delete updateData.fare;
-      updateQuery = {
-        ...updateData,
-        driver: null,
-        $unset: { seats: 1, fare: 1 },
-      };
-    }
-
-    const updatedRide = await Ride.findByIdAndUpdate(
-      req.params.id,
-      updateQuery,
-      { new: true, runValidators: true }
-    ).lean();
-
-    if (!updatedRide) {
+    const existing = await Ride.findById(req.params.id).select("initiatorId").lean();
+    if (!existing) {
       return res.status(404).json({
         success: false,
         message: "Ride not found",
       });
     }
+
+    const uid = req.user?.id || req.user?._id;
+    if (!uid || String(existing.initiatorId) !== String(uid)) {
+      return res.status(403).json({
+        success: false,
+        message: "Only the ride creator can update this ride",
+      });
+    }
+
+    const doc = await Ride.findById(req.params.id);
+    if (!doc) {
+      return res.status(404).json({
+        success: false,
+        message: "Ride not found",
+      });
+    }
+
+    const updateQuery = buildRideUpdateQuery(req.body);
+    applyRideUpdateQueryToDoc(doc, updateQuery);
+    await doc.save();
+
+    const updatedRide = doc.toObject({ virtuals: true });
 
     res.status(200).json({
       success: true,
@@ -272,6 +331,53 @@ const updateRide = async (req, res) => {
       data: updatedRide,
     });
   } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors,
+      });
+    }
+    res.status(500).json({
+      success: false,
+      message: "Error updating ride",
+      error: error.message,
+    });
+  }
+};
+
+/** Same as updateRide but without owner check — use only behind adminAuth. */
+const adminUpdateRide = async (req, res) => {
+  try {
+    const doc = await Ride.findById(req.params.id);
+    if (!doc) {
+      return res.status(404).json({
+        success: false,
+        message: "Ride not found",
+      });
+    }
+
+    const updateQuery = buildRideUpdateQuery(req.body);
+    applyRideUpdateQueryToDoc(doc, updateQuery);
+    await doc.save();
+
+    const updatedRide = doc.toObject({ virtuals: true });
+
+    res.status(200).json({
+      success: true,
+      message: "Ride updated successfully",
+      data: updatedRide,
+    });
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({
+        success: false,
+        message: "Validation Error",
+        errors,
+      });
+    }
     res.status(500).json({
       success: false,
       message: "Error updating ride",
@@ -502,23 +608,9 @@ const getMyRides = async (req, res) => {
         new Date(a.departureTime || a.createdAt)
     );
 
-    const now = new Date();
-    const currentRides = myRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime >= now;
-    });
-    const pastRides = myRides.filter((ride) => {
-      const rideTime = new Date(ride.departureTime || ride.createdAt);
-      return rideTime < now;
-    });
-
     return res.status(200).json({
       success: true,
       count: myRides.length,
-      activeCount: currentRides.length,
-      pastCount: pastRides.length,
-      currentRides,
-      pastRides,
       data: myRides,
     });
   } catch (error) {
@@ -535,6 +627,7 @@ module.exports = {
   getRideById,
   createRide,
   updateRide,
+  adminUpdateRide,
   deleteRide,
   cancelRideByOwner,
   removeParticipantFromRide,

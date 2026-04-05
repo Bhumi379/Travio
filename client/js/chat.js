@@ -96,6 +96,8 @@ function connectSocket() {
     if (data.chatId === chatId) {
       appendMessage(data.message);
       markChatRead(chatId);
+    } else if (chatListView && chatListView.style.display !== 'none') {
+      showChatList();
     }
   });
 
@@ -159,31 +161,28 @@ async function showChatList() {
   }
 
   const chats = data.data;
-  const nameCache = {};
 
-  const partnerIds = chats.map(c => {
-    const pid = c.participants.find(p => String(p) !== String(userId));
-    return pid ? String(pid) : null;
-  });
-
-  const uniqueIds = [...new Set(partnerIds.filter(Boolean))];
-  await Promise.all(uniqueIds.map(async id => {
-    nameCache[id] = await fetchUserName(id);
-  }));
-
-  chatListContent.innerHTML = chats.map((chat, i) => {
-    const pid = partnerIds[i];
-    const name = pid ? (nameCache[pid] || 'User') : 'Unknown';
+  chatListContent.innerHTML = chats.map((chat) => {
+    const partner = chat.participants.find(
+      (p) => String(p._id || p) !== String(userId)
+    );
+    const name = partner?.name || "User";
+    const pid = String(partner?._id || partner);
     const lastMsg = chat.messages?.length
       ? chat.messages[chat.messages.length - 1]
       : null;
-    const preview = lastMsg ? lastMsg.encryptedMessage : 'No messages yet';
-    const time = lastMsg ? formatDate(lastMsg.timestamp) : '';
+    const preview = lastMsg ? lastMsg.encryptedMessage : "No messages yet";
+    const time = lastMsg ? formatDate(lastMsg.timestamp) : "";
     const unreadCount = (chat.messages || []).filter((msg) => {
       const isMine = String(msg.senderId) === String(userId);
       const readBy = Array.isArray(msg.readBy) ? msg.readBy.map(String) : [];
       return !isMine && !readBy.includes(String(userId));
     }).length;
+
+    const badge =
+      unreadCount > 0
+        ? `<span class="chat-unread-pill" aria-label="${unreadCount} unread">${unreadCount > 99 ? "99+" : unreadCount}</span>`
+        : "";
 
     return `
       <div class="chat-list-item" data-chat-id="${chat._id}" data-partner-id="${pid}">
@@ -192,10 +191,12 @@ async function showChatList() {
           <div class="chat-name">${name}</div>
           <div class="chat-preview">${preview}</div>
         </div>
-        <div class="chat-time">${time}</div>
-        ${unreadCount > 0 ? `<span class="notification-badge" style="position:static;width:auto;min-width:20px;padding:0 6px;border-radius:999px;">${unreadCount > 99 ? '99+' : unreadCount}</span>` : ''}
+        <div class="chat-list-item-right">
+          <div class="chat-time">${time}</div>
+          ${badge}
+        </div>
       </div>`;
-  }).join('');
+  }).join("");
 
   chatListContent.querySelectorAll('.chat-list-item').forEach(item => {
     item.addEventListener('click', () => {

@@ -55,7 +55,7 @@ const localDiskStorage = multer.diskStorage({
 
 // Multer setup
 const upload = multer({
-  storage: hasCloudinaryConfig ? cloudinaryStorage : localDiskStorage,
+storage: localDiskStorage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     if (!allowedMimeTypes.has(file.mimetype)) {
