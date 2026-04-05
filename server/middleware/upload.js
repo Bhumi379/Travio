@@ -1,8 +1,9 @@
 const multer = require('multer');
-// `multer-storage-cloudinary` exports CloudinaryStorage as a named export.
-// Importing the module directly breaks because CloudinaryStorage is not the module itself.
-// const { CloudinaryStorage } = require('multer-storage-cloudinary');
-const cloudinary = require('../config/cloudinary');
+require('../config/cloudinary');
+
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('cloudinary').v2;
+
 const fs = require('fs');
 const path = require('path');
 
@@ -26,7 +27,21 @@ if (!fs.existsSync(localUploadDir)) {
   fs.mkdirSync(localUploadDir, { recursive: true });
 }
 
-// Cloudinary disabled - using local storage only\nconst localDiskStorage = multer.diskStorage({\n  destination: (_req, _file, cb) => cb(null, localUploadDir),\n  filename: (_req, file, cb) => {\n    const safeExt = path.extname(file.originalname || '').toLowerCase() || '.bin';\n    cb(null, `${Date.now()}_${file.fieldname}${safeExt}`);\n  },\n});
+// ✅ Cloudinary storage (FIXED)
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: (req, file) =>
+      file.fieldname === 'license'
+        ? 'travio/licenses'
+        : 'travio/aadhars',
+
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf'],
+
+    public_id: (req, file) =>
+      `${Date.now()}_${file.fieldname}`,
+  },
+});
 
 // Local storage fallback
 const localDiskStorage = multer.diskStorage({

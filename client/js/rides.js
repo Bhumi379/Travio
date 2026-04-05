@@ -418,7 +418,7 @@ if (ride.rideType?.toLowerCase() === "cab") {
         </div>
 
         <div class="ride-footer">
-          <div class="seats">${ride.seats ?? "N/A"} seats</div>
+          ${ride.rideType?.toLowerCase() === "cab" ? `<div class="seats">${ride.seats ?? "N/A"} seats</div>` : ""}
           ${priceHTML}
         </div>
 
