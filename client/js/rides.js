@@ -233,7 +233,8 @@ export async function loadRides(search = "") {
     setRides(visibleRides);
     await displayRides(visibleRides, "ridesGrid");
   } catch (err) {
-    showError(err.message);
+    console.error("loadRides:", err);
+    showError(`Failed to load rides: ${err.message}`);
   }
 }
 
@@ -256,6 +257,16 @@ export async function loadPreviousRides() {
   }
 }
 
+/** Match server getMyRides profile split: ongoing/future = active; completed/cancelled/past departure = past */
+function profileRideBucket(ride) {
+  const st = String(ride?.status || "scheduled").toLowerCase();
+  if (st === "cancelled" || st === "completed") return "past";
+  if (st === "ongoing") return "active";
+  const t = new Date(ride?.departureTime || ride?.createdAt);
+  if (Number.isNaN(t.getTime())) return "active";
+  return t >= new Date() ? "active" : "past";
+}
+
 /* ==============================
    LOAD RIDES FOR PROFILE PAGE
 ================================ */
@@ -264,25 +275,37 @@ export async function loadProfileRides() {
     const res = await fetch(`${API_BASE}/rides/my-rides`, {
       credentials: "include",
     });
+    if (!res.ok) {
+      const errData = await res.text();
+      throw new Error(`HTTP ${res.status}: ${errData.slice(0, 200)}`);
+    }
     const data = await res.json();
 
     if (!data.success) throw new Error(data.message);
 
-    const currentRides = Array.isArray(data.currentRides) ? data.currentRides : [];
-    const previousRides = Array.isArray(data.pastRides) ? data.pastRides : [];
+    let currentRides = Array.isArray(data.currentRides) ? data.currentRides : [];
+    let previousRides = Array.isArray(data.pastRides) ? data.pastRides : [];
+
+    if (
+      currentRides.length === 0 &&
+      previousRides.length === 0 &&
+      Array.isArray(data.data) &&
+      data.data.length > 0
+    ) {
+      const all = data.data;
+      currentRides = all.filter((r) => profileRideBucket(r) === "active");
+      previousRides = all.filter((r) => profileRideBucket(r) === "past");
+    }
 
     displayProfileRides(currentRides, "profileCurrentRidesGrid");
     displayProfileRides(previousRides, "profilePreviousRidesGrid");
 
-    const activeCountEl = document.getElementById('sidebarCurrentCount');
-    const prevCountEl = document.getElementById('sidebarPrevCount');
-    if (activeCountEl) {
-      activeCountEl.textContent = String(data.activeCount || currentRides.length);
-    }
-    if (prevCountEl) {
-      prevCountEl.textContent = String(data.pastCount || previousRides.length);
-    }
+    const activeCountEl = document.getElementById("sidebarCurrentCount");
+    const prevCountEl = document.getElementById("sidebarPrevCount");
+    if (activeCountEl) activeCountEl.textContent = String(currentRides.length);
+    if (prevCountEl) prevCountEl.textContent = String(previousRides.length);
   } catch (err) {
+    console.error("loadProfileRides:", err);
     showError(err.message);
   }
 }

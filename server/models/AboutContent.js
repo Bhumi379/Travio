@@ -39,6 +39,8 @@ const trustedDriverSchema = new mongoose.Schema(
   {
     name: { type: String, required: true, trim: true },
     description: { type: String, default: '', trim: true },
+    /** Optional; shown on Information page when set */
+    phone: { type: String, default: '', trim: true },
     letter: { type: String, default: '', trim: true, maxlength: 2 },
   },
   { _id: true }

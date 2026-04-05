@@ -52,16 +52,20 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Fetch current user first
   await fetchCurrentUser();
   
-  // Load notification + chat unread counters initially
-  loadNotifications();
-  loadChatUnreadCount();
-  
-  // Check for new notifications/messages every 5 seconds
-  const interval = setInterval(() => {
+  const onInfoPage =
+    typeof window !== 'undefined' &&
+    (window.location.pathname.includes('about.html') ||
+      window.location.pathname.endsWith('/about'));
+
+  if (!onInfoPage) {
     loadNotifications();
     loadChatUnreadCount();
-  }, 5000);
-  setNotificationCheckInterval(interval);
+    const interval = setInterval(() => {
+      loadNotifications();
+      loadChatUnreadCount();
+    }, 5000);
+    setNotificationCheckInterval(interval);
+  }
   
   // Initialize based on current page
   const currentPage = getCurrentPage();
@@ -78,10 +82,12 @@ document.addEventListener("DOMContentLoaded", async () => {
       pageInit.initPreviousRidesPage?.();
       break;
     case 'profile':
-      pageInit.initProfilePage?.();
+      await pageInit.initProfilePage?.();
       break;
     case 'search_results':
       pageInit.initSearchResultsPage?.();
+      break;
+    case 'about':
       break;
     default:
       console.warn("⚠️ Unknown page:", currentPage);
@@ -118,15 +124,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Show the section
                 driverDetailsSection.style.display = 'block';
                 if (seatFareSection) seatFareSection.style.display = 'block';
-                
-                // Make inputs required when cab sharing is selected
-                if(driverNameInput) driverNameInput.required = true;
-                if(carNumberInput) carNumberInput.required = true;
-                if(seatsInput) seatsInput.required = true;
-                // Keep hidden file inputs non-required in native validation.
-                // We validate these in JS submit handler to avoid blocked submit.
-                if(aadharInput) aadharInput.required = false;
-                if(licenseInput) licenseInput.required = false;
+
+                // Driver details are optional; seats still required for cab.
+                if (driverNameInput) driverNameInput.required = false;
+                if (carNumberInput) carNumberInput.required = false;
+                if (seatsInput) seatsInput.required = true;
+                if (aadharInput) aadharInput.required = false;
+                if (licenseInput) licenseInput.required = false;
                 
             } else {
                 // Hide the section

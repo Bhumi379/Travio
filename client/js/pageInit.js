@@ -201,27 +201,30 @@ export function initCreateRidePage() {
           vehicleNumber: carNumber || undefined,
         };
 
-        if (!aadharFile || !licenseFile) {
-          showError("Please upload both Aadhar and License files for cab rides");
-          return;
-        }
+        const hasFiles = !!(aadharFile || licenseFile);
 
-        const formData = new FormData();
-        formData.append("pickup", JSON.stringify(rideData.pickup));
-        formData.append("destination", JSON.stringify(rideData.destination));
-        formData.append("rideType", rideData.rideType);
-        formData.append("departureTime", rideData.departureTime);
-        if (rideData.seats != null && !Number.isNaN(rideData.seats)) {
-          formData.append("seats", String(rideData.seats));
+        if (hasFiles) {
+          const formData = new FormData();
+          formData.append("pickup", JSON.stringify(rideData.pickup));
+          formData.append("destination", JSON.stringify(rideData.destination));
+          formData.append("rideType", rideData.rideType);
+          formData.append("departureTime", rideData.departureTime);
+          if (rideData.seats != null && !Number.isNaN(rideData.seats)) {
+            formData.append("seats", String(rideData.seats));
+          }
+          if (rideData.fare != null && !Number.isNaN(rideData.fare)) {
+            formData.append("fare", String(rideData.fare));
+          }
+          if (rideData.notes) formData.append("notes", rideData.notes);
+          formData.append("driver", JSON.stringify(driver));
+          if (aadharFile) formData.append("aadhar", aadharFile);
+          if (licenseFile) formData.append("license", licenseFile);
+          payload = formData;
+        } else {
+          rideData.driver =
+            driver.name || driver.vehicleNumber ? driver : null;
+          payload = rideData;
         }
-        if (rideData.fare != null && !Number.isNaN(rideData.fare)) {
-          formData.append("fare", String(rideData.fare));
-        }
-        if (rideData.notes) formData.append("notes", rideData.notes);
-        formData.append("driver", JSON.stringify(driver));
-        formData.append("aadhar", aadharFile);
-        formData.append("license", licenseFile);
-        payload = formData;
       } else {
         payload = rideData;
       }
@@ -246,8 +249,8 @@ export function initPreviousRidesPage() {
 export async function initProfilePage() {
   console.log("👤 Initializing Profile Page");
   // Profile form is already populated by fetchCurrentUser()
-  loadProfileRides();
-  
+  await loadProfileRides();
+
   // Load profile pictures
   loadProfilePictures();
   

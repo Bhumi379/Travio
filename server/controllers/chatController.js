@@ -1,4 +1,12 @@
+const mongoose = require('mongoose');
 const Chat = require('../models/Chat');
+
+function validationMessages(error) {
+  const fromErrors = error.errors ? Object.values(error.errors).map((v) => v.message) : [];
+  if (fromErrors.length) return fromErrors;
+  if (error.message) return [error.message];
+  return ['Validation failed'];
+}
 
 // GET /api/chats
 const getAllChats = async (_req, res) => {
@@ -101,25 +109,111 @@ const createChat = async (req, res) => {
   }
 };
 
-// POST /api/chats/:id/messages  { senderId, encryptedMessage }
+// POST /api/chats/:id/messages  { senderId, encryptedMessage, messageType?, mediaUrl?, fileName?, mimeType? }
 const addMessage = async (req, res) => {
   try {
-    const { senderId, encryptedMessage } = req.body;
+    const { senderId, encryptedMessage, messageType, mediaUrl, fileName, mimeType } = req.body;
 
     const chat = await Chat.findById(req.params.id);
     if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
 
+    const payload = { senderId, encryptedMessage: String(encryptedMessage || '').trim() };
+    if (messageType === 'image' || messageType === 'file') {
+      payload.messageType = messageType;
+      payload.mediaUrl = mediaUrl;
+      payload.fileName = fileName || '';
+      payload.mimeType = mimeType || '';
+    }
+
     chat.messages = chat.messages || [];
-    chat.messages.push({ senderId, encryptedMessage });
+    chat.messages.push(payload);
     await chat.save();
 
     res.status(201).json({ success: true, message: 'Message added', data: chat });
   } catch (error) {
     if (error.name === 'ValidationError') {
-      const messages = Object.values(error.errors).map((v) => v.message);
-      return res.status(400).json({ success: false, message: 'Validation Error', errors: messages });
+      const messages = validationMessages(error);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || 'Validation Error',
+        errors: messages,
+      });
     }
     res.status(500).json({ success: false, message: 'Error adding message', error: error.message });
+  }
+};
+
+/** POST multipart: field "file", optional "caption" — participant only; broadcasts via Socket.IO */
+const uploadChatMedia = async (req, res) => {
+  try {
+    const rawUserId = req.user?.id || req.user?._id;
+    const { chatId } = req.params;
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    if (!mongoose.isValidObjectId(String(rawUserId))) {
+      return res.status(401).json({ success: false, message: 'Invalid session' });
+    }
+    const userId = new mongoose.Types.ObjectId(String(rawUserId));
+
+    const chat = await Chat.findById(chatId);
+    if (!chat) return res.status(404).json({ success: false, message: 'Chat not found' });
+    if (!chat.participants.map(String).includes(String(userId))) {
+      return res.status(403).json({ success: false, message: 'Not allowed for this chat' });
+    }
+
+    const mimeType = req.file.mimetype;
+    const messageType = mimeType.startsWith('image/') ? 'image' : 'file';
+    const publicPath = `/uploads/chat/${req.file.filename}`;
+    const fileName = (req.file.originalname || req.file.filename).slice(0, 200);
+    const caption = req.body.caption != null ? String(req.body.caption).trim() : '';
+
+    chat.messages = chat.messages || [];
+    chat.messages.push({
+      senderId: userId,
+      encryptedMessage: caption,
+      messageType,
+      mediaUrl: publicPath,
+      fileName,
+      mimeType,
+    });
+    await chat.save();
+    const newMsg = chat.messages[chat.messages.length - 1];
+
+    const io = req.app.get('io');
+    if (io) {
+      io.to(String(chatId)).emit('new-message', {
+        chatId: String(chatId),
+        message: {
+          _id: newMsg._id,
+          senderId: newMsg.senderId,
+          encryptedMessage: newMsg.encryptedMessage,
+          messageType: newMsg.messageType,
+          mediaUrl: newMsg.mediaUrl,
+          fileName: newMsg.fileName,
+          mimeType: newMsg.mimeType,
+          timestamp: newMsg.timestamp,
+          readBy: newMsg.readBy || [],
+        },
+      });
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Media sent',
+      data: { message: newMsg },
+    });
+  } catch (error) {
+    if (error.name === 'ValidationError') {
+      const messages = validationMessages(error);
+      return res.status(400).json({
+        success: false,
+        message: messages[0] || 'Validation Error',
+        errors: messages,
+      });
+    }
+    res.status(500).json({ success: false, message: 'Error uploading chat media', error: error.message });
   }
 };
 
@@ -168,6 +262,7 @@ module.exports = {
   markChatAsRead,
   createChat,
   addMessage,
+  uploadChatMedia,
   markMessageRead,
   deleteChat,
 };

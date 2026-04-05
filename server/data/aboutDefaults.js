@@ -53,16 +53,19 @@ module.exports = {
     {
       name: 'Verified Driver',
       description: 'Campus shuttle routes',
+      phone: '+91 98765 00001',
       letter: 'V',
     },
     {
       name: 'Verified Driver',
       description: 'Airport / long-route support',
+      phone: '+91 98765 00002',
       letter: 'R',
     },
     {
       name: 'Verified Driver',
       description: 'Evening pickups',
+      phone: '+91 98765 00003',
       letter: 'M',
     },
   ],

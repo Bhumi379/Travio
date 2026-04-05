@@ -1,20 +1,36 @@
 // Notification Functions
-import { API_BASE } from './config.js';
+import { API_BASE, currentUser } from './config.js';
 import { showError, showSuccess } from './utils.js';
 import { loadRides } from './rides.js';
+import { formatChatMessagePreview } from './chatFormat.js';
+
+function escHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
 
 /* ==============================
    NOTIFICATIONS
 ================================ */
-export async function loadNotifications() {
-  // Info/About page shouldn't show notifications panel.
-  // (The icon can stay, but we avoid fetching/rendering the panel.)
+function isInformationAboutPage() {
   try {
     const p = window.location?.pathname || '';
-    if (p.endsWith('about.html') || p === '/about' || p.endsWith('/about')) return;
+    return (
+      p.endsWith('about.html') ||
+      p === '/about' ||
+      p.endsWith('/about') ||
+      p.includes('/about.html')
+    );
   } catch {
-    // ignore
+    return false;
   }
+}
+
+export async function loadNotifications() {
+  if (isInformationAboutPage()) return;
 
   try {
     const res = await fetch(`${API_BASE}/notifications`, {
@@ -61,6 +77,8 @@ export async function markAllNotificationsAsRead() {
 
 
 export function displayNotifications(notifications, unreadCount) {
+  if (isInformationAboutPage()) return;
+
   console.log("📊 displayNotifications called with:", notifications.length, "notifications, unread:", unreadCount);
   
   // Update notification badge
@@ -82,11 +100,10 @@ export function displayNotifications(notifications, unreadCount) {
       console.log("✅ Badge added with count:", unreadCount);
     }
     else {
-  console.log("📭 No unread notifications — removing badge if exists");
-  const badge = document.querySelector('.notification-badge.notif-unread-badge');
-  if (badge) badge.remove();
-}
-
+      console.log("📭 No unread notifications — removing badge if exists");
+      const badge = document.querySelector('.notification-badge.notif-unread-badge');
+      if (badge) badge.remove();
+    }
 
     // Set up click handler only once (check if already has handler)
     if (!parent.dataset.notificationHandlerSet) {
@@ -203,6 +220,8 @@ export function toggleNotificationPanel(e) {
 }
 
 export async function loadChatUnreadCount() {
+  if (isInformationAboutPage()) return;
+
   try {
     const res = await fetch(`${API_BASE}/chats/unread-count`, {
       credentials: "include",
@@ -339,7 +358,7 @@ document.addEventListener('click', (e) => {
    CHAT PANEL FUNCTIONS
 ================================ */
 export function toggleChatPanel(e) {
-  e.stopPropagation();
+  if (e?.stopPropagation) e.stopPropagation();
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
 
@@ -347,7 +366,6 @@ export function toggleChatPanel(e) {
   panel.style.display = isVisible ? 'none' : 'block';
 
   if (!isVisible) {
-    console.log("💬 Chat panel opened");
     loadChatsForPanel();
   }
 }
@@ -395,17 +413,22 @@ export function displayChatPanel(chats) {
     chatItem.onclick = () => openChat(chat._id);
 
     const participantNames = chat.participants
-      .filter(p => p._id !== currentUser?._id)
+      .filter(p => String(p._id) !== String(currentUser?._id))
       .map(p => p.name)
       .join(', ');
 
+    const lastMsg = chat.messages?.length
+      ? chat.messages[chat.messages.length - 1]
+      : null;
+    const preview = escHtml(formatChatMessagePreview(lastMsg));
+
     chatItem.innerHTML = `
       <div style="display:flex; align-items:center; gap:10px;">
-        <img src="${chat.participants.find(p => p._id !== currentUser?._id)?.profilePicture || '/images/default-avatar.png'}" 
+        <img src="${chat.participants.find(p => String(p._id) !== String(currentUser?._id))?.profilePicture || '/images/default-avatar.png'}" 
              alt="Profile" style="width:40px; height:40px; border-radius:50%; object-fit:cover;">
         <div>
-          <div style="font-weight:600; color:#333;">${participantNames}</div>
-          <div style="font-size:12px; color:#666;">${chat.lastMessage || 'No messages yet'}</div>
+          <div style="font-weight:600; color:#333;">${escHtml(participantNames)}</div>
+          <div style="font-size:12px; color:#666;">${preview}</div>
         </div>
       </div>
     `;
@@ -415,8 +438,8 @@ export function displayChatPanel(chats) {
 }
 
 export function openChat(chatId) {
-  // This could navigate to a full chat page or open a detailed chat modal
-  window.location.href = `/chat.html?chatId=${chatId}`;
+  if (!chatId) return;
+  window.location.href = `chat.html?chatId=${encodeURIComponent(chatId)}`;
 }
 
 export function closeChatPanel() {
@@ -427,9 +450,9 @@ export function closeChatPanel() {
 // Close chat panel when clicking outside
 document.addEventListener('click', (e) => {
   const panel = document.getElementById('chatPanel');
-  const chatIcon = document.querySelector('.chat img[src*="chat"]');
+  const chatIcon = document.querySelector('.notification .chat-gif');
+  const chatParent = chatIcon?.closest('.notification');
   if (panel && panel.style.display === 'block') {
-    const chatParent = chatIcon?.closest('.chat');
     if (!panel.contains(e.target) && !chatParent?.contains(e.target)) {
       closeChatPanel();
     }

@@ -37,14 +37,13 @@
     </nav>
 
     <div class="header-right">
-        <div class="notification">
+        <div class="notification" onclick="toggleNotificationPanel(event)">
             <img src="images/notification.gif" alt="Notifications" class="header-icon">
-            
         </div>
-        
         <div class="notification">
-            <img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif">
-            
+            <a href="chat.html">
+                <img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif">
+            </a>
         </div>
         
         <div class="notification">
@@ -151,13 +150,14 @@
 
                 <div id="driverDetailsSection" style="display: none;">
                     <div class="section-divider">
-                        <h3 class="section-title">🚗 Driver Details</h3>
+                        <h3 class="section-title">🚗 Driver Details <span style="font-weight:500;font-size:0.85em;color:#666;">(optional)</span></h3>
                     </div>
+                    <p style="font-size:0.9rem;color:#666;margin:0 0 12px;">Add driver info or ID documents anytime you have them; you can publish a cab ride without them.</p>
                     
                     <div class="form-group">
                         <label for="driverName">
                             <span class="icon">👤</span>
-                            Driver Name
+                            Driver Name <span style="font-weight:400;color:#888;">(optional)</span>
                         </label>
                         <input type="text" id="driverName" placeholder="Enter driver's full name">
                     </div>
@@ -165,7 +165,7 @@
                     <div class="form-group">
                         <label for="carNumber">
                             <span class="icon">🚙</span>
-                            Car Number
+                            Car Number <span style="font-weight:400;color:#888;">(optional)</span>
                         </label>
                         <input type="text" id="carNumber" placeholder="e.g., RJ14AB1234" style="text-transform: uppercase;">
                     </div>
@@ -173,7 +173,7 @@
                     <div class="form-group">
                         <label for="aadharPhoto">
                             <span class="icon">🆔</span>
-                            Aadhar Card Photo
+                            Aadhar Card Photo <span style="font-weight:400;color:#888;">(optional)</span>
                         </label>
                         <div class="file-upload-wrapper">
                             <input type="file" id="aadharPhoto" accept="image/*,.pdf" style="display: none;">
@@ -187,7 +187,7 @@
                     <div class="form-group">
                         <label for="licensePhoto">
                             <span class="icon">🪪</span>
-                            Driver License Photo
+                            Driver License Photo <span style="font-weight:400;color:#888;">(optional)</span>
                         </label>
                         <div class="file-upload-wrapper">
                             <input type="file" id="licensePhoto" accept="image/*,.pdf" style="display: none;">

@@ -1,7 +1,26 @@
+const mongoose = require("mongoose");
 const Ride = require("../models/Ride");
 const RideRequest = require("../models/RideRequest");
 const { createNotification } = require("./notificationController");
 const path = require("path");
+
+/** Safe initiator id string from populated or raw ObjectId (avoids throwing on null / plain ObjectId). */
+function initiatorIdStr(ride) {
+  const i = ride?.initiatorId;
+  if (i == null) return "";
+  if (typeof i === "object" && i._id != null) return String(i._id);
+  return String(i);
+}
+
+/** Profile sidebar: past = cancelled/completed or departure already passed; active = ongoing or future scheduled. */
+function profileRideBucket(ride) {
+  const st = String(ride.status || "scheduled").toLowerCase();
+  if (st === "cancelled" || st === "completed") return "past";
+  if (st === "ongoing") return "active";
+  const t = new Date(ride.departureTime || ride.createdAt);
+  if (Number.isNaN(t.getTime())) return "active";
+  return t >= new Date() ? "active" : "past";
+}
 
 console.log("✅ rideController loaded");
 
@@ -199,6 +218,17 @@ const createRide = async (req, res) => {
       if (req.files.aadhar) {
         rideData.driver.aadharImage = toPublicFileUrl(req, req.files.aadhar[0]);
       }
+    }
+
+    if (rideData.rideType === "cab" && rideData.driver && typeof rideData.driver === "object") {
+      const d = rideData.driver;
+      const hasDriverInfo =
+        (d.name && String(d.name).trim()) ||
+        (d.vehicleNumber && String(d.vehicleNumber).trim()) ||
+        (d.contactNumber && String(d.contactNumber).trim()) ||
+        d.driverLicenseImage ||
+        d.aadharImage;
+      if (!hasDriverInfo) rideData.driver = null;
     }
 
     if (rideData.rideType === "travelBuddy") {
@@ -563,43 +593,71 @@ const getRidesByUser = async (req, res) => {
 ===================================================== */
 const getMyRides = async (req, res) => {
   try {
-    const userId = req.user?.id || req.user?._id;
-    if (!userId) {
+    const rawUserId = req.user?.id || req.user?._id;
+    if (!rawUserId) {
       return res.status(401).json({
         success: false,
         message: "Unauthorized",
       });
     }
 
-    const [createdRides, acceptedRequests] = await Promise.all([
-      Ride.find({ initiatorId: userId }).populate('initiatorId', 'name profilePicture').lean(),
-      RideRequest.find({ userId, status: "accepted" }).select("rideId").lean(),
+    if (!mongoose.isValidObjectId(String(rawUserId))) {
+      return res.status(401).json({
+        success: false,
+        message: "Invalid session",
+      });
+    }
+
+    const userObjectId = new mongoose.Types.ObjectId(String(rawUserId));
+    const userIdStr = String(userObjectId);
+
+    const [createdRides, acceptedRequests, participantRides] = await Promise.all([
+      Ride.find({ initiatorId: userObjectId })
+        .populate("initiatorId", "name profilePicture")
+        .lean(),
+      RideRequest.find({ userId: userObjectId, status: "accepted" })
+        .select("rideId")
+        .lean(),
+      Ride.find({ participants: userObjectId })
+        .populate("initiatorId", "name profilePicture")
+        .lean(),
     ]);
 
     const joinedRideIds = acceptedRequests.map((reqDoc) => reqDoc.rideId);
     const joinedRides = joinedRideIds.length
-      ? await Ride.find({ _id: { $in: joinedRideIds } }).populate('initiatorId', 'name profilePicture').lean()
+      ? await Ride.find({ _id: { $in: joinedRideIds } })
+          .populate("initiatorId", "name profilePicture")
+          .lean()
       : [];
 
     const normalizeRide = (ride, role) => ({
       ...ride,
       role,
-      initiatorName: ride.initiatorId?.name || 'Host',
+      initiatorName: ride.initiatorId?.name || "Host",
       initiatorProfilePicture: ride.initiatorId?.profilePicture || null,
     });
 
     const createdWithRole = createdRides.map((ride) =>
       normalizeRide(ride, "creator")
     );
+
     const joinedWithRole = joinedRides
-      .filter(
-        (ride) => String(ride.initiatorId._id) !== String(userId)
-      )
+      .filter((ride) => initiatorIdStr(ride) !== userIdStr)
+      .map((ride) => normalizeRide(ride, "participant"));
+
+    const participantWithRole = participantRides
+      .filter((ride) => initiatorIdStr(ride) !== userIdStr)
       .map((ride) => normalizeRide(ride, "participant"));
 
     const rideMap = new Map();
-    [...createdWithRole, ...joinedWithRole].forEach((ride) => {
-      rideMap.set(String(ride._id), ride);
+    createdWithRole.forEach((ride) => rideMap.set(String(ride._id), ride));
+    joinedWithRole.forEach((ride) => {
+      const id = String(ride._id);
+      if (!rideMap.has(id)) rideMap.set(id, ride);
+    });
+    participantWithRole.forEach((ride) => {
+      const id = String(ride._id);
+      if (!rideMap.has(id)) rideMap.set(id, ride);
     });
 
     const myRides = Array.from(rideMap.values()).sort(
@@ -608,12 +666,21 @@ const getMyRides = async (req, res) => {
         new Date(a.departureTime || a.createdAt)
     );
 
+    const currentRides = myRides.filter((r) => profileRideBucket(r) === "active");
+    const pastRides = myRides.filter((r) => profileRideBucket(r) === "past");
+
     return res.status(200).json({
       success: true,
       count: myRides.length,
+      activeCount: currentRides.length,
+      pastCount: pastRides.length,
+      currentRides,
+      pastRides,
       data: myRides,
     });
   } catch (error) {
+    console.error("getMyRides() error:", error);
+
     return res.status(500).json({
       success: false,
       message: "Error fetching your rides",
@@ -627,7 +694,6 @@ module.exports = {
   getRideById,
   createRide,
   updateRide,
-  adminUpdateRide,
   deleteRide,
   cancelRideByOwner,
   removeParticipantFromRide,

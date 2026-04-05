@@ -137,6 +137,13 @@ function renderTrustedDrivers(items, subtitle) {
           .map((d) => {
             const L = (d.letter || d.name || '?').charAt(0).toUpperCase();
             const bg = avatarGradient(L);
+            const phoneRaw = d.phone != null ? String(d.phone).trim() : '';
+            const telHref = phoneRaw ? phoneRaw.replace(/\s/g, '') : '';
+            const phoneBlock = phoneRaw
+              ? `<a class="phone-display" href="tel:${esc(telHref)}"><i class="fa-solid fa-phone"></i> ${esc(phoneRaw)}</a>`
+              : `<div class="phone-display" style="background: rgba(39, 174, 96, 0.08); color: #27ae60; cursor: default;">
+              <i class="fa-solid fa-shield-halved"></i> Trusted
+            </div>`;
             return `
           <div class="contact-card">
             <div class="avatar" style="background-color: ${bg};">${esc(L)}</div>
@@ -144,9 +151,7 @@ function renderTrustedDrivers(items, subtitle) {
               <h4>${esc(d.name)}</h4>
               <p>${esc(d.description || '')}</p>
             </div>
-            <div class="phone-display" style="background: rgba(39, 174, 96, 0.08); color: #27ae60; cursor: default;">
-              <i class="fa-solid fa-shield-halved"></i> Trusted
-            </div>
+            ${phoneBlock}
           </div>`;
           })
           .join('')}

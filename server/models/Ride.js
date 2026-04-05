@@ -35,30 +35,50 @@ const driverSchema = new mongoose.Schema(
     name: { type: String, trim: true },
 
     contactNumber: {
-      type:  String,
-      match: [phoneRegex, 'Contact must be 10 digits'],
+      type: String,
+      trim: true,
+      validate: {
+        validator(v) {
+          return v == null || v === '' || phoneRegex.test(String(v));
+        },
+        message: 'Contact must be 10 digits',
+      },
     },
 
     vehicleNumber: {
-      type:  String,
-      trim:  true,
-      match: [plateRegex, 'Invalid vehicle number'],
+      type: String,
+      trim: true,
+      validate: {
+        validator(v) {
+          return v == null || v === '' || plateRegex.test(String(v));
+        },
+        message: 'Invalid vehicle number',
+      },
     },
 
     aadhar: {
-      type:  String,
-      match: [aadharRegex, 'Aadhar must be 12 digits'],
+      type: String,
+      validate: {
+        validator(v) {
+          return v == null || v === '' || aadharRegex.test(String(v));
+        },
+        message: 'Aadhar must be 12 digits',
+      },
     },
 
     licence: {
-      type:  String,
-      trim:  true,
-      match: [licenseRegex, 'Invalid licence number'],
+      type: String,
+      trim: true,
+      validate: {
+        validator(v) {
+          return v == null || v === '' || licenseRegex.test(String(v));
+        },
+        message: 'Invalid licence number',
+      },
     },
 
-    // ✅ Cloudinary image URLs
     driverLicenseImage: { type: String, default: null },
-    aadharImage:        { type: String, default: null },
+    aadharImage: { type: String, default: null },
   },
   { _id: false }
 );

@@ -11,9 +11,30 @@ const messageSchema = new Schema(
       ref: 'User',
       required: [true, 'Sender is required'],
     },
+    /** Text body, or caption for image/file messages */
     encryptedMessage: {
       type: String,
-      required: [true, 'Encrypted message is required'],
+      trim: true,
+      default: '',
+    },
+    messageType: {
+      type: String,
+      enum: ['text', 'image', 'file'],
+      default: 'text',
+    },
+    /** Public URL path e.g. /uploads/chat/xyz.jpg */
+    mediaUrl: {
+      type: String,
+      default: null,
+    },
+    fileName: {
+      type: String,
+      default: '',
+      trim: true,
+    },
+    mimeType: {
+      type: String,
+      default: '',
       trim: true,
     },
     timestamp: {
@@ -24,32 +45,42 @@ const messageSchema = new Schema(
       {
         type: oid,
         ref: 'User',
-        default: undefined, // keep field absent if empty
+        default: undefined,
       },
     ],
   },
-  { _id: true } // auto-generate message _id
+  { _id: true }
 );
+
+// Mongoose 9: pre hooks do not receive `next()` — use async/throw (see migrating_to_9.html).
+messageSchema.pre('validate', async function () {
+  const hasMedia = this.mediaUrl != null && String(this.mediaUrl).trim() !== '';
+  const hasText =
+    this.encryptedMessage != null && String(this.encryptedMessage).trim() !== '';
+
+  if (!hasMedia && !hasText) {
+    throw new Error('Message text or media is required');
+  }
+});
 
 /** Chats */
 const chatSchema = new Schema(
   {
     participants: {
-      type: [ { type: oid, ref: 'User', required: true } ],
+      type: [{ type: oid, ref: 'User', required: true }],
       validate: {
         validator: (arr) => Array.isArray(arr) && arr.length >= 2,
         message: 'A chat must have at least 2 participants',
       },
     },
     messages: {
-      type: [messageSchema], // optional; can be empty
+      type: [messageSchema],
       default: undefined,
     },
   },
   { timestamps: true }
 );
 
-// id virtual like your other models
 chatSchema.virtual('id').get(function () {
   return this._id.toHexString();
 });

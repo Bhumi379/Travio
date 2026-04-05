@@ -1,6 +1,7 @@
 import { API_BASE, currentUser } from './config.js';
 import { fetchCurrentUser } from './auth.js';
 import { showError } from './utils.js';
+import { formatChatMessagePreview } from './chatFormat.js';
 
 let chatId = null;
 let partnerId = null;
@@ -18,6 +19,8 @@ const messagesArea = document.getElementById('messagesArea');
 const inputBar = document.getElementById('inputBar');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
+const attachBtn = document.getElementById('attachBtn');
+const chatFileInput = document.getElementById('chatFileInput');
 
 // ── Helpers ──
 
@@ -25,9 +28,26 @@ function getUserId() {
   return currentUser?._id || currentUser?.id || null;
 }
 
+async function parseJsonResponse(res) {
+  const raw = await res.text();
+  const trimmed = raw.trimStart();
+  if (trimmed.startsWith('<')) {
+    throw new Error(
+      'The server sent a web page instead of data. Reload the page and sign in again, or check that the API is running.'
+    );
+  }
+  try {
+    return JSON.parse(raw);
+  } catch {
+    throw new Error(
+      (raw && raw.slice(0, 200)) || `Invalid response (HTTP ${res.status})`
+    );
+  }
+}
+
 async function fetchJSON(url, opts = {}) {
   const res = await fetch(url, { credentials: 'include', ...opts });
-  return res.json();
+  return parseJsonResponse(res);
 }
 
 function formatTime(ts) {
@@ -56,7 +76,52 @@ async function fetchUserName(userId) {
   }
 }
 
+function escapeHtml(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
+}
+
+function absoluteMediaUrl(path) {
+  if (!path) return '';
+  if (/^https?:\/\//i.test(path)) return path;
+  const p = path.startsWith('/') ? path : `/${path}`;
+  return `${window.location.origin}${p}`;
+}
+
+function messageBodyHtml(msg) {
+  const t = msg.messageType || 'text';
+  const cap = msg.encryptedMessage ? escapeHtml(msg.encryptedMessage) : '';
+
+  if (t === 'image' && msg.mediaUrl) {
+    const src = escapeHtml(absoluteMediaUrl(msg.mediaUrl));
+    return `<div class="message-media"><a href="${src}" target="_blank" rel="noopener noreferrer"><img src="${src}" alt="Shared image" loading="lazy" /></a></div>${cap ? `<div class="message-caption">${cap}</div>` : ''}`;
+  }
+
+  if (
+    msg.mediaUrl &&
+    (msg.mimeType === 'video/mp4' || msg.mimeType === 'video/webm')
+  ) {
+    const src = escapeHtml(absoluteMediaUrl(msg.mediaUrl));
+    return `<div class="message-media message-media-video"><video src="${src}" controls playsinline preload="metadata"></video></div>${cap ? `<div class="message-caption">${cap}</div>` : ''}`;
+  }
+
+  if (t === 'file' && msg.mediaUrl) {
+    const href = escapeHtml(absoluteMediaUrl(msg.mediaUrl));
+    const name = escapeHtml(msg.fileName || 'Download file');
+    return `<a class="message-file" href="${href}" download target="_blank" rel="noopener noreferrer"><i class="fa-solid fa-file"></i> ${name}</a>${cap ? `<div class="message-caption">${cap}</div>` : ''}`;
+  }
+
+  return cap;
+}
+
 function appendMessage(msg) {
+  if (msg._id && messagesArea.querySelector(`[data-msg-id="${msg._id}"]`)) {
+    return;
+  }
+
   const userId = getUserId();
   const isMine = String(msg.senderId) === String(userId);
   const noMsg = messagesArea.querySelector('.no-messages');
@@ -73,8 +138,9 @@ function appendMessage(msg) {
 
   const div = document.createElement('div');
   div.className = `message ${isMine ? 'sent' : 'received'}`;
+  if (msg._id) div.dataset.msgId = String(msg._id);
   div.innerHTML = `
-    <div>${msg.encryptedMessage}</div>
+    <div class="message-body">${messageBodyHtml(msg)}</div>
     <div class="msg-time">${formatTime(msg.timestamp)}</div>`;
   messagesArea.appendChild(div);
   requestAnimationFrame(() => {
@@ -171,7 +237,7 @@ async function showChatList() {
     const lastMsg = chat.messages?.length
       ? chat.messages[chat.messages.length - 1]
       : null;
-    const preview = lastMsg ? lastMsg.encryptedMessage : "No messages yet";
+    const preview = formatChatMessagePreview(lastMsg);
     const time = lastMsg ? formatDate(lastMsg.timestamp) : "";
     const unreadCount = (chat.messages || []).filter((msg) => {
       const isMine = String(msg.senderId) === String(userId);
@@ -264,10 +330,11 @@ async function loadMessages() {
     lastRenderedLabel = dateLabel;
     lastMessageDateLabel = dateLabel;
 
+    const mid = msg._id ? ` data-msg-id="${msg._id}"` : '';
     return `
       ${shouldInsertSeparator ? `<div class="date-separator">${dateLabel}</div>` : ''}
-      <div class="message ${isMine ? 'sent' : 'received'}">
-        <div>${msg.encryptedMessage}</div>
+      <div class="message ${isMine ? 'sent' : 'received'}"${mid}>
+        <div class="message-body">${messageBodyHtml(msg)}</div>
         <div class="msg-time">${formatTime(msg.timestamp)}</div>
       </div>`;
   }).join('');
@@ -291,7 +358,42 @@ function sendMessage() {
     chatId,
     senderId: userId,
     encryptedMessage: text,
+    messageType: 'text',
   });
+}
+
+async function uploadChatMediaFile(file) {
+  if (!chatId || !file || !getUserId()) return;
+
+  const fd = new FormData();
+  fd.append('file', file);
+  const cap = messageInput.value.trim();
+  if (cap) fd.append('caption', cap);
+  messageInput.value = '';
+
+  try {
+    const res = await fetch(`${API_BASE}/chats/${encodeURIComponent(chatId)}/media`, {
+      method: 'POST',
+      credentials: 'include',
+      body: fd,
+    });
+    const data = await parseJsonResponse(res);
+    if (!res.ok || !data.success) {
+      const detail =
+        Array.isArray(data.errors) && data.errors.length
+          ? data.errors.join('; ')
+          : data.message;
+      throw new Error(detail || 'Upload failed');
+    }
+    if (data.data?.message) {
+      appendMessage(data.data.message);
+      markChatRead(chatId);
+    }
+  } catch (err) {
+    showError(err.message || 'Could not send file');
+  } finally {
+    if (chatFileInput) chatFileInput.value = '';
+  }
 }
 
 // ── Find or Create Chat from Ride ──
@@ -340,6 +442,12 @@ messageInput.addEventListener('keydown', (e) => {
     e.preventDefault();
     sendMessage();
   }
+});
+
+attachBtn?.addEventListener('click', () => chatFileInput?.click());
+chatFileInput?.addEventListener('change', () => {
+  const file = chatFileInput?.files?.[0];
+  if (file) uploadChatMediaFile(file);
 });
 
 // ── Init ──

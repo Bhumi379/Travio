@@ -49,7 +49,10 @@ function sanitizeMetroDidi(arr) {
     .map((m) => {
       const name = normalizeString(m?.name);
       const route = normalizeString(m?.route) || '';
-      const phone = normalizeString(m?.phone);
+      const phone =
+        m?.phone == null || m?.phone === ''
+          ? ''
+          : String(m.phone).trim();
       const letter = normalizeString(m?.letter).slice(0, 2);
       return {
         name,
@@ -68,6 +71,12 @@ function sanitizeMetroDidi(arr) {
   return out.length ? out : aboutDefaults.metroDidi;
 }
 
+function trustedDriverPhone(d) {
+  const raw = d?.phone ?? d?.driverPhone ?? d?.contactPhone;
+  if (raw == null || raw === '') return '';
+  return String(raw).trim();
+}
+
 function sanitizeTrustedDrivers(arr) {
   if (!Array.isArray(arr)) return aboutDefaults.trustedDrivers;
 
@@ -75,8 +84,9 @@ function sanitizeTrustedDrivers(arr) {
     .map((d) => {
       const name = normalizeString(d?.name);
       const description = normalizeString(d?.description) || '';
+      const phone = trustedDriverPhone(d);
       const letter = normalizeString(d?.letter).slice(0, 2);
-      return { name, description, letter };
+      return { name, description, phone, letter };
     })
     // `name` is required by schema; drop invalid entries
     .filter((d) => d.name)

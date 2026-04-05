@@ -36,11 +36,13 @@
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
       </nav>
       <div class="header-right">
-        <div class="notification">
+        <div class="notification" onclick="toggleNotificationPanel(event)">
           <img src="images/notification.gif" alt="Notifications" class="header-icon" />
         </div>
         <div class="notification">
-          <a href="chat.html"><img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif" /></a>
+          <a href="chat.html">
+            <img src="images/chat-bot.gif" alt="Chat" class="header-icon chat-gif" />
+          </a>
         </div>
         <div class="notification">
           <a href="profile.html"><img src="images/profile.gif" alt="User" class="header-avatar" /></a>

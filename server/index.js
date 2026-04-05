@@ -20,6 +20,10 @@ const reviewRoutes = require("./routes/reviewRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
 const authRoute = require("./routes/authroutes");
 const contentRoutes = require("./routes/contentRoutes");
+const multer = require("multer");
+const protect = require("./middleware/authmiddleware");
+const chatUpload = require("./middleware/chatUpload");
+const { uploadChatMedia } = require("./controllers/chatController");
 
 
 const app = express();
@@ -30,13 +34,14 @@ const io = new Server(server, {
     credentials: true,
   },
 });
+app.set("io", io);
 const PORT = process.env.PORT || 5000;
 //app.use Without it, your server can't read data from requests!
 // ------------ Global Middlewares ------------
 // CORS Configuration - VERY IMPORTANT
 app.use(cors({
-  origin: "http://localhost:5500", // Your frontend URL (Live Server port)
-  credentials: true // Allow cookies
+  origin: ["http://localhost:5500", "http://localhost:5000"],
+  credentials: true,
 }));
 
 
@@ -60,7 +65,15 @@ const startServer = async () => {
     app.use("/api/ride-requests", rideRequestRoutes);
     app.use("/api/auth", authRoute);
     app.use("/api/users", userRoutes);
-   
+
+    // Register on the app (full path) before mounting /api/chats so POST .../media always matches.
+    // Nested router + Express 5 path handling could otherwise fall through and return HTML for this route.
+    app.post(
+      "/api/chats/:chatId/media",
+      protect,
+      chatUpload.single("file"),
+      uploadChatMedia
+    );
     app.use("/api/chats", chatRoutes);
     app.use("/api/reviews", reviewRoutes);
     app.use("/api/notifications", notificationRoutes);
@@ -74,24 +87,38 @@ const startServer = async () => {
     app.get("/", (req, res) => {
       res.sendFile(path.join(__dirname, "..", "client", "login.html"));
     });
-    app.use((req, res, next) => {
-  if (!req.path.startsWith("/api")) {
-    res.sendFile(path.join(__dirname, "..", "client", "login.html"));
-  } else {
-    next(); // forward API routes
-  }
-});
+    // SPA fallback: use originalUrl — req.path can be stripped after mounted routers,
+    // so /api/* could wrongly receive login.html and break fetch().json().
+    app.use((req, res) => {
+      const pathname = (req.originalUrl || req.url || "").split("?")[0];
+      if (pathname.startsWith("/api")) {
+        return res
+          .status(404)
+          .json({ success: false, message: "API route not found" });
+      }
+      res.sendFile(path.join(__dirname, "..", "client", "login.html"));
+    });
 //(/) → explicitly serves login.html.
 
 //* → ensures that any non-API URL (like /home, /profile) also loads login.html. 
 // This is especially useful if you do SPA routing on the frontend.
 
-    // Global error handler
+    // Global error handler (multer must receive real Express `next` — do not wrap .single() in a fake callback)
     app.use((err, req, res, next) => {
+      if (err instanceof multer.MulterError) {
+        const msg =
+          err.code === "LIMIT_FILE_SIZE"
+            ? "File too large (max 12 MB)"
+            : err.message || "Upload failed";
+        return res.status(400).json({ success: false, message: msg });
+      }
+      if (err && err.message === "Unsupported file type for chat") {
+        return res.status(400).json({ success: false, message: err.message });
+      }
       console.error(err);
-      res.status(500).json({ 
-        success: false, 
-        message: "Internal Server Error" 
+      res.status(500).json({
+        success: false,
+        message: "Internal Server Error",
       });
     });
 
@@ -108,30 +135,59 @@ const startServer = async () => {
         socket.leave(chatId);
       });
 
-      socket.on("send-message", async ({ chatId, senderId, encryptedMessage }) => {
-        try {
-          const Chat = require("./models/Chat");
-          const chat = await Chat.findById(chatId);
-          if (!chat) return;
+      socket.on(
+        "send-message",
+        async ({
+          chatId,
+          senderId,
+          encryptedMessage,
+          messageType,
+          mediaUrl,
+          fileName,
+          mimeType,
+        }) => {
+          try {
+            const Chat = require("./models/Chat");
+            const chat = await Chat.findById(chatId);
+            if (!chat) return;
+            if (!chat.participants.map(String).includes(String(senderId))) return;
 
-          chat.messages = chat.messages || [];
-          chat.messages.push({ senderId, encryptedMessage });
-          await chat.save();
+            const type = messageType === "image" || messageType === "file" ? messageType : "text";
+            const payload = {
+              senderId,
+              encryptedMessage: String(encryptedMessage || "").trim(),
+              messageType: type,
+            };
+            if (type !== "text") {
+              payload.mediaUrl = mediaUrl || null;
+              payload.fileName = fileName || "";
+              payload.mimeType = mimeType || "";
+            }
 
-          const newMsg = chat.messages[chat.messages.length - 1];
-          io.to(chatId).emit("new-message", {
-            chatId,
-            message: {
-              _id: newMsg._id,
-              senderId: newMsg.senderId,
-              encryptedMessage: newMsg.encryptedMessage,
-              timestamp: newMsg.timestamp,
-            },
-          });
-        } catch (err) {
-          console.error("Socket send-message error:", err.message);
+            chat.messages = chat.messages || [];
+            chat.messages.push(payload);
+            await chat.save();
+
+            const newMsg = chat.messages[chat.messages.length - 1];
+            io.to(chatId).emit("new-message", {
+              chatId,
+              message: {
+                _id: newMsg._id,
+                senderId: newMsg.senderId,
+                encryptedMessage: newMsg.encryptedMessage,
+                messageType: newMsg.messageType || "text",
+                mediaUrl: newMsg.mediaUrl || null,
+                fileName: newMsg.fileName || "",
+                mimeType: newMsg.mimeType || "",
+                timestamp: newMsg.timestamp,
+                readBy: newMsg.readBy || [],
+              },
+            });
+          } catch (err) {
+            console.error("Socket send-message error:", err.message);
+          }
         }
-      });
+      );
 
       socket.on("disconnect", () => {
         console.log("🔌 Socket disconnected:", socket.id);

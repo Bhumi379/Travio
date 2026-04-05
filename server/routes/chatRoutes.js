@@ -13,7 +13,7 @@ const {
   deleteChat,
 } = require('../controllers/chatController');
 
-// Chats
+// Chats (POST .../media is registered on the main app before this router — see index.js)
 router.get('/', getAllChats);
 router.get('/unread-count', protect, getUnreadCount);
 router.get('/user/:userId', getChatsByUser);
