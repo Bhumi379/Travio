@@ -3,8 +3,8 @@
  * Tests model validation, schema, and methods
  */
 
-import mongoose from 'mongoose';
-import { mockUser } from '../fixtures/mockData.js';
+const mongoose = require('mongoose');
+const { mockUser } = require('../fixtures/mockData.js');
 
 describe('User Model Tests', () => {
   // Test user creation

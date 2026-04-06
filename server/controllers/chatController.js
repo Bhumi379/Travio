@@ -165,7 +165,8 @@ const uploadChatMedia = async (req, res) => {
 
     const mimeType = req.file.mimetype;
     const messageType = mimeType.startsWith('image/') ? 'image' : 'file';
-    const publicPath = `/uploads/chat/${req.file.filename}`;
+    // Use Cloudinary URL (req.file.path) or local path - multer-storage-cloudinary provides the full URL
+    const mediaUrl = req.file.path || `/uploads/chat/${req.file.filename}`;
     const fileName = (req.file.originalname || req.file.filename).slice(0, 200);
     const caption = req.body.caption != null ? String(req.body.caption).trim() : '';
 
@@ -174,7 +175,7 @@ const uploadChatMedia = async (req, res) => {
       senderId: userId,
       encryptedMessage: caption,
       messageType,
-      mediaUrl: publicPath,
+      mediaUrl,
       fileName,
       mimeType,
     });

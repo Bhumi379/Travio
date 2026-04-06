@@ -4,6 +4,20 @@
  */
 
 import { API_BASE } from './config.js';
+import { 
+  toggleNotificationPanel, 
+  closeNotificationPanel,
+  loadNotifications,
+  loadChatUnreadCount,
+  acceptRequest,
+  rejectRequest 
+} from './notifications.js';
+
+// Make functions globally available for onclick handlers
+window.toggleNotificationPanel = toggleNotificationPanel;
+window.closeNotificationPanel = closeNotificationPanel;
+window.acceptRequest = acceptRequest;
+window.rejectRequest = rejectRequest;
 
 function esc(s) {
   if (s == null) return '';
@@ -141,8 +155,8 @@ function renderTrustedDrivers(items, subtitle) {
             const telHref = phoneRaw ? phoneRaw.replace(/\s/g, '') : '';
             const phoneBlock = phoneRaw
               ? `<a class="phone-display" href="tel:${esc(telHref)}"><i class="fa-solid fa-phone"></i> ${esc(phoneRaw)}</a>`
-              : `<div class="phone-display" style="background: rgba(39, 174, 96, 0.08); color: #27ae60; cursor: default;">
-              <i class="fa-solid fa-shield-halved"></i> Trusted
+              : `<div class="phone-display" style="background: rgba(108, 99, 255, 0.08); color: #6c63ff; cursor: default;">
+              <i class="fa-solid fa-info-circle"></i> No contact info
             </div>`;
             return `
           <div class="contact-card">
@@ -205,4 +219,17 @@ async function initAboutPage() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', initAboutPage);
+document.addEventListener('DOMContentLoaded', async () => {
+  // Load notifications and chat unread count
+  loadNotifications();
+  loadChatUnreadCount();
+  
+  // Set up periodic refresh of notifications
+  setInterval(() => {
+    loadNotifications();
+    loadChatUnreadCount();
+  }, 5000);
+  
+  // Initialize about page content
+  initAboutPage();
+});

@@ -51,6 +51,11 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser()); // ADD THIS - Parses cookies from requests
 
+// Lightweight health endpoint for monitoring and integration tests.
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({ success: true, message: "Backend is healthy" });
+});
+
 
 
 // ------------ Start Server After DB Connect ------------
@@ -207,4 +212,8 @@ const startServer = async () => {
   }
 };
 
-startServer();
+if (require.main === module) {
+  startServer();
+}
+
+module.exports = { app, server, startServer };

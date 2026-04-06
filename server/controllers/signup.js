@@ -18,8 +18,53 @@ const createUser = async (req, res) => {
       return res.status(400).json({ message: "All required fields must be filled" });
     }
 
-    if (!String(email).toLowerCase().endsWith("@banasthali.in")) {
+    // Name validation - should not be empty and at least 2 characters
+    const trimmedName = String(name).trim();
+    if (trimmedName.length < 2 || trimmedName.length > 50) {
+      return res.status(400).json({ message: "Name must be between 2 and 50 characters" });
+    }
+    if (!/^[a-zA-Z\s]+$/.test(trimmedName)) {
+      return res.status(400).json({ message: "Name should contain only letters and spaces" });
+    }
+
+    // Email validation - must be @banasthali.in
+    const trimmedEmail = String(email).toLowerCase().trim();
+    if (!trimmedEmail.endsWith("@banasthali.in")) {
       return res.status(400).json({ message: "Email must end with @banasthali.in" });
+    }
+    if (!/^[a-zA-Z0-9._%+-]+@banasthali\.in$/.test(trimmedEmail)) {
+      return res.status(400).json({ message: "Email format is invalid" });
+    }
+
+    // Contact number validation - exactly 10 digits
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(String(contactNumber).trim())) {
+      return res.status(400).json({ message: "Contact number must be exactly 10 digits" });
+    }
+
+    // Guardian number validation if provided - exactly 10 digits
+    if (guardianNumber && String(guardianNumber).trim() !== "") {
+      if (!phoneRegex.test(String(guardianNumber).trim())) {
+        return res.status(400).json({ message: "Guardian number must be exactly 10 digits" });
+      }
+    }
+
+    // Password validation - minimum 8 characters with mixed case and at least one number
+    const passwordStr = String(password);
+    if (passwordStr.length < 8) {
+      return res.status(400).json({ message: "Password must be at least 8 characters long" });
+    }
+    if (!/[A-Z]/.test(passwordStr)) {
+      return res.status(400).json({ message: "Password must contain at least one uppercase letter" });
+    }
+    if (!/[a-z]/.test(passwordStr)) {
+      return res.status(400).json({ message: "Password must contain at least one lowercase letter" });
+    }
+    if (!/[0-9]/.test(passwordStr)) {
+      return res.status(400).json({ message: "Password must contain at least one number" });
+    }
+    if (!/[!@#$%^&*]/.test(passwordStr)) {
+      return res.status(400).json({ message: "Password must contain at least one special character (!@#$%^&*)" });
     }
 
     const oldUser = await User.findOne({ email });

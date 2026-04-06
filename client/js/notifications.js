@@ -30,8 +30,6 @@ function isInformationAboutPage() {
 }
 
 export async function loadNotifications() {
-  if (isInformationAboutPage()) return;
-
   try {
     const res = await fetch(`${API_BASE}/notifications`, {
       credentials: "include"
@@ -79,8 +77,6 @@ export async function markAllNotificationsAsRead() {
 
 
 export function displayNotifications(notifications, unreadCount) {
-  if (isInformationAboutPage()) return;
-
   console.log("📊 displayNotifications called with:", notifications.length, "notifications, unread:", unreadCount);
   
   // Update notification badge
@@ -239,8 +235,6 @@ export function toggleNotificationPanel(e) {
 }
 
 export async function loadChatUnreadCount() {
-  if (isInformationAboutPage()) return;
-
   try {
     const res = await fetch(`${API_BASE}/chats/unread-count`, {
       credentials: "include",
