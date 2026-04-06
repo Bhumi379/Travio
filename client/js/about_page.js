@@ -19,6 +19,21 @@ window.closeNotificationPanel = closeNotificationPanel;
 window.acceptRequest = acceptRequest;
 window.rejectRequest = rejectRequest;
 
+/* ═══════════════════════════════════
+   MOBILE NAVIGATION
+═══════════════════════════════════ */
+function toggleMobileNav() {
+  const hamburger = document.getElementById('hamburger');
+  const navDrawer = document.getElementById('mobileNavDrawer');
+  
+  if (hamburger && navDrawer) {
+    hamburger.classList.toggle('active');
+    navDrawer.classList.toggle('open');
+  }
+}
+
+window.toggleMobileNav = toggleMobileNav;
+
 function esc(s) {
   if (s == null) return '';
   return String(s)

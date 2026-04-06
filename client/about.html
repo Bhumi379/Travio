@@ -597,6 +597,13 @@
             <a href="about.html" class="nav-link active">Information</a>
             <a href="login.html" class="nav-link logout">Logout</a>
         </nav>
+
+        <!-- Hamburger Menu Toggle -->
+        <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
          
         <div class="header-right">
             <div class="notification" onclick="toggleNotificationPanel(event)">
@@ -613,6 +620,14 @@
                 </a>
             </div>
         </div>
+
+        <!-- Mobile Navigation Drawer -->
+        <nav class="mobile-nav-drawer" id="mobileNavDrawer">
+            <a href="index.html" class="nav-link" onclick="toggleMobileNav()">Home</a>
+            <a href="create_a_ride.html" class="nav-link" onclick="toggleMobileNav()">Create a Ride</a>
+            <a href="about.html" class="nav-link active" onclick="toggleMobileNav()">Information</a>
+            <a href="login.html" class="nav-link logout" onclick="toggleMobileNav()">Logout</a>
+        </nav>
     </header>
 
     <main class="container" id="aboutDynamicRoot">

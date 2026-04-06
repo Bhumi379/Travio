@@ -735,6 +735,13 @@
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
       </nav>
 
+      <!-- Hamburger Menu Toggle -->
+      <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+      </div>
+
       <div class="header-right">
         <div class="notification" onclick="toggleNotificationPanel(event)">
           <img src="images/notification.gif" alt="Notifications" class="header-icon">
@@ -749,13 +756,15 @@
             <img src="images/profile.gif" alt="User" class="header-avatar">
           </a>
         </div>
-        <!-- Hamburger (visible on mobile only) -->
-        <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
-          <span></span>
-          <span></span>
-          <span></span>
-        </button>
       </div>
+
+      <!-- Mobile Navigation Drawer -->
+      <nav class="mobile-nav-drawer" id="mobileNavDrawer">
+        <a href="index.html" class="nav-link" onclick="toggleMobileNav()">Home</a>
+        <a href="create_a_ride.html" class="nav-link" onclick="toggleMobileNav()">Create a Ride</a>
+        <a href="about.html" class="nav-link" onclick="toggleMobileNav()">Information</a>
+        <a href="login.html" class="nav-link logout" onclick="logout(); toggleMobileNav()">Logout</a>
+      </nav>
     </header>
 
     <div class="details-shell">

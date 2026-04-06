@@ -39,6 +39,13 @@
         <a href="login.html" class="nav-link logout" onclick="logout()">Logout</a>
     </nav>
 
+    <!-- Hamburger Menu Toggle -->
+    <div class="hamburger" id="hamburger" onclick="toggleMobileNav()">
+        <span></span>
+        <span></span>
+        <span></span>
+    </div>
+
     <div class="header-right">
         <div class="notification" onclick="toggleNotificationPanel(event)">
             <img src="images/notification.gif" alt="Notifications" class="header-icon">
@@ -56,6 +63,14 @@
           </a>
      </div>
     </div>
+
+    <!-- Mobile Navigation Drawer -->
+    <nav class="mobile-nav-drawer" id="mobileNavDrawer">
+        <a href="create_a_ride.html" class="nav-link" onclick="showPage('create-ride'); toggleMobileNav()">Create a Ride</a>
+        <a href="previous_ride.html" class="nav-link" onclick="showPage('previous-rides'); toggleMobileNav()">Previous Rides</a>
+        <a href="about.html" class="nav-link" onclick="showPage('about'); toggleMobileNav()">About</a>
+        <a href="login.html" class="nav-link logout" onclick="logout(); toggleMobileNav()">Logout</a>
+    </nav>
 </header>
 
     <div class="search-container search-container--top-strip">

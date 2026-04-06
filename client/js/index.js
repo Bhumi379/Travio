@@ -44,6 +44,21 @@ window.rejectRequest = rejectRequest;
 window.submitReview = submitReview;
 
 /* ==============================
+   MOBILE NAVIGATION
+================================ */
+function toggleMobileNav() {
+  const hamburger = document.getElementById('hamburger');
+  const navDrawer = document.getElementById('mobileNavDrawer');
+  
+  if (hamburger && navDrawer) {
+    hamburger.classList.toggle('active');
+    navDrawer.classList.toggle('open');
+  }
+}
+
+window.toggleMobileNav = toggleMobileNav;
+
+/* ==============================
    MAIN INITIALIZATION
 ================================ */
 document.addEventListener("DOMContentLoaded", async () => {
